@@ -1,0 +1,12 @@
+src/main/java/com/example/gestoreagenti
+
+gestoreagenti/
+├── CrudDipendentiApplication.java      <-- classe principale Spring Boot
+├── model/
+│   └── Dipendente.java                 <-- entità tabella Dipendenti
+├── repository/
+│   └── DipendenteRepository.java       <-- interfaccia JPA
+├── service/
+│   └── DipendenteService.java          <-- logica CRUD
+└── controller/
+    └── DipendenteController.java       <-- API REST CRUD

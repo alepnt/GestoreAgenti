@@ -1,12 +1,23 @@
-src/main/java/com/example/gestoreagenti
-
-gestoreagenti/
-├── CrudDipendentiApplication.java      <-- classe principale Spring Boot
-├── model/
-│   └── Dipendente.java                 <-- entità tabella Dipendenti
-├── repository/
-│   └── DipendenteRepository.java       <-- interfaccia JPA
-├── service/
-│   └── DipendenteService.java          <-- logica CRUD
-└── controller/
-    └── DipendenteController.java       <-- API REST CRUD
+GestoreAgenti/
+├── pom.xml                         <-- POM padre con moduli client e server
+├── client/
+│   ├── pom.xml                     <-- Modulo Maven per l'applicazione desktop JavaFX
+│   └── src/
+│       ├── main/java/com/example/GestoreAgenti/fx/
+│       │   ├── AgentManagerApp.java            <-- entrypoint dell'applicazione client
+│       │   ├── controller/                     <-- controller JavaFX con logica di presentazione
+│       │   ├── data/                           <-- servizi di accesso ai dati lato client
+│       │   └── model/                          <-- modelli JavaFX orientati agli oggetti
+│       └── main/resources/fx/                  <-- file FXML e risorse grafiche
+└── server/
+    ├── pom.xml                 <-- Modulo Spring Boot che espone l'API REST
+    └── src/
+        ├── main/java/com/example/GestoreAgenti/
+        │   ├── GestoreAgentiApplication.java   <-- classe principale Spring Boot
+        │   ├── controller/                     <-- controller REST MVC
+        │   ├── model/                          <-- entità JPA e classi dominio
+        │   ├── repository/                     <-- interfacce Repository Spring Data
+        │   ├── security/                       <-- configurazione e filtri di sicurezza JWT
+        │   └── service/                        <-- servizi applicativi orientati agli oggetti
+        ├── main/resources/application.properties  <-- configurazione SQL Server
+        └── test/java/com/example/GestoreAgenti/   <-- test unitari Spring Boot

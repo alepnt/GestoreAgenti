@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.example.GestoreAgenti.fx.controller.dashboard.DashboardController">
+    <top>
+        <HBox alignment="CENTER_LEFT" spacing="20" styleClass="header">
+            <padding>
+                <Insets top="15" right="20" bottom="15" left="20"/>
+            </padding>
+            <VBox spacing="5">
+                <Label fx:id="welcomeLabel" styleClass="header-title" text="Benvenuto"/>
+                <Label fx:id="teamLabel" styleClass="header-subtitle" text="Team"/>
+            </VBox>
+            <Pane HBox.hgrow="ALWAYS"/>
+            <Button text="Esci" onAction="#handleLogout"/>
+        </HBox>
+    </top>
+    <left>
+        <VBox spacing="10" styleClass="side-menu">
+            <padding>
+                <Insets top="20" right="15" bottom="20" left="15"/>
+            </padding>
+            <Label text="Navigazione" styleClass="side-menu-title"/>
+            <ToggleGroup fx:id="navigationGroup"/>
+            <ToggleButton fx:id="utenteButton" text="Utente" toggleGroup="$navigationGroup" onAction="#showUtente"/>
+            <ToggleButton fx:id="agendaButton" text="Agenda" toggleGroup="$navigationGroup" onAction="#showAgenda"/>
+            <ToggleButton fx:id="chatInternaButton" text="Chat interna" toggleGroup="$navigationGroup" onAction="#showChatInterna"/>
+            <ToggleButton fx:id="chatEsternaButton" text="Chat esterna" toggleGroup="$navigationGroup" onAction="#showChatEsterna"/>
+            <ToggleButton fx:id="notificheButton" text="Notifiche" toggleGroup="$navigationGroup" onAction="#showNotifiche"/>
+            <ToggleButton fx:id="fattureButton" text="Fatture" toggleGroup="$navigationGroup" onAction="#showFatture"/>
+            <ToggleButton fx:id="pagamentiButton" text="Pagamenti" toggleGroup="$navigationGroup" onAction="#showPagamenti"/>
+        </VBox>
+    </left>
+    <center>
+        <StackPane fx:id="contentStack" styleClass="content">
+            <AnchorPane fx:id="utentePane" visible="false" managed="false">
+                <VBox spacing="12" AnchorPane.topAnchor="20" AnchorPane.leftAnchor="20">
+                    <Label text="Profilo utente" styleClass="section-title"/>
+                    <GridPane hgap="15" vgap="12">
+                        <columnConstraints>
+                            <ColumnConstraints halignment="RIGHT"/>
+                            <ColumnConstraints halignment="LEFT" minWidth="220"/>
+                        </columnConstraints>
+                        <Label text="Nome" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+                        <Label fx:id="userNameLabel" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+                        <Label text="Ruolo" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+                        <Label fx:id="userRoleLabel" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+                        <Label text="Team" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+                        <Label fx:id="userTeamLabel" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+                        <Label text="Email" GridPane.rowIndex="3" GridPane.columnIndex="0"/>
+                        <Label fx:id="userEmailLabel" GridPane.rowIndex="3" GridPane.columnIndex="1"/>
+                    </GridPane>
+                </VBox>
+            </AnchorPane>
+
+            <AnchorPane fx:id="agendaPane" visible="false" managed="false">
+                <VBox spacing="15" AnchorPane.topAnchor="20" AnchorPane.leftAnchor="20" AnchorPane.rightAnchor="20" AnchorPane.bottomAnchor="20">
+                    <Label text="Agenda" styleClass="section-title"/>
+                    <TableView fx:id="agendaTable" prefHeight="400">
+                        <columns>
+                            <TableColumn fx:id="agendaDateColumn" text="Data" prefWidth="120"/>
+                            <TableColumn fx:id="agendaTimeColumn" text="Orario" prefWidth="120"/>
+                            <TableColumn fx:id="agendaDescriptionColumn" text="Descrizione" prefWidth="260"/>
+                            <TableColumn fx:id="agendaLocationColumn" text="Luogo" prefWidth="200"/>
+                        </columns>
+                    </TableView>
+                </VBox>
+            </AnchorPane>
+
+            <AnchorPane fx:id="chatInternaPane" visible="false" managed="false">
+                <BorderPane AnchorPane.topAnchor="0" AnchorPane.bottomAnchor="0" AnchorPane.leftAnchor="0" AnchorPane.rightAnchor="0">
+                    <center>
+                        <ListView fx:id="teamChatList"/>
+                    </center>
+                    <bottom>
+                        <VBox spacing="8" padding="10">
+                            <Label text="Invia un messaggio al team"/>
+                            <HBox spacing="10">
+                                <TextArea fx:id="teamChatInput" prefRowCount="2" HBox.hgrow="ALWAYS"/>
+                                <Button text="Invia" onAction="#handleSendTeamMessage"/>
+                            </HBox>
+                        </VBox>
+                    </bottom>
+                </BorderPane>
+            </AnchorPane>
+
+            <AnchorPane fx:id="chatEsternaPane" visible="false" managed="false">
+                <BorderPane AnchorPane.topAnchor="0" AnchorPane.bottomAnchor="0" AnchorPane.leftAnchor="0" AnchorPane.rightAnchor="0">
+                    <center>
+                        <SplitPane orientation="HORIZONTAL">
+                            <ListView fx:id="emailList" prefWidth="260"/>
+                            <VBox spacing="10" padding="15">
+                                <Label text="Dettagli messaggio" styleClass="section-subtitle"/>
+                                <Label text="Mittente:" styleClass="detail-label"/>
+                                <Label fx:id="emailSenderLabel" wrapText="true"/>
+                                <Label text="Oggetto:" styleClass="detail-label"/>
+                                <Label fx:id="emailSubjectLabel" wrapText="true"/>
+                                <Label text="Testo:" styleClass="detail-label"/>
+                                <TextArea fx:id="emailBodyPreview" editable="false" wrapText="true" prefRowCount="10"/>
+                            </VBox>
+                        </SplitPane>
+                    </center>
+                    <bottom>
+                        <VBox spacing="8" padding="15">
+                            <Label text="Nuova email" styleClass="section-subtitle"/>
+                            <TextField fx:id="emailRecipientField" promptText="Destinatario"/>
+                            <TextField fx:id="emailSubjectField" promptText="Oggetto"/>
+                            <TextArea fx:id="emailBodyArea" promptText="Scrivi il messaggio" prefRowCount="4"/>
+                            <HBox spacing="10" alignment="CENTER_LEFT">
+                                <Button text="Invia" onAction="#handleSendEmail"/>
+                                <Label fx:id="emailStatusLabel"/>
+                            </HBox>
+                        </VBox>
+                    </bottom>
+                </BorderPane>
+            </AnchorPane>
+
+            <AnchorPane fx:id="notifichePane" visible="false" managed="false">
+                <BorderPane AnchorPane.topAnchor="0" AnchorPane.bottomAnchor="0" AnchorPane.leftAnchor="0" AnchorPane.rightAnchor="0">
+                    <left>
+                        <ListView fx:id="notificationsList" prefWidth="260"/>
+                    </left>
+                    <center>
+                        <VBox spacing="10" padding="20">
+                            <Label fx:id="notificationTitleLabel" styleClass="section-subtitle" wrapText="true"/>
+                            <TextArea fx:id="notificationBodyArea" editable="false" wrapText="true" prefRowCount="12"/>
+                        </VBox>
+                    </center>
+                </BorderPane>
+            </AnchorPane>
+
+            <AnchorPane fx:id="fatturePane" visible="false" managed="false">
+                <VBox spacing="15" AnchorPane.topAnchor="20" AnchorPane.leftAnchor="20" AnchorPane.rightAnchor="20" AnchorPane.bottomAnchor="20">
+                    <Label text="Fatture" styleClass="section-title"/>
+                    <TabPane tabClosingPolicy="UNAVAILABLE">
+                        <tabs>
+                            <Tab text="Emesse">
+                                <content>
+                                    <TableView fx:id="invoicesIssuedTable">
+                                        <columns>
+                                            <TableColumn fx:id="invoiceIssuedNumberColumn" text="Numero" prefWidth="140"/>
+                                            <TableColumn fx:id="invoiceIssuedDateColumn" text="Data" prefWidth="140"/>
+                                            <TableColumn fx:id="invoiceIssuedCustomerColumn" text="Cliente" prefWidth="200"/>
+                                            <TableColumn fx:id="invoiceIssuedTotalColumn" text="Totale" prefWidth="120"/>
+                                        </columns>
+                                    </TableView>
+                                </content>
+                            </Tab>
+                            <Tab text="In sollecito">
+                                <content>
+                                    <TableView fx:id="invoicesDueTable">
+                                        <columns>
+                                            <TableColumn fx:id="invoiceDueNumberColumn" text="Numero" prefWidth="140"/>
+                                            <TableColumn fx:id="invoiceDueDateColumn" text="Data" prefWidth="140"/>
+                                            <TableColumn fx:id="invoiceDueCustomerColumn" text="Cliente" prefWidth="200"/>
+                                            <TableColumn fx:id="invoiceDueTotalColumn" text="Totale" prefWidth="120"/>
+                                        </columns>
+                                    </TableView>
+                                </content>
+                            </Tab>
+                            <Tab text="Saldato">
+                                <content>
+                                    <TableView fx:id="invoicesPaidTable">
+                                        <columns>
+                                            <TableColumn fx:id="invoicePaidNumberColumn" text="Numero" prefWidth="140"/>
+                                            <TableColumn fx:id="invoicePaidDateColumn" text="Data" prefWidth="140"/>
+                                            <TableColumn fx:id="invoicePaidCustomerColumn" text="Cliente" prefWidth="200"/>
+                                            <TableColumn fx:id="invoicePaidTotalColumn" text="Totale" prefWidth="120"/>
+                                        </columns>
+                                    </TableView>
+                                </content>
+                            </Tab>
+                        </tabs>
+                    </TabPane>
+                </VBox>
+            </AnchorPane>
+
+            <AnchorPane fx:id="pagamentiPane" visible="false" managed="false">
+                <VBox spacing="15" AnchorPane.topAnchor="20" AnchorPane.leftAnchor="20" AnchorPane.rightAnchor="20" AnchorPane.bottomAnchor="20">
+                    <Label text="Archivio pagamenti" styleClass="section-title"/>
+                    <TableView fx:id="paymentsTable">
+                        <columns>
+                            <TableColumn fx:id="paymentInvoiceColumn" text="Fattura" prefWidth="160"/>
+                            <TableColumn fx:id="paymentAmountColumn" text="Importo" prefWidth="140"/>
+                            <TableColumn fx:id="paymentDateColumn" text="Data" prefWidth="140"/>
+                            <TableColumn fx:id="paymentMethodColumn" text="Metodo" prefWidth="160"/>
+                        </columns>
+                    </TableView>
+                </VBox>
+            </AnchorPane>
+        </StackPane>
+    </center>
+</BorderPane>

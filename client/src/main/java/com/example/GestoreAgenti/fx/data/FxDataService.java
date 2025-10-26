@@ -111,6 +111,36 @@ public class FxDataService {
                 .map(EmployeeCredential::employee);
     }
 
+    public Optional<Employee> registerEmployee(String id, String fullName, String role, String teamName, String email, String password) {
+        String trimmedId = id == null ? "" : id.trim();
+        String trimmedName = fullName == null ? "" : fullName.trim();
+        String trimmedRole = role == null ? "" : role.trim();
+        String trimmedTeam = teamName == null ? "" : teamName.trim();
+        String trimmedEmail = email == null ? "" : email.trim();
+        String trimmedPassword = password == null ? "" : password.trim();
+
+        if (trimmedId.isEmpty() || trimmedName.isEmpty() || trimmedRole.isEmpty()
+                || trimmedTeam.isEmpty() || trimmedEmail.isEmpty() || trimmedPassword.isEmpty()) {
+            return Optional.empty();
+        }
+
+        if (credentials.containsKey(trimmedId)) {
+            return Optional.empty();
+        }
+
+        Employee employee = new Employee(trimmedId, trimmedName, trimmedRole, trimmedTeam, trimmedEmail);
+        credentials.put(trimmedId, new EmployeeCredential(employee, trimmedPassword));
+
+        agendaByEmployee.computeIfAbsent(trimmedId, key -> FXCollections.observableArrayList());
+        notificationsByEmployee.computeIfAbsent(trimmedId, key -> FXCollections.observableArrayList());
+        invoicesByEmployee.computeIfAbsent(trimmedId, key -> FXCollections.observableArrayList());
+        paymentsByEmployee.computeIfAbsent(trimmedId, key -> FXCollections.observableArrayList());
+        emailsByEmployee.computeIfAbsent(trimmedId, key -> FXCollections.observableArrayList());
+        chatByTeam.computeIfAbsent(trimmedTeam, key -> FXCollections.observableArrayList());
+
+        return Optional.of(employee);
+    }
+
     public ObservableList<AgendaItem> getAgendaFor(Employee employee) {
         return agendaByEmployee.computeIfAbsent(employee.id(), key -> FXCollections.observableArrayList());
     }

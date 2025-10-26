@@ -110,7 +110,10 @@ public class LoginController {
         grid.setVgap(10);
         grid.setPadding(new Insets(20, 150, 10, 10));
 
-        Label idValue = new Label(dataService.peekNextEmployeeId());
+        TextField idField = new TextField(dataService.peekNextEmployeeId());
+        idField.setEditable(false);
+        idField.setFocusTraversable(false);
+        idField.setMaxWidth(Double.MAX_VALUE);
 
         TextField nameField = new TextField();
         nameField.setPromptText("Nome completo");
@@ -132,7 +135,7 @@ public class LoginController {
         passwordInputField.setPromptText("Password");
 
         grid.add(new Label("ID"), 0, 0);
-        grid.add(idValue, 1, 0);
+        grid.add(idField, 1, 0);
         grid.add(new Label("Nome"), 0, 1);
         grid.add(nameField, 1, 1);
         grid.add(new Label("Ruolo"), 0, 2);

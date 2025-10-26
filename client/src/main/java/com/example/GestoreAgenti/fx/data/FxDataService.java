@@ -45,9 +45,9 @@ public class FxDataService {
     }
 
     private void seedDemoData() {
-        Employee mario = new Employee("A001", "Mario Rossi", "Account Manager", "Team Nord", "m.rossi@azienda.it");
-        Employee lucia = new Employee("A002", "Lucia Bianchi", "Consulente", "Team Nord", "l.bianchi@azienda.it");
-        Employee giulia = new Employee("A003", "Giulia Verdi", "Project Manager", "Team Centro", "g.verdi@azienda.it");
+        Employee mario = new Employee("C0001", "Mario Rossi", "Account Manager", "Team Nord", "m.rossi@azienda.it");
+        Employee lucia = new Employee("C0002", "Lucia Bianchi", "Consulente", "Team Nord", "l.bianchi@azienda.it");
+        Employee giulia = new Employee("C0003", "Giulia Verdi", "Project Manager", "Team Centro", "g.verdi@azienda.it");
 
         credentials.put(mario.id(), new EmployeeCredential(mario, "password1"));
         credentials.put(lucia.id(), new EmployeeCredential(lucia, "password2"));

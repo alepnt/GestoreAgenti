@@ -11,6 +11,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
@@ -28,7 +29,7 @@ import java.util.Optional;
  */
 public class LoginController {
 
-    private record RegistrationForm(String id, String fullName, String role, String teamName, String email, String password) {}
+    private record RegistrationForm(String fullName, String role, String teamName, String email, String password) {}
 
     @FXML
     private TextField employeeIdField;
@@ -109,17 +110,23 @@ public class LoginController {
         grid.setVgap(10);
         grid.setPadding(new Insets(20, 150, 10, 10));
 
-        TextField idField = new TextField();
-        idField.setPromptText("ID dipendente");
+        TextField idField = new TextField(dataService.peekNextEmployeeId());
+        idField.setEditable(false);
+        idField.setFocusTraversable(false);
+        idField.setMaxWidth(Double.MAX_VALUE);
 
         TextField nameField = new TextField();
         nameField.setPromptText("Nome completo");
 
-        TextField roleField = new TextField();
-        roleField.setPromptText("Ruolo");
+        ComboBox<String> roleCombo = new ComboBox<>();
+        roleCombo.setItems(dataService.getAvailableRoles());
+        roleCombo.setPromptText("Seleziona il ruolo");
+        roleCombo.setMaxWidth(Double.MAX_VALUE);
 
-        TextField teamField = new TextField();
-        teamField.setPromptText("Team");
+        ComboBox<String> teamCombo = new ComboBox<>();
+        teamCombo.setItems(dataService.getAvailableTeams());
+        teamCombo.setPromptText("Seleziona il team");
+        teamCombo.setMaxWidth(Double.MAX_VALUE);
 
         TextField emailField = new TextField();
         emailField.setPromptText("Email");
@@ -132,9 +139,9 @@ public class LoginController {
         grid.add(new Label("Nome"), 0, 1);
         grid.add(nameField, 1, 1);
         grid.add(new Label("Ruolo"), 0, 2);
-        grid.add(roleField, 1, 2);
+        grid.add(roleCombo, 1, 2);
         grid.add(new Label("Team"), 0, 3);
-        grid.add(teamField, 1, 3);
+        grid.add(teamCombo, 1, 3);
         grid.add(new Label("Email"), 0, 4);
         grid.add(emailField, 1, 4);
         grid.add(new Label("Password"), 0, 5);
@@ -146,29 +153,28 @@ public class LoginController {
         registerButton.setDisable(true);
 
         Runnable validate = () -> {
-            boolean disable = idField.getText().isBlank()
-                    || nameField.getText().isBlank()
-                    || roleField.getText().isBlank()
-                    || teamField.getText().isBlank()
+            boolean disable = nameField.getText().isBlank()
+                    || roleCombo.getSelectionModel().getSelectedItem() == null
+                    || teamCombo.getSelectionModel().getSelectedItem() == null
                     || emailField.getText().isBlank()
                     || passwordInputField.getText().isBlank();
             registerButton.setDisable(disable);
         };
 
-        idField.textProperty().addListener((obs, oldValue, newValue) -> validate.run());
         nameField.textProperty().addListener((obs, oldValue, newValue) -> validate.run());
-        roleField.textProperty().addListener((obs, oldValue, newValue) -> validate.run());
-        teamField.textProperty().addListener((obs, oldValue, newValue) -> validate.run());
+        roleCombo.valueProperty().addListener((obs, oldValue, newValue) -> validate.run());
+        teamCombo.valueProperty().addListener((obs, oldValue, newValue) -> validate.run());
         emailField.textProperty().addListener((obs, oldValue, newValue) -> validate.run());
         passwordInputField.textProperty().addListener((obs, oldValue, newValue) -> validate.run());
+
+        validate.run();
 
         dialog.setResultConverter(dialogButton -> {
             if (dialogButton == registerButtonType) {
                 return new RegistrationForm(
-                        idField.getText(),
                         nameField.getText(),
-                        roleField.getText(),
-                        teamField.getText(),
+                        roleCombo.getSelectionModel().getSelectedItem(),
+                        teamCombo.getSelectionModel().getSelectedItem(),
                         emailField.getText(),
                         passwordInputField.getText()
                 );
@@ -178,7 +184,6 @@ public class LoginController {
 
         dialog.showAndWait().ifPresent(form -> {
             Optional<Employee> registered = dataService.registerEmployee(
-                    form.id(),
                     form.fullName(),
                     form.role(),
                     form.teamName(),
@@ -190,7 +195,8 @@ public class LoginController {
                 Alert success = new Alert(Alert.AlertType.INFORMATION);
                 success.setTitle("Registrazione completata");
                 success.setHeaderText("Nuovo dipendente registrato");
-                success.setContentText("L'account per " + registered.get().fullName() + " è stato creato. Puoi accedere con l'ID "
+                success.setContentText("L'account per " + registered.get().fullName()
+                        + " è stato creato. Puoi accedere con l'ID "
                         + registered.get().id() + ".");
                 if (primaryStage != null) {
                     success.initOwner(primaryStage);
@@ -203,7 +209,7 @@ public class LoginController {
                 Alert failure = new Alert(Alert.AlertType.ERROR);
                 failure.setTitle("Registrazione non riuscita");
                 failure.setHeaderText("Impossibile registrare il dipendente");
-                failure.setContentText("Verifica che l'ID non sia già in uso e che i dati siano corretti.");
+                failure.setContentText("Verifica che i dati siano corretti e riprova.");
                 if (primaryStage != null) {
                     failure.initOwner(primaryStage);
                 }

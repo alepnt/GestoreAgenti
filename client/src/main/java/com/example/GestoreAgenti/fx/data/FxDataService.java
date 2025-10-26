@@ -26,6 +26,9 @@ public class FxDataService {
 
     private record EmployeeCredential(Employee employee, String password) {}
 
+    private static final String GENERATED_ID_PREFIX = "C";
+    private static final int GENERATED_ID_DIGITS = 4;
+
     private final Map<String, EmployeeCredential> credentials = new HashMap<>();
     private final Map<String, ObservableList<AgendaItem>> agendaByEmployee = new HashMap<>();
     private final Map<String, ObservableList<Notification>> notificationsByEmployee = new HashMap<>();
@@ -33,19 +36,29 @@ public class FxDataService {
     private final Map<String, ObservableList<PaymentRecord>> paymentsByEmployee = new HashMap<>();
     private final Map<String, ObservableList<ChatMessage>> chatByTeam = new HashMap<>();
     private final Map<String, ObservableList<EmailMessage>> emailsByEmployee = new HashMap<>();
+    private final ObservableList<String> availableTeams = FXCollections.observableArrayList();
+    private final ObservableList<String> availableTeamsView = FXCollections.unmodifiableObservableList(availableTeams);
+    private final ObservableList<String> availableRoles = FXCollections.observableArrayList("Junior", "Senior", "Responsabile");
+    private final ObservableList<String> availableRolesView = FXCollections.unmodifiableObservableList(availableRoles);
+
+    private int nextEmployeeSequence;
 
     public FxDataService() {
         seedDemoData();
     }
 
     private void seedDemoData() {
-        Employee mario = new Employee("A001", "Mario Rossi", "Account Manager", "Team Nord", "m.rossi@azienda.it");
-        Employee lucia = new Employee("A002", "Lucia Bianchi", "Consulente", "Team Nord", "l.bianchi@azienda.it");
-        Employee giulia = new Employee("A003", "Giulia Verdi", "Project Manager", "Team Centro", "g.verdi@azienda.it");
+        Employee mario = new Employee("C0001", "Mario Rossi", "Account Manager", "Team Nord", "m.rossi@azienda.it");
+        Employee lucia = new Employee("C0002", "Lucia Bianchi", "Consulente", "Team Nord", "l.bianchi@azienda.it");
+        Employee giulia = new Employee("C0003", "Giulia Verdi", "Project Manager", "Team Centro", "g.verdi@azienda.it");
 
         credentials.put(mario.id(), new EmployeeCredential(mario, "password1"));
         credentials.put(lucia.id(), new EmployeeCredential(lucia, "password2"));
         credentials.put(giulia.id(), new EmployeeCredential(giulia, "password3"));
+
+        addTeamName(mario.teamName());
+        addTeamName(lucia.teamName());
+        addTeamName(giulia.teamName());
 
         agendaByEmployee.put(mario.id(), FXCollections.observableArrayList(
                 new AgendaItem(LocalDateTime.of(2024, Month.DECEMBER, 12, 9, 0),
@@ -103,6 +116,61 @@ public class FxDataService {
                 new EmailMessage("amministrazione@omega.it", giulia.email(), "Fattura pagata",
                         "Buongiorno, vi confermiamo il pagamento della fattura FT-2024-005.",
                         LocalDateTime.now().minusDays(2), true)));
+        initializeNextEmployeeSequence();
+    }
+
+    private void addTeamName(String teamName) {
+        if (teamName == null) {
+            return;
+        }
+        String trimmed = teamName.trim();
+        if (!trimmed.isEmpty() && !availableTeams.contains(trimmed)) {
+            availableTeams.add(trimmed);
+        }
+    }
+
+    private void initializeNextEmployeeSequence() {
+        int maxExisting = 0;
+        for (String id : credentials.keySet()) {
+            if (id != null && id.matches(GENERATED_ID_PREFIX + "\\d{" + GENERATED_ID_DIGITS + "}")) {
+                int value = Integer.parseInt(id.substring(GENERATED_ID_PREFIX.length()));
+                if (value > maxExisting) {
+                    maxExisting = value;
+                }
+            }
+        }
+        nextEmployeeSequence = Math.max(1, maxExisting + 1);
+    }
+
+    public String peekNextEmployeeId() {
+        int sequence = nextEmployeeSequence;
+        String candidate = formatGeneratedId(sequence);
+        while (credentials.containsKey(candidate)) {
+            sequence++;
+            candidate = formatGeneratedId(sequence);
+        }
+        return candidate;
+    }
+
+    public ObservableList<String> getAvailableTeams() {
+        return availableTeamsView;
+    }
+
+    public ObservableList<String> getAvailableRoles() {
+        return availableRolesView;
+    }
+
+    private String nextAvailableEmployeeId() {
+        String candidate;
+        do {
+            candidate = formatGeneratedId(nextEmployeeSequence);
+            nextEmployeeSequence++;
+        } while (credentials.containsKey(candidate));
+        return candidate;
+    }
+
+    private String formatGeneratedId(int sequence) {
+        return GENERATED_ID_PREFIX + String.format("%0" + GENERATED_ID_DIGITS + "d", sequence);
     }
 
     public Optional<Employee> authenticate(String employeeId, String password) {
@@ -111,32 +179,29 @@ public class FxDataService {
                 .map(EmployeeCredential::employee);
     }
 
-    public Optional<Employee> registerEmployee(String id, String fullName, String role, String teamName, String email, String password) {
-        String trimmedId = id == null ? "" : id.trim();
+    public Optional<Employee> registerEmployee(String fullName, String role, String teamName, String email, String password) {
         String trimmedName = fullName == null ? "" : fullName.trim();
         String trimmedRole = role == null ? "" : role.trim();
         String trimmedTeam = teamName == null ? "" : teamName.trim();
         String trimmedEmail = email == null ? "" : email.trim();
         String trimmedPassword = password == null ? "" : password.trim();
 
-        if (trimmedId.isEmpty() || trimmedName.isEmpty() || trimmedRole.isEmpty()
+        if (trimmedName.isEmpty() || trimmedRole.isEmpty()
                 || trimmedTeam.isEmpty() || trimmedEmail.isEmpty() || trimmedPassword.isEmpty()) {
             return Optional.empty();
         }
 
-        if (credentials.containsKey(trimmedId)) {
-            return Optional.empty();
-        }
+        String generatedId = nextAvailableEmployeeId();
+        Employee employee = new Employee(generatedId, trimmedName, trimmedRole, trimmedTeam, trimmedEmail);
+        credentials.put(generatedId, new EmployeeCredential(employee, trimmedPassword));
 
-        Employee employee = new Employee(trimmedId, trimmedName, trimmedRole, trimmedTeam, trimmedEmail);
-        credentials.put(trimmedId, new EmployeeCredential(employee, trimmedPassword));
-
-        agendaByEmployee.computeIfAbsent(trimmedId, key -> FXCollections.observableArrayList());
-        notificationsByEmployee.computeIfAbsent(trimmedId, key -> FXCollections.observableArrayList());
-        invoicesByEmployee.computeIfAbsent(trimmedId, key -> FXCollections.observableArrayList());
-        paymentsByEmployee.computeIfAbsent(trimmedId, key -> FXCollections.observableArrayList());
-        emailsByEmployee.computeIfAbsent(trimmedId, key -> FXCollections.observableArrayList());
+        agendaByEmployee.computeIfAbsent(generatedId, key -> FXCollections.observableArrayList());
+        notificationsByEmployee.computeIfAbsent(generatedId, key -> FXCollections.observableArrayList());
+        invoicesByEmployee.computeIfAbsent(generatedId, key -> FXCollections.observableArrayList());
+        paymentsByEmployee.computeIfAbsent(generatedId, key -> FXCollections.observableArrayList());
+        emailsByEmployee.computeIfAbsent(generatedId, key -> FXCollections.observableArrayList());
         chatByTeam.computeIfAbsent(trimmedTeam, key -> FXCollections.observableArrayList());
+        addTeamName(trimmedTeam);
 
         return Optional.of(employee);
     }

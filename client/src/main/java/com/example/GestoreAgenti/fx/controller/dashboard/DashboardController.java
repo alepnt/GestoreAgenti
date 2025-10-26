@@ -44,7 +44,7 @@ public class DashboardController {
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
     private static final DateTimeFormatter DATE_TIME_FORMAT = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
     private static final DateTimeFormatter TIME_RANGE_FORMAT = DateTimeFormatter.ofPattern("HH:mm");
-    private static final NumberFormat CURRENCY_FORMAT = NumberFormat.getCurrencyInstance(new Locale("it", "IT"));
+    private static final NumberFormat CURRENCY_FORMAT = NumberFormat.getCurrencyInstance(Locale.of("it", "IT"));
 
     @FXML
     private Label welcomeLabel;
@@ -67,24 +67,31 @@ public class DashboardController {
     @FXML
     private ToggleGroup navigationGroup;
 
+    @SuppressWarnings("unused")
     @FXML
     private ToggleButton utenteButton;
 
+    @SuppressWarnings("unused")
     @FXML
     private ToggleButton agendaButton;
 
+    @SuppressWarnings("unused")
     @FXML
     private ToggleButton chatInternaButton;
 
+    @SuppressWarnings("unused")
     @FXML
     private ToggleButton chatEsternaButton;
 
+    @SuppressWarnings("unused")
     @FXML
     private ToggleButton notificheButton;
 
+    @SuppressWarnings("unused")
     @FXML
     private ToggleButton fattureButton;
 
+    @SuppressWarnings("unused")
     @FXML
     private ToggleButton pagamentiButton;
 
@@ -387,41 +394,49 @@ public class DashboardController {
         });
     }
 
+    @SuppressWarnings("unused")
     @FXML
     private void showUtente(ActionEvent event) {
         showPane(utentePane);
     }
 
+    @SuppressWarnings("unused")
     @FXML
     private void showAgenda(ActionEvent event) {
         showPane(agendaPane);
     }
 
+    @SuppressWarnings("unused")
     @FXML
     private void showChatInterna(ActionEvent event) {
         showPane(chatInternaPane);
     }
 
+    @SuppressWarnings("unused")
     @FXML
     private void showChatEsterna(ActionEvent event) {
         showPane(chatEsternaPane);
     }
 
+    @SuppressWarnings("unused")
     @FXML
     private void showNotifiche(ActionEvent event) {
         showPane(notifichePane);
     }
 
+    @SuppressWarnings("unused")
     @FXML
     private void showFatture(ActionEvent event) {
         showPane(fatturePane);
     }
 
+    @SuppressWarnings("unused")
     @FXML
     private void showPagamenti(ActionEvent event) {
         showPane(pagamentiPane);
     }
 
+    @SuppressWarnings("unused")
     @FXML
     private void handleSendTeamMessage(ActionEvent event) {
         String message = teamChatInput.getText();
@@ -436,6 +451,7 @@ public class DashboardController {
         }
     }
 
+    @SuppressWarnings("unused")
     @FXML
     private void handleSendEmail(ActionEvent event) {
         String recipient = emailRecipientField.getText();
@@ -455,6 +471,7 @@ public class DashboardController {
         }
     }
 
+    @SuppressWarnings("unused")
     @FXML
     private void handleLogout(ActionEvent event) {
         try {

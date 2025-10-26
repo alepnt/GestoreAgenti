@@ -113,9 +113,19 @@ while IFS="=" read -r key value; do
   case "${key-}" in
   distributionUrl) distributionUrl=$(trim "${value-}") ;;
   distributionSha256Sum) distributionSha256Sum=$(trim "${value-}") ;;
+  distributionType) distributionType=$(trim "${value-}") ;;
   esac
 done <"$scriptDir/.mvn/wrapper/maven-wrapper.properties"
 [ -n "${distributionUrl-}" ] || die "cannot read distributionUrl property in $scriptDir/.mvn/wrapper/maven-wrapper.properties"
+
+if [ "${distributionType-}" = "only-script" ]; then
+  if command -v mvn >/dev/null 2>&1; then
+    verbose "distributionType=only-script, using mvn from PATH"
+    exec "$(command -v mvn)" "$@"
+  else
+    verbose "distributionType=only-script but mvn not found; continuing with wrapper download"
+  fi
+fi
 
 case "${distributionUrl##*/}" in
 maven-mvnd-*bin.*)

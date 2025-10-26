@@ -15,6 +15,7 @@
             <TextField fx:id="employeeIdField" promptText="ID dipendente"/>
             <PasswordField fx:id="passwordField" promptText="Password"/>
             <Button text="Accedi" maxWidth="Infinity" onAction="#handleLogin"/>
+            <Button text="Registrati" maxWidth="Infinity" onAction="#handleRegister"/>
             <Label fx:id="errorLabel" styleClass="error-label" wrapText="true"/>
         </VBox>
     </children>

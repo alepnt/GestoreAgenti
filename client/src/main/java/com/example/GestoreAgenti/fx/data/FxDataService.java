@@ -37,6 +37,9 @@ public class FxDataService {
     private final Map<String, ObservableList<ChatMessage>> chatByTeam = new HashMap<>();
     private final Map<String, ObservableList<EmailMessage>> emailsByEmployee = new HashMap<>();
     private final ObservableList<String> availableTeams = FXCollections.observableArrayList();
+    private final ObservableList<String> availableTeamsView = FXCollections.unmodifiableObservableList(availableTeams);
+    private final ObservableList<String> availableRoles = FXCollections.observableArrayList("Junior", "Senior", "Responsabile");
+    private final ObservableList<String> availableRolesView = FXCollections.unmodifiableObservableList(availableRoles);
 
     private int nextEmployeeSequence;
 
@@ -150,7 +153,11 @@ public class FxDataService {
     }
 
     public ObservableList<String> getAvailableTeams() {
-        return FXCollections.unmodifiableObservableList(availableTeams);
+        return availableTeamsView;
+    }
+
+    public ObservableList<String> getAvailableRoles() {
+        return availableRolesView;
     }
 
     private String nextAvailableEmployeeId() {

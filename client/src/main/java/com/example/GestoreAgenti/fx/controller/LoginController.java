@@ -119,7 +119,7 @@ public class LoginController {
         nameField.setPromptText("Nome completo");
 
         ComboBox<String> roleCombo = new ComboBox<>();
-        roleCombo.getItems().addAll("Junior", "Senior", "Responsabile");
+        roleCombo.setItems(dataService.getAvailableRoles());
         roleCombo.setPromptText("Seleziona il ruolo");
         roleCombo.setMaxWidth(Double.MAX_VALUE);
 

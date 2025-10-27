@@ -52,5 +52,20 @@ public class FatturaController { // Dichiara la classe FatturaController che inc
         service.deleteFattura(id); // Esegue questa istruzione come parte della logica del metodo.
         return ResponseEntity.noContent().build(); // Restituisce il risultato dell'elaborazione al chiamante.
     } // Chiude il blocco di codice precedente.
+
+    @PostMapping("/{id}/emetti") // Applica l'annotazione @PostMapping per configurare il componente.
+    public Fattura emettiFattura(@PathVariable Long id) { // Richiede l'emissione della fattura rispettando le regole di stato.
+        return service.emettiFattura(id); // Delega la logica di transizione al servizio applicativo.
+    } // Chiude il blocco di codice precedente.
+
+    @PostMapping("/{id}/paga") // Applica l'annotazione @PostMapping per configurare il componente.
+    public Fattura pagaFattura(@PathVariable Long id) { // Richiede il pagamento della fattura rispettando le regole di stato.
+        return service.pagaFattura(id); // Delega la logica di transizione al servizio applicativo.
+    } // Chiude il blocco di codice precedente.
+
+    @PostMapping("/{id}/annulla") // Applica l'annotazione @PostMapping per configurare il componente.
+    public Fattura annullaFattura(@PathVariable Long id) { // Richiede l'annullamento della fattura rispettando le regole di stato.
+        return service.annullaFattura(id); // Delega la logica di transizione al servizio applicativo.
+    } // Chiude il blocco di codice precedente.
 } // Chiude il blocco di codice precedente.
 

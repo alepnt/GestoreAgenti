@@ -52,4 +52,24 @@ public class PagamentoController { // Dichiara la classe PagamentoController che
         service.deletePagamento(id); // Esegue questa istruzione come parte della logica del metodo.
         return ResponseEntity.noContent().build(); // Restituisce il risultato dell'elaborazione al chiamante.
     } // Chiude il blocco di codice precedente.
+
+    @PostMapping("/{id}/elabora") // Applica l'annotazione @PostMapping per configurare il componente.
+    public Pagamento avviaElaborazione(@PathVariable Long id) { // Avvia l'elaborazione del pagamento rispettando le regole di stato.
+        return service.avviaElaborazione(id); // Delega la logica di transizione al servizio applicativo.
+    } // Chiude il blocco di codice precedente.
+
+    @PostMapping("/{id}/completa") // Applica l'annotazione @PostMapping per configurare il componente.
+    public Pagamento completaPagamento(@PathVariable Long id) { // Completa il pagamento rispettando le regole di stato.
+        return service.completaPagamento(id); // Delega la logica di transizione al servizio applicativo.
+    } // Chiude il blocco di codice precedente.
+
+    @PostMapping("/{id}/fallisci") // Applica l'annotazione @PostMapping per configurare il componente.
+    public Pagamento fallisciPagamento(@PathVariable Long id) { // Marca il pagamento come fallito rispettando le regole di stato.
+        return service.fallisciPagamento(id); // Delega la logica di transizione al servizio applicativo.
+    } // Chiude il blocco di codice precedente.
+
+    @PostMapping("/{id}/ripeti") // Applica l'annotazione @PostMapping per configurare il componente.
+    public Pagamento ripetiElaborazione(@PathVariable Long id) { // Ripete l'elaborazione del pagamento rispettando le regole di stato.
+        return service.ripetiElaborazione(id); // Delega la logica di transizione al servizio applicativo.
+    } // Chiude il blocco di codice precedente.
 } // Chiude il blocco di codice precedente.

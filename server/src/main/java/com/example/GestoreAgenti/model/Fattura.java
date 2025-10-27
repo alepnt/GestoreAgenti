@@ -1,5 +1,9 @@
 package com.example.GestoreAgenti.model; // Definisce il pacchetto com.example.GestoreAgenti.model a cui appartiene questa classe.
 
+import com.example.GestoreAgenti.model.state.BozzaState; // Importa lo stato Bozza per definire lo stato iniziale della fattura.
+import com.example.GestoreAgenti.model.state.FatturaState; // Importa l'interfaccia degli stati della fattura.
+import com.example.GestoreAgenti.model.state.FatturaStateFactory; // Importa la factory che restituisce le implementazioni degli stati.
+import com.fasterxml.jackson.annotation.JsonIgnore; // Importa JsonIgnore per evitare la serializzazione del campo di stato interno.
 import jakarta.persistence.*; // Importa tutte le annotazioni JPA necessarie per mappare l'entità nel database.
 import java.math.BigDecimal; // Importa BigDecimal per rappresentare importi monetari con precisione.
 import java.time.LocalDate; // Importa LocalDate per gestire le date senza informazioni temporali.
@@ -28,7 +32,21 @@ public class Fattura { // Dichiara la classe Fattura che incapsula la logica del
     private BigDecimal iva; // Memorizza l'IVA dell'entità.
     private BigDecimal totale; // Memorizza il totale dell'entità.
 
-    private String stato; // Memorizza lo stato dell'entità.
+    private String stato = BozzaState.NOME; // Memorizza lo stato dell'entità.
+
+    @Transient // Impedisce a JPA di persistere direttamente l'oggetto stato.
+    private FatturaState state = new BozzaState(); // Riferimento all'implementazione concreta dello stato della fattura.
+
+    @PrePersist // Assicura che lo stato testuale sia coerente prima del salvataggio.
+    @PreUpdate // Assicura che lo stato testuale sia coerente prima dell'aggiornamento.
+    private void sincronizzaStatoPersistito() {
+        this.stato = risolviStato().getNome();
+    }
+
+    @PostLoad // Ricostruisce l'oggetto stato dopo il caricamento dal database.
+    private void ricostruisciStato() {
+        this.state = FatturaStateFactory.fromName(this.stato);
+    }
 
     // Getters e Setters
     public Long getIdFattura() { return idFattura; } // Restituisce l'ID della fattura dell'entità.
@@ -55,7 +73,26 @@ public class Fattura { // Dichiara la classe Fattura che incapsula la logica del
     public BigDecimal getTotale() { return totale; } // Restituisce il totale dell'entità.
     public void setTotale(BigDecimal totale) { this.totale = totale; } // Imposta il totale per l'entità.
 
-    public String getStato() { return stato; } // Restituisce lo stato dell'entità.
-    public void setStato(String stato) { this.stato = stato; } // Imposta lo stato per l'entità.
+    public String getStato() { return risolviStato().getNome(); } // Restituisce lo stato dell'entità.
+    public String getColoreStato() { return risolviStato().getColore(); } // Restituisce il colore associato allo stato.
+    public void setStato(String stato) { setState(FatturaStateFactory.fromName(stato)); } // Imposta lo stato per l'entità.
+
+    @JsonIgnore // Evita di esporre lo stato interno durante la serializzazione JSON.
+    public FatturaState getState() { return risolviStato(); } // Restituisce l'implementazione dello stato.
+    public void setState(FatturaState state) {
+        this.state = state;
+        this.stato = state.getNome();
+    } // Aggiorna l'implementazione e il valore persistito dello stato.
+
+    public void emetti() { risolviStato().emetti(this); } // Richiede l'emissione della fattura seguendo le regole dello stato.
+    public void paga() { risolviStato().paga(this); } // Richiede il pagamento della fattura seguendo le regole dello stato.
+    public void annulla() { risolviStato().annulla(this); } // Richiede l'annullamento della fattura seguendo le regole dello stato.
+
+    private FatturaState risolviStato() {
+        if (state == null) {
+            state = FatturaStateFactory.fromName(stato);
+        }
+        return state;
+    } // Risolve l'implementazione dello stato a partire dal valore persistito.
 } // Chiude il blocco di codice precedente.
 

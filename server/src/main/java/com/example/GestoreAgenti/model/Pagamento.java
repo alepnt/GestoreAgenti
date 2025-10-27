@@ -3,13 +3,11 @@ package com.example.GestoreAgenti.model; // Definisce il pacchetto com.example.G
 import java.math.BigDecimal; // Importa BigDecimal per rappresentare importi monetari con precisione.
 import java.time.LocalDate; // Importa LocalDate per gestire le date senza informazioni temporali.
 
-import jakarta.persistence.Entity; // Importa Entity per contrassegnare la classe come entità JPA.
-import jakarta.persistence.GeneratedValue; // Importa GeneratedValue per definire la generazione automatica della chiave primaria.
-import jakarta.persistence.GenerationType; // Importa GenerationType per specificare la strategia di generazione delle chiavi.
-import jakarta.persistence.Id; // Importa Id per identificare il campo chiave primaria dell'entità.
-import jakarta.persistence.JoinColumn; // Importa JoinColumn per descrivere la colonna di relazione nella tabella.
-import jakarta.persistence.ManyToOne; // Importa ManyToOne per modellare una relazione molti-a-uno.
-import jakarta.persistence.Table; // Importa Table per impostare il nome della tabella su cui mappare l'entità.
+import com.example.GestoreAgenti.model.state.pagamento.InAttesaState; // Importa lo stato iniziale InAttesa per i pagamenti.
+import com.example.GestoreAgenti.model.state.pagamento.PagamentoState; // Importa l'interfaccia dello state pattern per i pagamenti.
+import com.example.GestoreAgenti.model.state.pagamento.PagamentoStateFactory; // Importa la factory per risolvere gli stati del pagamento.
+import com.fasterxml.jackson.annotation.JsonIgnore; // Importa JsonIgnore per evitare la serializzazione del campo di stato interno.
+import jakarta.persistence.*; // Importa tutte le annotazioni JPA necessarie per mappare l'entità nel database.
 
 @Entity // Applica l'annotazione @Entity per configurare il componente.
 @Table(name = "pagamento") // Applica l'annotazione @Table per configurare il componente.
@@ -29,6 +27,22 @@ public class Pagamento { // Dichiara la classe Pagamento che incapsula la logica
 
     private String metodo; // Memorizza il metodo di pagamento dell'entità.
 
+    private String stato = InAttesaState.NOME; // Memorizza lo stato del pagamento.
+
+    @Transient // Impedisce a JPA di persistere direttamente l'oggetto stato.
+    private PagamentoState state = new InAttesaState(); // Riferimento all'implementazione concreta dello stato del pagamento.
+
+    @PrePersist // Assicura la coerenza tra valore testuale e implementazione prima del salvataggio.
+    @PreUpdate // Assicura la coerenza tra valore testuale e implementazione prima dell'aggiornamento.
+    private void sincronizzaStatoPersistito() {
+        this.stato = risolviStato().getNome();
+    }
+
+    @PostLoad // Ricostruisce l'oggetto stato dopo il caricamento dal database.
+    private void ricostruisciStato() {
+        this.state = PagamentoStateFactory.fromName(this.stato);
+    }
+
     // Getters e Setters
     public Long getIdPagamento() { return idPagamento; } // Restituisce l'ID del pagamento dell'entità.
     public void setIdPagamento(Long idPagamento) { this.idPagamento = idPagamento; } // Imposta l'ID del pagamento per l'entità.
@@ -44,4 +58,27 @@ public class Pagamento { // Dichiara la classe Pagamento che incapsula la logica
 
     public String getMetodo() { return metodo; } // Restituisce il metodo di pagamento dell'entità.
     public void setMetodo(String metodo) { this.metodo = metodo; } // Imposta il metodo di pagamento per l'entità.
+
+    public String getStato() { return risolviStato().getNome(); } // Restituisce lo stato del pagamento.
+    public String getColoreStato() { return risolviStato().getColore(); } // Restituisce il colore associato allo stato del pagamento.
+    public void setStato(String stato) { setState(PagamentoStateFactory.fromName(stato)); } // Imposta lo stato partendo dal nome persistito.
+
+    @JsonIgnore // Evita di serializzare lo stato interno durante le risposte REST.
+    public PagamentoState getState() { return risolviStato(); } // Restituisce l'implementazione concreta dello stato.
+    public void setState(PagamentoState state) {
+        this.state = state;
+        this.stato = state.getNome();
+    } // Aggiorna implementazione concreta e valore persistito.
+
+    public void elabora() { risolviStato().elabora(this); } // Richiede l'avvio dell'elaborazione del pagamento.
+    public void completa() { risolviStato().completa(this); } // Richiede la conferma del pagamento.
+    public void fallisci() { risolviStato().fallisci(this); } // Richiede di marcare il pagamento come fallito.
+    public void ripeti() { risolviStato().ripeti(this); } // Richiede di ripetere l'elaborazione del pagamento.
+
+    private PagamentoState risolviStato() {
+        if (state == null) {
+            state = PagamentoStateFactory.fromName(stato);
+        }
+        return state;
+    } // Risolve l'implementazione dello stato partendo dal valore persistito.
 } // Chiude il blocco di codice precedente.

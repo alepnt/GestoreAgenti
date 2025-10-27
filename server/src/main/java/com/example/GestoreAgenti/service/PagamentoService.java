@@ -2,6 +2,7 @@ package com.example.GestoreAgenti.service; // Definisce il pacchetto com.example
 
 import java.util.List; // Importa List per gestire insiemi ordinati di elementi.
 import java.util.Optional; // Importa Optional per modellare risultati potenzialmente assenti.
+import java.util.function.Consumer; // Importa Consumer per applicare operazioni sulle transizioni di stato.
 
 import org.springframework.stereotype.Service; // Importa Service per dichiarare la classe come servizio dell'applicazione.
 
@@ -41,6 +42,29 @@ public class PagamentoService { // Dichiara la classe PagamentoService che incap
 
     public void deletePagamento(Long id) { // Elimina il pagamento identificato dall'input.
         repository.deleteById(id); // Esegue questa istruzione come parte della logica del metodo.
+    } // Chiude il blocco di codice precedente.
+
+    public Pagamento avviaElaborazione(Long id) { // Avvia l'elaborazione del pagamento.
+        return aggiornaStato(id, Pagamento::elabora);
+    } // Chiude il blocco di codice precedente.
+
+    public Pagamento completaPagamento(Long id) { // Completa il pagamento confermandolo.
+        return aggiornaStato(id, Pagamento::completa);
+    } // Chiude il blocco di codice precedente.
+
+    public Pagamento fallisciPagamento(Long id) { // Marca il pagamento come fallito.
+        return aggiornaStato(id, Pagamento::fallisci);
+    } // Chiude il blocco di codice precedente.
+
+    public Pagamento ripetiElaborazione(Long id) { // Ripete l'elaborazione partendo da uno stato fallito.
+        return aggiornaStato(id, Pagamento::ripeti);
+    } // Chiude il blocco di codice precedente.
+
+    private Pagamento aggiornaStato(Long id, Consumer<Pagamento> operazione) { // Applica l'operazione di stato richiesta.
+        return repository.findById(id).map(pagamento -> {
+            operazione.accept(pagamento);
+            return repository.save(pagamento);
+        }).orElseThrow(() -> new RuntimeException("Pagamento non trovato con id " + id));
     } // Chiude il blocco di codice precedente.
 } // Chiude il blocco di codice precedente.
 

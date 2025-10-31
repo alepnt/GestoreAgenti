@@ -6,6 +6,7 @@ import com.example.GestoreAgenti.fx.data.remote.RemoteAgentService;
 import com.example.GestoreAgenti.fx.data.remote.RemoteAgentServiceProxy;
 import com.example.GestoreAgenti.fx.data.remote.RemoteChatClient;
 import com.example.GestoreAgenti.fx.data.remote.RemoteEmailClient;
+import com.example.GestoreAgenti.fx.data.remote.RemoteInvoiceClient;
 import com.example.GestoreAgenti.fx.event.EmailSentEvent;
 import com.example.GestoreAgenti.fx.event.FxEventBus;
 import com.example.GestoreAgenti.fx.event.NotificationUpdatedEvent;
@@ -15,7 +16,7 @@ import com.example.GestoreAgenti.fx.model.ChatMessage;
 import com.example.GestoreAgenti.fx.model.EmailMessage;
 import com.example.GestoreAgenti.fx.model.Employee;
 import com.example.GestoreAgenti.fx.model.InvoiceRecord;
-import com.example.GestoreAgenti.fx.model.InvoiceState;
+import com.example.GestoreAgenti.invoice.InvoiceState;
 import com.example.GestoreAgenti.fx.model.Notification;
 import com.example.GestoreAgenti.fx.model.PaymentRecord;
 import javafx.application.Platform;
@@ -60,6 +61,7 @@ public class FxDataService {
     private final ObservableList<String> availableRolesView = FXCollections.unmodifiableObservableList(availableRoles);
     private final RemoteChatClient remoteChatClient = new RemoteChatClient();
     private final RemoteEmailClient remoteEmailClient = new RemoteEmailClient();
+    private final RemoteInvoiceClient remoteInvoiceClient = new RemoteInvoiceClient();
     private final Map<String, AutoCloseable> chatSubscriptions = new ConcurrentHashMap<>();
     private final Set<String> desiredChatTeams = ConcurrentHashMap.newKeySet();
 
@@ -409,6 +411,10 @@ public class FxDataService {
                     emails.add(outgoing);
                     eventBus.publish(new EmailSentEvent(employee, outgoing));
                 }));
+    }
+
+    public CompletableFuture<byte[]> downloadInvoicesReport() {
+        return remoteInvoiceClient.downloadInvoiceReport();
     }
 
     public void markNotificationAsRead(Employee employee, Notification notification) {

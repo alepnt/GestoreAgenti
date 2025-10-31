@@ -154,6 +154,7 @@
             <AnchorPane fx:id="fatturePane" visible="false" managed="false">
                 <VBox spacing="15" AnchorPane.topAnchor="20" AnchorPane.leftAnchor="20" AnchorPane.rightAnchor="20" AnchorPane.bottomAnchor="20">
                     <Label text="Fatture" styleClass="section-title"/>
+                    <Button fx:id="exportInvoicesButton" text="Esporta report Excel" onAction="#handleExportInvoices" maxWidth="200"/>
                     <TabPane tabClosingPolicy="UNAVAILABLE">
                         <tabs>
                             <Tab text="Emesse">

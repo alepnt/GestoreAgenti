@@ -6,9 +6,9 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Locale;
 
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
@@ -59,9 +59,13 @@ public class FatturaExcelReportService {
                 }
             }
 
-            for (SheetContext context : orderedContexts) {
-                for (int columnIndex = 0; columnIndex < context.columnCount; columnIndex++) {
-                    context.sheet.autoSizeColumn(columnIndex);
+            if (orderedContexts.isEmpty()) {
+                createEmptySheet(workbook, headerStyle);
+            } else {
+                for (SheetContext context : orderedContexts) {
+                    for (int columnIndex = 0; columnIndex < context.columnCount; columnIndex++) {
+                        context.sheet.autoSizeColumn(columnIndex);
+                    }
                 }
             }
 
@@ -113,7 +117,7 @@ public class FatturaExcelReportService {
                     formatNumber(fattura.getImponibile()),
                     formatNumber(fattura.getIva()),
                     formatNumber(fattura.getTotale()),
-                    valueOrEmpty(fattura.getStato()));
+                    stato.getLabel());
             case IN_SOLLECITO -> {
                 Contratto contratto = fattura.getContratto();
                 yield List.of(
@@ -122,7 +126,7 @@ public class FatturaExcelReportService {
                         formatContratto(contratto),
                         formatDate(fattura.getDataEmissione()),
                         formatNumber(fattura.getTotale()),
-                        valueOrEmpty(fattura.getStato()));
+                        stato.getLabel());
             }
             case SALDATA -> {
                 Contratto contratto = fattura.getContratto();
@@ -134,13 +138,22 @@ public class FatturaExcelReportService {
                         formatNumber(fattura.getTotale()),
                         servizio != null ? formatNumber(servizio.getCommissionePercentuale()) : "",
                         servizio != null ? valueOrEmpty(servizio.getNome()) : "",
-                        valueOrEmpty(fattura.getStato()));
+                        stato.getLabel());
             }
         };
     }
 
     private InvoiceState resolveState(Fattura fattura) {
         return fattura != null ? InvoiceState.fromPersistence(fattura.getStato()) : InvoiceState.EMESSA;
+    }
+
+    private void createEmptySheet(Workbook workbook, CellStyle headerStyle) {
+        Sheet sheet = workbook.createSheet("Fatture");
+        Row headerRow = sheet.createRow(0);
+        Cell headerCell = headerRow.createCell(0);
+        headerCell.setCellValue("Nessuna fattura disponibile");
+        headerCell.setCellStyle(headerStyle);
+        sheet.autoSizeColumn(0);
     }
 
     private String formatCliente(Cliente cliente) {
@@ -220,8 +233,9 @@ public class FatturaExcelReportService {
             }
             String normalized = raw.trim().toUpperCase(Locale.ROOT);
             return switch (normalized) {
-                case "IN_SOLLECITO" -> IN_SOLLECITO;
+                case "IN_SOLLECITO", "SOLLECITO", "SOLLECITATA", "SOLLECITATO", "INSOLUTO" -> IN_SOLLECITO;
                 case "SALDATA", "SALDATO", "PAGATA", "PAGATO" -> SALDATA;
+                case "EMESSA", "EMESSO", "BOZZA", "ANNULLATA", "ANNULLATO" -> EMESSA;
                 default -> EMESSA;
             };
         }

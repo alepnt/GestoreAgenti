@@ -37,4 +37,14 @@ public class ContrattoService extends AbstractCrudService<Contratto, Long> {
     public void deleteContratto(Long id) {
         delete(id);
     }
+
+    /**
+     * Recupera tutti i contratti collegati al dipendente indicato.
+     *
+     * @param dipendenteId identificativo del dipendente
+     * @return elenco dei contratti associati
+     */
+    public java.util.List<Contratto> getContrattiByDipendente(Long dipendenteId) {
+        return ((ContrattoRepository) repository()).findByDipendente_Id(dipendenteId);
+    }
 }

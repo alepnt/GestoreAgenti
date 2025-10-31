@@ -36,4 +36,14 @@ public class ProvvigioneService extends AbstractCrudService<Provvigione, Long> {
     public void deleteProvvigione(Long id) {
         delete(id);
     }
+
+    /**
+     * Restituisce le provvigioni associate al dipendente indicato.
+     *
+     * @param dipendenteId identificativo del dipendente
+     * @return elenco delle provvigioni disponibili per il dipendente
+     */
+    public java.util.List<Provvigione> getProvvigioniByDipendente(Long dipendenteId) {
+        return ((ProvvigioneRepository) repository()).findByDipendente_Id(dipendenteId);
+    }
 }

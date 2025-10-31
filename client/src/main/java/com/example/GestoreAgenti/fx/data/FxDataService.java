@@ -1,5 +1,7 @@
 package com.example.GestoreAgenti.fx.data;
 
+import com.example.GestoreAgenti.fx.data.remote.RemoteChatClient;
+import com.example.GestoreAgenti.fx.data.remote.RemoteEmailClient;
 import com.example.GestoreAgenti.fx.event.EmailSentEvent;
 import com.example.GestoreAgenti.fx.event.FxEventBus;
 import com.example.GestoreAgenti.fx.event.NotificationUpdatedEvent;
@@ -12,6 +14,7 @@ import com.example.GestoreAgenti.fx.model.InvoiceRecord;
 import com.example.GestoreAgenti.fx.model.InvoiceState;
 import com.example.GestoreAgenti.fx.model.Notification;
 import com.example.GestoreAgenti.fx.model.PaymentRecord;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
@@ -19,9 +22,14 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.Month;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Servizio che fornisce dati dimostrativi e funzionalità minime per la GUI JavaFX.
@@ -45,6 +53,10 @@ public class FxDataService {
     private final ObservableList<String> availableTeamsView = FXCollections.unmodifiableObservableList(availableTeams);
     private final ObservableList<String> availableRoles = FXCollections.observableArrayList("Junior", "Senior", "Responsabile");
     private final ObservableList<String> availableRolesView = FXCollections.unmodifiableObservableList(availableRoles);
+    private final RemoteChatClient remoteChatClient = new RemoteChatClient();
+    private final RemoteEmailClient remoteEmailClient = new RemoteEmailClient();
+    private final Map<String, AutoCloseable> chatSubscriptions = new ConcurrentHashMap<>();
+    private final Set<String> desiredChatTeams = ConcurrentHashMap.newKeySet();
 
     private int nextEmployeeSequence;
 
@@ -235,27 +247,110 @@ public class FxDataService {
         if (message == null || message.isBlank()) {
             return;
         }
-        ObservableList<ChatMessage> chat = getTeamChat(employee);
-        ChatMessage chatMessage = new ChatMessage(employee.teamName(), employee.fullName(), LocalDateTime.now(), message.trim());
-        chat.add(chatMessage);
-        eventBus.publish(new TeamMessageSentEvent(employee, chatMessage));
+        String trimmedMessage = message.trim();
+        remoteChatClient.sendTeamMessage(employee.teamName(), employee.fullName(), trimmedMessage)
+                .exceptionally(error -> {
+                    System.err.println("Invio messaggio chat fallito: " + error.getMessage());
+                    Platform.runLater(() -> {
+                        ChatMessage fallback = new ChatMessage(employee.teamName(), employee.fullName(),
+                                LocalDateTime.now(), trimmedMessage);
+                        ObservableList<ChatMessage> chat = getTeamChat(employee);
+                        chat.add(fallback);
+                        eventBus.publish(new TeamMessageSentEvent(employee, fallback));
+                    });
+                    return null;
+                });
+    }
+
+    public void connectTeamChat(Employee employee) {
+        if (employee == null || employee.teamName() == null || employee.teamName().isBlank()) {
+            return;
+        }
+        String teamName = employee.teamName().trim();
+        disconnectTeamChat(employee);
+        desiredChatTeams.add(teamName);
+        remoteChatClient.subscribeToTeam(teamName,
+                        message -> Platform.runLater(() -> {
+                            ObservableList<ChatMessage> chat = getTeamChat(employee);
+                            if (!chat.contains(message)) {
+                                chat.add(message);
+                                chat.sort(Comparator.comparing(ChatMessage::timestamp));
+                                eventBus.publish(new TeamMessageSentEvent(employee, message));
+                            }
+                        }),
+                        error -> System.err.println("Aggiornamento chat in tempo reale fallito: " + error.getMessage()))
+                .thenAccept(subscription -> {
+                    if (!desiredChatTeams.contains(teamName)) {
+                        try {
+                            subscription.close();
+                        } catch (Exception ignored) {
+                            // Ignored
+                        }
+                        return;
+                    }
+                    chatSubscriptions.put(teamName, subscription);
+                })
+                .exceptionally(error -> {
+                    System.err.println("Connessione chat fallita: " + error.getMessage());
+                    desiredChatTeams.remove(teamName);
+                    return null;
+                });
+    }
+
+    public void disconnectTeamChat(Employee employee) {
+        if (employee == null || employee.teamName() == null || employee.teamName().isBlank()) {
+            return;
+        }
+        String teamName = employee.teamName().trim();
+        desiredChatTeams.remove(teamName);
+        AutoCloseable subscription = chatSubscriptions.remove(teamName);
+        if (subscription != null) {
+            try {
+                subscription.close();
+            } catch (Exception ignored) {
+                // Ignored
+            }
+        }
+        remoteChatClient.disconnectFromTeam(teamName);
+    }
+
+    public void refreshTeamChat(Employee employee) {
+        if (employee == null) {
+            return;
+        }
+        remoteChatClient.fetchTeamMessages(employee.teamName())
+                .thenAccept(messages -> Platform.runLater(() -> {
+                    ObservableList<ChatMessage> chat = getTeamChat(employee);
+                    chat.setAll(messages);
+                    chat.sort(Comparator.comparing(ChatMessage::timestamp));
+                }))
+                .exceptionally(error -> {
+                    System.err.println("Aggiornamento chat fallito: " + error.getMessage());
+                    return null;
+                });
     }
 
     public ObservableList<EmailMessage> getEmailsFor(Employee employee) {
         return emailsByEmployee.computeIfAbsent(employee.id(), key -> FXCollections.observableArrayList());
     }
 
-    public void sendEmail(Employee employee, String recipient, String subject, String body) {
-        if (recipient == null || recipient.isBlank() || subject == null || subject.isBlank() || body == null || body.isBlank()) {
-            return;
+    public CompletableFuture<Void> sendEmail(Employee employee, String recipient, String subject, String body) {
+        if (employee == null) {
+            return CompletableFuture.failedFuture(new IllegalArgumentException("Dipendente non valido"));
         }
-        ObservableList<EmailMessage> emails = getEmailsFor(employee);
-        EmailMessage outgoing = new EmailMessage(employee.email(), recipient.trim(), subject.trim(), body.trim(), LocalDateTime.now(), false);
-        emails.add(outgoing);
-        // Genera automaticamente una risposta del cliente per dimostrazione.
-        emails.add(new EmailMessage(recipient.trim(), employee.email(), "Re: " + subject.trim(),
-                "Grazie per l'aggiornamento, vi ricontatteremo a breve.", LocalDateTime.now(), true));
-        eventBus.publish(new EmailSentEvent(employee, outgoing));
+        if (recipient == null || recipient.isBlank() || subject == null || subject.isBlank() || body == null || body.isBlank()) {
+            return CompletableFuture.failedFuture(new IllegalArgumentException("Compila destinatario, oggetto e testo"));
+        }
+        String trimmedRecipient = recipient.trim();
+        String trimmedSubject = subject.trim();
+        String trimmedBody = body.trim();
+        EmailMessage outgoing = new EmailMessage(employee.email(), trimmedRecipient, trimmedSubject, trimmedBody, LocalDateTime.now(), false);
+        return remoteEmailClient.sendEmail(outgoing.sender(), outgoing.recipient(), outgoing.subject(), outgoing.body())
+                .thenRun(() -> Platform.runLater(() -> {
+                    ObservableList<EmailMessage> emails = getEmailsFor(employee);
+                    emails.add(outgoing);
+                    eventBus.publish(new EmailSentEvent(employee, outgoing));
+                }));
     }
 
     public void markNotificationAsRead(Employee employee, Notification notification) {

@@ -247,9 +247,9 @@ public class DashboardController {
     private final List<AutoCloseable> eventSubscriptions = new ArrayList<>();
 
     public void initializeData(FxDataService dataService, Employee employee) {
+        cleanupSubscriptions();
         this.dataService = dataService;
         this.employee = employee;
-        cleanupSubscriptions();
 
         welcomeLabel.setText("Benvenuto, " + employee.fullName());
         teamLabel.setText("Team " + employee.teamName());
@@ -298,6 +298,8 @@ public class DashboardController {
                 }
             }
         });
+        dataService.refreshTeamChat(employee);
+        dataService.connectTeamChat(employee);
     }
 
     private void configureEmailSection() {
@@ -440,6 +442,9 @@ public class DashboardController {
     }
 
     private void cleanupSubscriptions() {
+        if (dataService != null && employee != null) {
+            dataService.disconnectTeamChat(employee);
+        }
         for (AutoCloseable subscription : eventSubscriptions) {
             try {
                 subscription.close();

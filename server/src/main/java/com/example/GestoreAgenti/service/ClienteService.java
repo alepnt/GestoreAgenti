@@ -33,7 +33,7 @@ public class ClienteService extends AbstractCrudService<Cliente, Long> {
         return super.update(id, cliente);
     }
 
-    public void delete(Long id) {
-        super.delete(id);
+    public Cliente delete(Long id) {
+        return super.delete(id);
     }
 }

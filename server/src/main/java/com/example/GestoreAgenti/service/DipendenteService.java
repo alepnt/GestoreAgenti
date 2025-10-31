@@ -39,7 +39,7 @@ public class DipendenteService extends AbstractCrudService<Dipendente, Long> {
         return super.update(id, dipendente);
     }
 
-    public void delete(Long id) {
-        super.delete(id);
+    public Dipendente delete(Long id) {
+        return super.delete(id);
     }
 }

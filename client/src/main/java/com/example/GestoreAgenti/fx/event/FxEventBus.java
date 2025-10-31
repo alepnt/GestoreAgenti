@@ -14,8 +14,10 @@ public class FxEventBus {
 
     private final Map<Class<?>, List<Consumer<? super FxEvent>>> listeners = new ConcurrentHashMap<>();
 
+    @SuppressWarnings("unchecked")
     public <E extends FxEvent> AutoCloseable subscribe(Class<E> eventType, Consumer<E> listener) {
-        listeners.computeIfAbsent(eventType, key -> new CopyOnWriteArrayList<>()).add(listener);
+        listeners.computeIfAbsent(eventType, key -> new CopyOnWriteArrayList<>())
+                .add((Consumer<? super FxEvent>) listener);
         return () -> listeners.getOrDefault(eventType, List.of()).remove(listener);
     }
 

@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController; // Importa RestCo
 import com.example.GestoreAgenti.model.Fattura; // Importa la classe Fattura per accedere alle informazioni di fatturazione.
 import com.example.GestoreAgenti.service.FatturaService; // Importa FatturaService per coordinare la gestione delle fatture.
 import com.example.GestoreAgenti.service.report.FatturaExcelReportService; // Importa il servizio per generare il report Excel delle fatture.
+import com.example.GestoreAgenti.service.report.FatturaPdfReportService; // Importa il servizio per generare il PDF delle fatture.
 
 @RestController // Applica l'annotazione @RestController per configurare il componente.
 @RequestMapping("/api/fatture") // Applica l'annotazione @RequestMapping per configurare il componente.
@@ -29,10 +30,13 @@ public class FatturaController { // Dichiara la classe FatturaController che inc
 
     private final FatturaService service; // Mantiene il riferimento al servizio applicativo FatturaService per delegare le operazioni di business.
     private final FatturaExcelReportService reportService; // Servizio per generare il layout Excel differenziato per tipo di fattura.
+    private final FatturaPdfReportService pdfReportService; // Servizio per generare il template PDF condiviso delle fatture.
 
-    public FatturaController(FatturaService service, FatturaExcelReportService reportService) { // Costruttore della classe FatturaController che inizializza le dipendenze richieste.
+    public FatturaController(FatturaService service, FatturaExcelReportService reportService,
+            FatturaPdfReportService pdfReportService) { // Costruttore della classe FatturaController che inizializza le dipendenze richieste.
         this.service = service; // Aggiorna il campo dell'istanza con il valore ricevuto.
         this.reportService = reportService; // Aggiorna il campo dell'istanza con il servizio dedicato ai report Excel.
+        this.pdfReportService = pdfReportService; // Aggiorna il campo dell'istanza con il servizio dedicato al PDF.
     } // Chiude il blocco di codice precedente.
 
     @GetMapping // Applica l'annotazione @GetMapping per configurare il componente.
@@ -47,6 +51,17 @@ public class FatturaController { // Dichiara la classe FatturaController che inc
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=fatture-report.xlsx") // Suggerisce il nome del file scaricato.
                 .contentType(EXCEL_MEDIA_TYPE) // Imposta il tipo di contenuto dell'Excel.
                 .body(new ByteArrayResource(workbook)); // Restituisce il file al client.
+    } // Chiude il blocco di codice precedente.
+
+    @GetMapping(value = "/{id}/pdf", produces = MediaType.APPLICATION_PDF_VALUE) // Applica l'annotazione @GetMapping per esporre il report PDF della fattura.
+    public ResponseEntity<Resource> esportaFatturaPdf(@PathVariable Long id) { // Restituisce il template PDF generato.
+        Fattura fattura = service.findRequiredById(id); // Recupera la fattura da rappresentare.
+        byte[] pdf = pdfReportService.generaPdf(fattura); // Genera il PDF utilizzando il template condiviso.
+        String filename = "fattura-" + (fattura.getNumeroFattura() != null ? fattura.getNumeroFattura() : id) + ".pdf"; // Determina il nome del file.
+        return ResponseEntity.ok() // Configura la risposta HTTP di successo.
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + filename) // Suggerisce il nome del file scaricato.
+                .contentType(MediaType.APPLICATION_PDF) // Imposta il tipo di contenuto del PDF.
+                .body(new ByteArrayResource(pdf)); // Restituisce il file al client.
     } // Chiude il blocco di codice precedente.
 
     @GetMapping("/{id}") // Applica l'annotazione @GetMapping per configurare il componente.

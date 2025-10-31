@@ -1,5 +1,9 @@
 package com.example.GestoreAgenti.fx.data;
 
+import com.example.GestoreAgenti.fx.data.adapter.EmployeeAdapter;
+import com.example.GestoreAgenti.fx.data.dto.EmployeeDto;
+import com.example.GestoreAgenti.fx.data.remote.RemoteAgentService;
+import com.example.GestoreAgenti.fx.data.remote.RemoteAgentServiceProxy;
 import com.example.GestoreAgenti.fx.data.remote.RemoteChatClient;
 import com.example.GestoreAgenti.fx.data.remote.RemoteEmailClient;
 import com.example.GestoreAgenti.fx.event.EmailSentEvent;

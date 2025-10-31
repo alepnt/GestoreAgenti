@@ -1,7 +1,14 @@
 package com.example.GestoreAgenti.fx.controller.dashboard;
 
-import com.example.GestoreAgenti.fx.controller.LoginController;
+import com.example.GestoreAgenti.fx.command.Command;
+import com.example.GestoreAgenti.fx.command.LogoutCommand;
+import com.example.GestoreAgenti.fx.command.SendEmailCommand;
+import com.example.GestoreAgenti.fx.command.SendTeamMessageCommand;
+import com.example.GestoreAgenti.fx.command.ShowPaneCommand;
 import com.example.GestoreAgenti.fx.data.FxDataService;
+import com.example.GestoreAgenti.fx.event.EmailSentEvent;
+import com.example.GestoreAgenti.fx.event.NotificationUpdatedEvent;
+import com.example.GestoreAgenti.fx.event.TeamMessageSentEvent;
 import com.example.GestoreAgenti.fx.model.AgendaItem;
 import com.example.GestoreAgenti.fx.model.ChatMessage;
 import com.example.GestoreAgenti.fx.model.EmailMessage;
@@ -10,14 +17,12 @@ import com.example.GestoreAgenti.fx.model.InvoiceRecord;
 import com.example.GestoreAgenti.fx.model.InvoiceState;
 import com.example.GestoreAgenti.fx.model.Notification;
 import com.example.GestoreAgenti.fx.model.PaymentRecord;
+import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
@@ -31,10 +36,13 @@ import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 
-import java.io.IOException;
 import java.text.NumberFormat;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Controller della dashboard principale con tutte le sezioni richieste.
@@ -235,10 +243,13 @@ public class DashboardController {
 
     private FxDataService dataService;
     private Employee employee;
+    private final Map<String, Command> commands = new HashMap<>();
+    private final List<AutoCloseable> eventSubscriptions = new ArrayList<>();
 
     public void initializeData(FxDataService dataService, Employee employee) {
         this.dataService = dataService;
         this.employee = employee;
+        cleanupSubscriptions();
 
         welcomeLabel.setText("Benvenuto, " + employee.fullName());
         teamLabel.setText("Team " + employee.teamName());
@@ -253,6 +264,9 @@ public class DashboardController {
         configureNotifications();
         configureInvoices();
         configurePayments();
+
+        registerCommands();
+        subscribeToEvents();
 
         showPane(utentePane);
         navigationGroup.selectToggle(utenteButton);
@@ -361,6 +375,88 @@ public class DashboardController {
         paymentMethodColumn.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().method()));
     }
 
+    private void registerCommands() {
+        commands.clear();
+        commands.put("showUtente", new ShowPaneCommand(this::showPane, utentePane));
+        commands.put("showAgenda", new ShowPaneCommand(this::showPane, agendaPane));
+        commands.put("showChatInterna", new ShowPaneCommand(this::showPane, chatInternaPane));
+        commands.put("showChatEsterna", new ShowPaneCommand(this::showPane, chatEsternaPane));
+        commands.put("showNotifiche", new ShowPaneCommand(this::showPane, notifichePane));
+        commands.put("showFatture", new ShowPaneCommand(this::showPane, fatturePane));
+        commands.put("showPagamenti", new ShowPaneCommand(this::showPane, pagamentiPane));
+        commands.put("sendTeamMessage", new SendTeamMessageCommand(() -> teamChatInput.getText(), dataService, employee, teamChatInput, teamChatList));
+        commands.put("sendEmail", new SendEmailCommand(() -> emailRecipientField.getText(),
+                () -> emailSubjectField.getText(),
+                () -> emailBodyArea.getText(),
+                dataService,
+                employee,
+                emailStatusLabel,
+                emailRecipientField,
+                emailSubjectField,
+                emailBodyArea,
+                emailList));
+        commands.put("logout", new LogoutCommand(() -> (Stage) contentStack.getScene().getWindow(), dataService, this::cleanupSubscriptions));
+    }
+
+    private void subscribeToEvents() {
+        if (dataService == null) {
+            return;
+        }
+        var bus = dataService.getEventBus();
+        eventSubscriptions.add(bus.subscribe(TeamMessageSentEvent.class, this::onTeamMessageSent));
+        eventSubscriptions.add(bus.subscribe(EmailSentEvent.class, this::onEmailSent));
+        eventSubscriptions.add(bus.subscribe(NotificationUpdatedEvent.class, this::onNotificationUpdated));
+    }
+
+    private void onTeamMessageSent(TeamMessageSentEvent event) {
+        if (!event.message().teamName().equals(employee.teamName())) {
+            return;
+        }
+        Platform.runLater(() -> {
+            int lastIndex = teamChatList.getItems().size() - 1;
+            if (lastIndex >= 0) {
+                teamChatList.scrollTo(lastIndex);
+            }
+        });
+    }
+
+    private void onEmailSent(EmailSentEvent event) {
+        if (!event.employee().id().equals(employee.id())) {
+            return;
+        }
+        Platform.runLater(() -> {
+            emailStatusLabel.setText("Email inviata");
+            if (!emailList.getItems().isEmpty()) {
+                emailList.getSelectionModel().selectLast();
+            }
+        });
+    }
+
+    private void onNotificationUpdated(NotificationUpdatedEvent event) {
+        if (!event.employee().id().equals(employee.id())) {
+            return;
+        }
+        Platform.runLater(notificationsList::refresh);
+    }
+
+    private void cleanupSubscriptions() {
+        for (AutoCloseable subscription : eventSubscriptions) {
+            try {
+                subscription.close();
+            } catch (Exception ignored) {
+                // nothing to do
+            }
+        }
+        eventSubscriptions.clear();
+    }
+
+    private void executeCommand(String key) {
+        Command command = commands.get(key);
+        if (command != null) {
+            command.execute();
+        }
+    }
+
     private void showEmailDetail(EmailMessage email) {
         if (email == null) {
             emailSenderLabel.setText("");
@@ -397,96 +493,60 @@ public class DashboardController {
     @SuppressWarnings("unused")
     @FXML
     private void showUtente(ActionEvent event) {
-        showPane(utentePane);
+        executeCommand("showUtente");
     }
 
     @SuppressWarnings("unused")
     @FXML
     private void showAgenda(ActionEvent event) {
-        showPane(agendaPane);
+        executeCommand("showAgenda");
     }
 
     @SuppressWarnings("unused")
     @FXML
     private void showChatInterna(ActionEvent event) {
-        showPane(chatInternaPane);
+        executeCommand("showChatInterna");
     }
 
     @SuppressWarnings("unused")
     @FXML
     private void showChatEsterna(ActionEvent event) {
-        showPane(chatEsternaPane);
+        executeCommand("showChatEsterna");
     }
 
     @SuppressWarnings("unused")
     @FXML
     private void showNotifiche(ActionEvent event) {
-        showPane(notifichePane);
+        executeCommand("showNotifiche");
     }
 
     @SuppressWarnings("unused")
     @FXML
     private void showFatture(ActionEvent event) {
-        showPane(fatturePane);
+        executeCommand("showFatture");
     }
 
     @SuppressWarnings("unused")
     @FXML
     private void showPagamenti(ActionEvent event) {
-        showPane(pagamentiPane);
+        executeCommand("showPagamenti");
     }
 
     @SuppressWarnings("unused")
     @FXML
     private void handleSendTeamMessage(ActionEvent event) {
-        String message = teamChatInput.getText();
-        if (message == null || message.isBlank()) {
-            return;
-        }
-        dataService.sendTeamMessage(employee, message);
-        teamChatInput.clear();
-        int lastIndex = teamChatList.getItems().size() - 1;
-        if (lastIndex >= 0) {
-            teamChatList.scrollTo(lastIndex);
-        }
+        executeCommand("sendTeamMessage");
     }
 
     @SuppressWarnings("unused")
     @FXML
     private void handleSendEmail(ActionEvent event) {
-        String recipient = emailRecipientField.getText();
-        String subject = emailSubjectField.getText();
-        String body = emailBodyArea.getText();
-        if (recipient == null || recipient.isBlank() || subject == null || subject.isBlank() || body == null || body.isBlank()) {
-            emailStatusLabel.setText("Compila destinatario, oggetto e testo");
-            return;
-        }
-        dataService.sendEmail(employee, recipient, subject, body);
-        emailStatusLabel.setText("Email inviata");
-        emailRecipientField.clear();
-        emailSubjectField.clear();
-        emailBodyArea.clear();
-        if (!emailList.getItems().isEmpty()) {
-            emailList.getSelectionModel().selectLast();
-        }
+        executeCommand("sendEmail");
     }
 
     @SuppressWarnings("unused")
     @FXML
     private void handleLogout(ActionEvent event) {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fx/login-view.fxml"));
-            Parent root = loader.load();
-            LoginController loginController = loader.getController();
-            Stage stage = (Stage) contentStack.getScene().getWindow();
-            loginController.setPrimaryStage(stage);
-            loginController.setDataService(dataService);
-            Scene scene = new Scene(root);
-            scene.getStylesheets().add(getClass().getResource("/fx/styles.css").toExternalForm());
-            stage.setScene(scene);
-            stage.setTitle("Gestore Agenti - Accesso dipendenti");
-        } catch (IOException e) {
-            // In un caso reale si mostrerebbe un avviso all'utente
-        }
+        executeCommand("logout");
     }
 }

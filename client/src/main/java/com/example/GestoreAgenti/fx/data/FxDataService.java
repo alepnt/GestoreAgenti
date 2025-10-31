@@ -1,5 +1,9 @@
 package com.example.GestoreAgenti.fx.data;
 
+import com.example.GestoreAgenti.fx.event.EmailSentEvent;
+import com.example.GestoreAgenti.fx.event.FxEventBus;
+import com.example.GestoreAgenti.fx.event.NotificationUpdatedEvent;
+import com.example.GestoreAgenti.fx.event.TeamMessageSentEvent;
 import com.example.GestoreAgenti.fx.model.AgendaItem;
 import com.example.GestoreAgenti.fx.model.ChatMessage;
 import com.example.GestoreAgenti.fx.model.EmailMessage;
@@ -36,6 +40,7 @@ public class FxDataService {
     private final Map<String, ObservableList<PaymentRecord>> paymentsByEmployee = new HashMap<>();
     private final Map<String, ObservableList<ChatMessage>> chatByTeam = new HashMap<>();
     private final Map<String, ObservableList<EmailMessage>> emailsByEmployee = new HashMap<>();
+    private final FxEventBus eventBus = new FxEventBus();
     private final ObservableList<String> availableTeams = FXCollections.observableArrayList();
     private final ObservableList<String> availableTeamsView = FXCollections.unmodifiableObservableList(availableTeams);
     private final ObservableList<String> availableRoles = FXCollections.observableArrayList("Junior", "Senior", "Responsabile");
@@ -231,7 +236,9 @@ public class FxDataService {
             return;
         }
         ObservableList<ChatMessage> chat = getTeamChat(employee);
-        chat.add(new ChatMessage(employee.teamName(), employee.fullName(), LocalDateTime.now(), message.trim()));
+        ChatMessage chatMessage = new ChatMessage(employee.teamName(), employee.fullName(), LocalDateTime.now(), message.trim());
+        chat.add(chatMessage);
+        eventBus.publish(new TeamMessageSentEvent(employee, chatMessage));
     }
 
     public ObservableList<EmailMessage> getEmailsFor(Employee employee) {
@@ -248,13 +255,20 @@ public class FxDataService {
         // Genera automaticamente una risposta del cliente per dimostrazione.
         emails.add(new EmailMessage(recipient.trim(), employee.email(), "Re: " + subject.trim(),
                 "Grazie per l'aggiornamento, vi ricontatteremo a breve.", LocalDateTime.now(), true));
+        eventBus.publish(new EmailSentEvent(employee, outgoing));
     }
 
     public void markNotificationAsRead(Employee employee, Notification notification) {
         ObservableList<Notification> notifications = getNotificationsFor(employee);
         int index = notifications.indexOf(notification);
         if (index >= 0) {
-            notifications.set(index, new Notification(notification.title(), notification.message(), notification.createdAt(), true));
+            Notification updated = new Notification(notification.title(), notification.message(), notification.createdAt(), true);
+            notifications.set(index, updated);
+            eventBus.publish(new NotificationUpdatedEvent(employee, updated));
         }
+    }
+
+    public FxEventBus getEventBus() {
+        return eventBus;
     }
 }

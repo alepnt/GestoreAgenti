@@ -1,51 +1,66 @@
 package com.example.GestoreAgenti.service; // Definisce il pacchetto com.example.GestoreAgenti.service a cui appartiene questa classe.
 
-import java.util.List; // Importa List per gestire insiemi ordinati di elementi.
-import java.util.Optional; // Importa Optional per modellare risultati potenzialmente assenti.
+import java.util.List;
+import java.util.Optional;
 
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder; // Importa BCryptPasswordEncoder per cifrare le password degli utenti.
-import org.springframework.stereotype.Service; // Importa Service per dichiarare la classe come servizio dell'applicazione.
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.stereotype.Service;
 
-import com.example.GestoreAgenti.model.Utente; // Importa la classe Utente per utilizzare i dati anagrafici degli utenti.
-import com.example.GestoreAgenti.repository.UtenteRepository; // Importa UtenteRepository per recuperare e salvare le informazioni degli utenti.
+import com.example.GestoreAgenti.model.Utente;
+import com.example.GestoreAgenti.repository.UtenteRepository;
+import com.example.GestoreAgenti.service.crud.AbstractCrudService;
+import com.example.GestoreAgenti.service.crud.CrudEntityHandler;
 
-@Service // Applica l'annotazione @Service per configurare il componente.
-public class UtenteService { // Dichiara la classe UtenteService che incapsula la logica del dominio.
+@Service
+public class UtenteService extends AbstractCrudService<Utente, Long> {
 
-    private final UtenteRepository repository; // Mantiene il riferimento al repository UtenteRepository per accedere ai dati persistenti.
-    private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder(); // Memorizza il b crypt password encoder associato all'entità.
+    private static final class UtenteCrudHandler implements CrudEntityHandler<Utente> {
+        private final BCryptPasswordEncoder encoder;
 
-    public UtenteService(UtenteRepository repository) { // Costruttore della classe UtenteService che inizializza le dipendenze richieste.
-        this.repository = repository; // Aggiorna il campo dell'istanza con il valore ricevuto.
-    } // Chiude il blocco di codice precedente.
+        private UtenteCrudHandler(BCryptPasswordEncoder encoder) {
+            this.encoder = encoder;
+        }
 
-    public List<Utente> getAllUtenti() { // Restituisce la lista di i utenti gestiti dal sistema.
-        return repository.findAll(); // Restituisce il risultato dell'elaborazione al chiamante.
-    } // Chiude il blocco di codice precedente.
+        @Override
+        public Utente prepareForCreate(Utente entity) {
+            entity.setPasswordHash(encoder.encode(entity.getPasswordHash()));
+            return entity;
+        }
 
-    public Optional<Utente> getUtenteById(Long id) { // Restituisce i dati di utente filtrati in base a ID.
-        return repository.findById(id); // Restituisce il risultato dell'elaborazione al chiamante.
-    } // Chiude il blocco di codice precedente.
+        @Override
+        public Utente merge(Utente existing, Utente changes) {
+            existing.setUsername(changes.getUsername());
+            existing.setRuolo(changes.getRuolo());
+            existing.setDipendente(changes.getDipendente());
+            if (changes.getPasswordHash() != null && !changes.getPasswordHash().isBlank()) {
+                existing.setPasswordHash(encoder.encode(changes.getPasswordHash()));
+            }
+            return existing;
+        }
+    }
 
-    public Utente createUtente(Utente utente) { // Metodo create utente che gestisce la logica prevista.
-        utente.setPasswordHash(passwordEncoder.encode(utente.getPasswordHash())); // Esegue questa istruzione come parte della logica del metodo.
-        return repository.save(utente); // Restituisce il risultato dell'elaborazione al chiamante.
-    } // Chiude il blocco di codice precedente.
+    public UtenteService(UtenteRepository repository) {
+        super(repository, new UtenteCrudHandler(new BCryptPasswordEncoder()), "Utente");
+    }
 
-    public Utente updateUtente(Long id, Utente utenteDetails) { // Aggiorna le utente applicando i dati forniti.
-        return repository.findById(id).map(utente -> { // Restituisce il risultato dell'elaborazione al chiamante.
-            utente.setUsername(utenteDetails.getUsername()); // Esegue questa istruzione come parte della logica del metodo.
-            if (utenteDetails.getPasswordHash() != null && !utenteDetails.getPasswordHash().isEmpty()) { // Valuta la condizione per determinare il ramo di esecuzione.
-                utente.setPasswordHash(passwordEncoder.encode(utenteDetails.getPasswordHash())); // Esegue questa istruzione come parte della logica del metodo.
-            } // Chiude il blocco di codice precedente.
-            utente.setRuolo(utenteDetails.getRuolo()); // Esegue questa istruzione come parte della logica del metodo.
-            utente.setDipendente(utenteDetails.getDipendente()); // Esegue questa istruzione come parte della logica del metodo.
-            return repository.save(utente); // Restituisce il risultato dell'elaborazione al chiamante.
-        }).orElseThrow(() -> new RuntimeException("Utente non trovato con id " + id)); // Elabora il risultato opzionale scegliendo il comportamento appropriato.
-    } // Chiude il blocco di codice precedente.
+    public List<Utente> getAllUtenti() {
+        return findAll();
+    }
 
-    public void deleteUtente(Long id) { // Elimina le utente identificato dall'input.
-        repository.deleteById(id); // Esegue questa istruzione come parte della logica del metodo.
-    } // Chiude il blocco di codice precedente.
-} // Chiude il blocco di codice precedente.
+    public Optional<Utente> getUtenteById(Long id) {
+        return findOptionalById(id);
+    }
+
+    public Utente createUtente(Utente utente) {
+        return create(utente);
+    }
+
+    public Utente updateUtente(Long id, Utente utenteDetails) {
+        return update(id, utenteDetails);
+    }
+
+    public void deleteUtente(Long id) {
+        delete(id);
+    }
+}
 

@@ -1,23 +1,34 @@
 GestoreAgenti/
-├── pom.xml                         <-- POM padre con moduli client e server
+├── pom.xml                               <-- POM padre con moduli client e server
+├── docs/                                 <-- Documentazione operativa (es. setup email, build offline)
 ├── client/
-│   ├── pom.xml                     <-- Modulo Maven per l'applicazione desktop JavaFX
+│   ├── pom.xml                           <-- Modulo Maven per l'applicazione desktop JavaFX
 │   └── src/
 │       ├── main/java/com/example/GestoreAgenti/fx/
-│       │   ├── AgentManagerApp.java            <-- entrypoint dell'applicazione client
-│       │   ├── controller/                     <-- controller JavaFX con logica di presentazione
-│       │   ├── data/                           <-- servizi di accesso ai dati lato client
-│       │   └── model/                          <-- modelli JavaFX orientati agli oggetti
-│       └── main/resources/fx/                  <-- file FXML e risorse grafiche
+│       │   ├── AgentManagerApp.java                <-- entrypoint dell'applicazione client
+│       │   ├── command/                            <-- comandi legati alle azioni della UI
+│       │   ├── controller/                         <-- controller JavaFX con logica di presentazione
+│       │   ├── data/
+│       │   │   ├── FxDataService.java              <-- servizio centrale che orchestra i dati locali/remoti
+│       │   │   ├── adapter/                        <-- adapter per convertire DTO REST in modelli UI
+│       │   │   ├── dto/                            <-- record/DTO scambiati con i servizi remoti
+│       │   │   └── remote/                         <-- client HTTP/WebSocket e proxy verso il backend
+│       │   ├── event/                              <-- event bus e definizioni di eventi UI
+│       │   └── model/                              <-- modelli JavaFX orientati agli oggetti
+│       └── main/resources/
+│           └── fx/                                 <-- file FXML, fogli di stile e risorse grafiche
 └── server/
-    ├── pom.xml                 <-- Modulo Spring Boot che espone l'API REST
+    ├── pom.xml                           <-- Modulo Spring Boot che espone l'API REST
     └── src/
         ├── main/java/com/example/GestoreAgenti/
-        │   ├── GestoreAgentiApplication.java   <-- classe principale Spring Boot
-        │   ├── controller/                     <-- controller REST MVC
-        │   ├── model/                          <-- entità JPA e classi dominio
-        │   ├── repository/                     <-- interfacce Repository Spring Data
-        │   ├── security/                       <-- configurazione e filtri di sicurezza JWT
-        │   └── service/                        <-- servizi applicativi orientati agli oggetti
-        ├── main/resources/application.properties  <-- configurazione SQL Server
-        └── test/java/com/example/GestoreAgenti/   <-- test unitari Spring Boot
+        │   ├── GestoreAgentiApplication.java       <-- classe principale Spring Boot
+        │   ├── controller/                         <-- controller REST MVC e WebSocket
+        │   ├── model/                              <-- entità JPA e classi dominio
+        │   ├── repository/                         <-- interfacce Repository Spring Data
+        │   ├── security/                           <-- configurazione e filtri di sicurezza JWT
+        │   └── service/
+        │       ├── crud/                           <-- servizi generici con logica comune CRUD
+        │       └── *Service.java                   <-- servizi applicativi specifici (cliente, team, ecc.)
+        ├── main/resources/
+        │   └── application.properties              <-- configurazione (datasource SQL Server, mail, ecc.)
+        └── test/java/com/example/GestoreAgenti/     <-- test unitari e di integrazione Spring Boot

@@ -7,6 +7,8 @@ import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
+import com.example.GestoreAgenti.event.DomainEventPublisher;
+import com.example.GestoreAgenti.event.fattura.FatturaCreatedEvent;
 import com.example.GestoreAgenti.model.Contratto;
 import com.example.GestoreAgenti.model.Fattura;
 import com.example.GestoreAgenti.model.state.AnnullataState;
@@ -74,8 +76,11 @@ public class FatturaService extends AbstractCrudService<Fattura, Long> {
         }
     }
 
-    public FatturaService(FatturaRepository repository) {
+    private final DomainEventPublisher eventPublisher;
+
+    public FatturaService(FatturaRepository repository, DomainEventPublisher eventPublisher) {
         super(repository, new FatturaCrudHandler(), "Fattura");
+        this.eventPublisher = eventPublisher;
     }
 
     public List<Fattura> getAllFatture() {
@@ -87,7 +92,9 @@ public class FatturaService extends AbstractCrudService<Fattura, Long> {
     }
 
     public Fattura createFattura(Fattura fattura) {
-        return create(fattura);
+        Fattura created = create(fattura);
+        eventPublisher.publish(new FatturaCreatedEvent(created));
+        return created;
     }
 
     public Fattura updateFattura(Long id, Fattura fatturaDetails) {
@@ -119,7 +126,7 @@ public class FatturaService extends AbstractCrudService<Fattura, Long> {
     public Fattura creaDaContratto(Contratto contratto, String numeroFattura, LocalDate dataEmissione, BigDecimal aliquotaIva) {
         Fattura fattura = GeneratoreFattura.getInstance()
                 .creaDaContratto(contratto, numeroFattura, dataEmissione, aliquotaIva);
-        return create(fattura);
+        return createFattura(fattura);
     }
 
     public Fattura creaDaContratto(Contratto contratto, String numeroFattura, BigDecimal aliquotaIva) {

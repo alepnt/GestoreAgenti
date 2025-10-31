@@ -1,5 +1,7 @@
 package com.example.GestoreAgenti.service;
 
+import com.example.GestoreAgenti.event.DomainEventPublisher;
+import com.example.GestoreAgenti.event.chat.ChatMessageCreatedEvent;
 import com.example.GestoreAgenti.model.ChatMessage;
 import org.springframework.stereotype.Service;
 
@@ -19,8 +21,10 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class ChatService {
 
     private final Map<String, CopyOnWriteArrayList<ChatMessage>> messagesByTeam = new ConcurrentHashMap<>();
+    private final DomainEventPublisher eventPublisher;
 
-    public ChatService() {
+    public ChatService(DomainEventPublisher eventPublisher) {
+        this.eventPublisher = eventPublisher;
         seedDemoMessages();
     }
 
@@ -54,6 +58,7 @@ public class ChatService {
         ChatMessage message = new ChatMessage(trimmedTeam, trimmedSender, LocalDateTime.now(), trimmedContent);
         messagesByTeam.computeIfAbsent(normalizeKey(trimmedTeam), key -> new CopyOnWriteArrayList<>())
                 .add(message);
+        eventPublisher.publish(new ChatMessageCreatedEvent(message));
         return message;
     }
 

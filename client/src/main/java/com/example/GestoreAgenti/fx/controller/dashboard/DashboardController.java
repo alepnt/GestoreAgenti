@@ -21,8 +21,10 @@ import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
+import javafx.css.PseudoClass;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
@@ -34,6 +36,7 @@ import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
 import java.text.NumberFormat;
@@ -53,6 +56,7 @@ public class DashboardController {
     private static final DateTimeFormatter DATE_TIME_FORMAT = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
     private static final DateTimeFormatter TIME_RANGE_FORMAT = DateTimeFormatter.ofPattern("HH:mm");
     private static final NumberFormat CURRENCY_FORMAT = NumberFormat.getCurrencyInstance(Locale.of("it", "IT"));
+    private static final PseudoClass UNREAD_PSEUDO_CLASS = PseudoClass.getPseudoClass("unread");
 
     @FXML
     private Label welcomeLabel;
@@ -177,6 +181,12 @@ public class DashboardController {
 
     @FXML
     private Label notificationTitleLabel;
+
+    @FXML
+    private Label notificationDateLabel;
+
+    @FXML
+    private Label notificationStatusLabel;
 
     @FXML
     private TextArea notificationBodyArea;
@@ -327,14 +337,36 @@ public class DashboardController {
         ObservableList<Notification> notifications = dataService.getNotificationsFor(employee);
         notificationsList.setItems(notifications);
         notificationsList.setCellFactory(listView -> new ListCell<>() {
+            private final VBox container = new VBox(4);
+            private final Label titleLabel = new Label();
+            private final Label messageLabel = new Label();
+            private final Label dateLabel = new Label();
+
+            {
+                container.getStyleClass().add("notification-item");
+                container.prefWidthProperty().bind(listView.widthProperty().subtract(32));
+                titleLabel.getStyleClass().add("notification-item-title");
+                titleLabel.setWrapText(true);
+                titleLabel.setMaxWidth(Double.MAX_VALUE);
+                messageLabel.getStyleClass().add("notification-item-message");
+                messageLabel.setWrapText(true);
+                messageLabel.setMaxWidth(Double.MAX_VALUE);
+                dateLabel.getStyleClass().add("notification-item-date");
+                container.getChildren().addAll(titleLabel, messageLabel, dateLabel);
+                setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
+            }
+
             @Override
             protected void updateItem(Notification notification, boolean empty) {
                 super.updateItem(notification, empty);
                 if (empty || notification == null) {
-                    setText(null);
+                    setGraphic(null);
                 } else {
-                    String status = notification.read() ? "(letto)" : "(nuovo)";
-                    setText(notification.title() + " " + status);
+                    titleLabel.setText(notification.title());
+                    messageLabel.setText(notification.message());
+                    dateLabel.setText(notification.createdAt().format(DATE_TIME_FORMAT));
+                    container.pseudoClassStateChanged(UNREAD_PSEUDO_CLASS, !notification.read());
+                    setGraphic(container);
                 }
             }
         });
@@ -478,13 +510,18 @@ public class DashboardController {
     private void showNotificationDetail(Notification notification) {
         if (notification == null) {
             notificationTitleLabel.setText("");
+            notificationDateLabel.setText("");
+            notificationStatusLabel.setText("");
             notificationBodyArea.clear();
             return;
         }
         notificationTitleLabel.setText(notification.title());
+        notificationDateLabel.setText(notification.createdAt().format(DATE_TIME_FORMAT));
+        notificationStatusLabel.setText(notification.read() ? "Letta" : "Nuova");
         notificationBodyArea.setText(notification.message());
         if (!notification.read()) {
             dataService.markNotificationAsRead(employee, notification);
+            notificationStatusLabel.setText("Letta");
         }
     }
 

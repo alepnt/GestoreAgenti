@@ -9,6 +9,9 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import com.example.GestoreAgenti.event.DomainEventPublisher;
+import com.example.GestoreAgenti.event.email.EmailSentEvent;
+
 /**
  * Invia messaggi email utilizzando il {@link JavaMailSender} configurato in Spring Boot.
  */
@@ -18,13 +21,16 @@ public class EmailDeliveryService {
     private final JavaMailSender mailSender;
     private final boolean enabled;
     private final String overrideSender;
+    private final DomainEventPublisher eventPublisher;
 
     public EmailDeliveryService(JavaMailSender mailSender,
                                 @Value("${mail.enabled:false}") boolean enabled,
-                                @Value("${mail.override-sender:}") String overrideSender) {
+                                @Value("${mail.override-sender:}") String overrideSender,
+                                DomainEventPublisher eventPublisher) {
         this.mailSender = mailSender;
         this.enabled = enabled;
         this.overrideSender = overrideSender;
+        this.eventPublisher = eventPublisher;
     }
 
     public void send(String from, String to, String subject, String body) {
@@ -46,6 +52,7 @@ public class EmailDeliveryService {
                 helper.setReplyTo(from.trim());
             }
             mailSender.send(message);
+            eventPublisher.publish(new EmailSentEvent(sanitizedFrom, sanitizedTo, sanitizedSubject));
         } catch (MailException | MessagingException ex) {
             String message = ex.getMessage();
             if (!StringUtils.hasText(message)) {

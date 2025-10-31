@@ -59,13 +59,21 @@ public class SendEmailCommand implements Command {
             return;
         }
 
-        dataService.sendEmail(employee, recipient, subject, body);
-        statusLabel.setText("Email inviata");
-        recipientField.clear();
-        subjectField.clear();
-        bodyArea.clear();
-        if (!emailList.getItems().isEmpty()) {
-            emailList.getSelectionModel().selectLast();
-        }
+        statusLabel.setText("Invio in corso...");
+        dataService.sendEmail(employee, recipient, subject, body)
+                .whenComplete((ignored, error) -> {
+                    if (error != null) {
+                        Throwable cause = error instanceof java.util.concurrent.CompletionException && error.getCause() != null
+                                ? error.getCause() : error;
+                        javafx.application.Platform.runLater(() -> statusLabel.setText(
+                                "Errore invio: " + (cause.getMessage() == null ? cause.toString() : cause.getMessage())));
+                    } else {
+                        javafx.application.Platform.runLater(() -> {
+                            recipientField.clear();
+                            subjectField.clear();
+                            bodyArea.clear();
+                        });
+                    }
+                });
     }
 }

@@ -1,6 +1,7 @@
 package com.example.GestoreAgenti.fx.data;
 
 import com.example.GestoreAgenti.fx.data.remote.RemoteChatClient;
+import com.example.GestoreAgenti.fx.data.remote.RemoteEmailClient;
 import com.example.GestoreAgenti.fx.event.EmailSentEvent;
 import com.example.GestoreAgenti.fx.event.FxEventBus;
 import com.example.GestoreAgenti.fx.event.NotificationUpdatedEvent;
@@ -27,6 +28,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -53,6 +55,7 @@ public class FxDataService {
     private final ObservableList<String> availableRoles = FXCollections.observableArrayList("Junior", "Senior", "Responsabile");
     private final ObservableList<String> availableRolesView = FXCollections.unmodifiableObservableList(availableRoles);
     private final RemoteChatClient remoteChatClient = new RemoteChatClient();
+    private final RemoteEmailClient remoteEmailClient = new RemoteEmailClient();
     private final Map<String, AutoCloseable> chatSubscriptions = new ConcurrentHashMap<>();
     private final Set<String> desiredChatTeams = ConcurrentHashMap.newKeySet();
 
@@ -385,17 +388,23 @@ public class FxDataService {
         return emailsByEmployee.computeIfAbsent(employee.id(), key -> FXCollections.observableArrayList());
     }
 
-    public void sendEmail(Employee employee, String recipient, String subject, String body) {
-        if (recipient == null || recipient.isBlank() || subject == null || subject.isBlank() || body == null || body.isBlank()) {
-            return;
+    public CompletableFuture<Void> sendEmail(Employee employee, String recipient, String subject, String body) {
+        if (employee == null) {
+            return CompletableFuture.failedFuture(new IllegalArgumentException("Dipendente non valido"));
         }
-        ObservableList<EmailMessage> emails = getEmailsFor(employee);
-        EmailMessage outgoing = new EmailMessage(employee.email(), recipient.trim(), subject.trim(), body.trim(), LocalDateTime.now(), false);
-        emails.add(outgoing);
-        // Genera automaticamente una risposta del cliente per dimostrazione.
-        emails.add(new EmailMessage(recipient.trim(), employee.email(), "Re: " + subject.trim(),
-                "Grazie per l'aggiornamento, vi ricontatteremo a breve.", LocalDateTime.now(), true));
-        eventBus.publish(new EmailSentEvent(employee, outgoing));
+        if (recipient == null || recipient.isBlank() || subject == null || subject.isBlank() || body == null || body.isBlank()) {
+            return CompletableFuture.failedFuture(new IllegalArgumentException("Compila destinatario, oggetto e testo"));
+        }
+        String trimmedRecipient = recipient.trim();
+        String trimmedSubject = subject.trim();
+        String trimmedBody = body.trim();
+        EmailMessage outgoing = new EmailMessage(employee.email(), trimmedRecipient, trimmedSubject, trimmedBody, LocalDateTime.now(), false);
+        return remoteEmailClient.sendEmail(outgoing.sender(), outgoing.recipient(), outgoing.subject(), outgoing.body())
+                .thenRun(() -> Platform.runLater(() -> {
+                    ObservableList<EmailMessage> emails = getEmailsFor(employee);
+                    emails.add(outgoing);
+                    eventBus.publish(new EmailSentEvent(employee, outgoing));
+                }));
     }
 
     public void markNotificationAsRead(Employee employee, Notification notification) {

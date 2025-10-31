@@ -3,7 +3,7 @@ package com.example.GestoreAgenti.fx.model;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-import com.example.GestoreAgenti.invoice.InvoiceState;
+import com.example.GestoreAgenti.fx.model.InvoiceState;
 
 /**
  * Rappresenta una fattura gestita nelle schermate JavaFX.

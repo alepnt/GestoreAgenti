@@ -8,6 +8,7 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Locale;
 
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
@@ -18,7 +19,6 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
 
-import com.example.GestoreAgenti.invoice.InvoiceState;
 import com.example.GestoreAgenti.model.Cliente;
 import com.example.GestoreAgenti.model.Contratto;
 import com.example.GestoreAgenti.model.Fattura;
@@ -196,6 +196,34 @@ public class FatturaExcelReportService {
             this.sheet = sheet;
             this.nextRow = nextRow;
             this.columnCount = columnCount;
+        }
+    }
+
+    private enum InvoiceState {
+        EMESSA("Emessa"),
+        IN_SOLLECITO("In sollecito"),
+        SALDATA("Saldato");
+
+        private final String label;
+
+        InvoiceState(String label) {
+            this.label = label;
+        }
+
+        public String getLabel() {
+            return label;
+        }
+
+        public static InvoiceState fromPersistence(String raw) {
+            if (raw == null || raw.isBlank()) {
+                return EMESSA;
+            }
+            String normalized = raw.trim().toUpperCase(Locale.ROOT);
+            return switch (normalized) {
+                case "IN_SOLLECITO" -> IN_SOLLECITO;
+                case "SALDATA", "SALDATO", "PAGATA", "PAGATO" -> SALDATA;
+                default -> EMESSA;
+            };
         }
     }
 }

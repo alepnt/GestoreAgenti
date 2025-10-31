@@ -16,7 +16,7 @@ import com.example.GestoreAgenti.fx.model.ChatMessage;
 import com.example.GestoreAgenti.fx.model.EmailMessage;
 import com.example.GestoreAgenti.fx.model.Employee;
 import com.example.GestoreAgenti.fx.model.InvoiceRecord;
-import com.example.GestoreAgenti.invoice.InvoiceState;
+import com.example.GestoreAgenti.fx.model.InvoiceState;
 import com.example.GestoreAgenti.fx.model.Notification;
 import com.example.GestoreAgenti.fx.model.PaymentRecord;
 import javafx.application.Platform;

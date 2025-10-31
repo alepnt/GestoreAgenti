@@ -7,5 +7,15 @@ import com.example.GestoreAgenti.model.Provvigione; // Importa la classe Provvig
 
 @Repository // Applica l'annotazione @Repository per configurare il componente.
 public interface ProvvigioneRepository extends JpaRepository<Provvigione, Long> { // Dichiara l'interfaccia ProvvigioneRepository che definisce le operazioni sui dati.
+
+    /**
+     * Recupera tutte le provvigioni associate al dipendente specificato.
+     * L'uso del metodo derivato permette di mantenere il repository semplice e
+     * di affidare al servizio applicativo eventuali regole aggiuntive.
+     *
+     * @param dipendenteId identificativo del dipendente di interesse
+     * @return provvigioni collegate al dipendente
+     */
+    java.util.List<Provvigione> findByDipendente_Id(Long dipendenteId);
 } // Chiude il blocco di codice precedente.
 

@@ -1,5 +1,9 @@
 package com.example.GestoreAgenti.fx.data;
 
+import com.example.GestoreAgenti.fx.data.adapter.EmployeeAdapter;
+import com.example.GestoreAgenti.fx.data.dto.EmployeeDto;
+import com.example.GestoreAgenti.fx.data.remote.RemoteAgentService;
+import com.example.GestoreAgenti.fx.data.remote.RemoteAgentServiceProxy;
 import com.example.GestoreAgenti.fx.event.EmailSentEvent;
 import com.example.GestoreAgenti.fx.event.FxEventBus;
 import com.example.GestoreAgenti.fx.event.NotificationUpdatedEvent;
@@ -41,29 +45,26 @@ public class FxDataService {
     private final Map<String, ObservableList<ChatMessage>> chatByTeam = new HashMap<>();
     private final Map<String, ObservableList<EmailMessage>> emailsByEmployee = new HashMap<>();
     private final FxEventBus eventBus = new FxEventBus();
+    private final EmployeeAdapter employeeAdapter = new EmployeeAdapter();
     private final ObservableList<String> availableTeams = FXCollections.observableArrayList();
     private final ObservableList<String> availableTeamsView = FXCollections.unmodifiableObservableList(availableTeams);
     private final ObservableList<String> availableRoles = FXCollections.observableArrayList("Junior", "Senior", "Responsabile");
     private final ObservableList<String> availableRolesView = FXCollections.unmodifiableObservableList(availableRoles);
 
     private int nextEmployeeSequence;
+    private RemoteAgentServiceProxy remoteAgentProxy;
 
     public FxDataService() {
         seedDemoData();
     }
 
     private void seedDemoData() {
-        Employee mario = new Employee("C0001", "Mario Rossi", "Account Manager", "Team Nord", "m.rossi@azienda.it");
-        Employee lucia = new Employee("C0002", "Lucia Bianchi", "Consulente", "Team Nord", "l.bianchi@azienda.it");
-        Employee giulia = new Employee("C0003", "Giulia Verdi", "Project Manager", "Team Centro", "g.verdi@azienda.it");
-
-        credentials.put(mario.id(), new EmployeeCredential(mario, "password1"));
-        credentials.put(lucia.id(), new EmployeeCredential(lucia, "password2"));
-        credentials.put(giulia.id(), new EmployeeCredential(giulia, "password3"));
-
-        addTeamName(mario.teamName());
-        addTeamName(lucia.teamName());
-        addTeamName(giulia.teamName());
+        Employee mario = registerEmployee(new EmployeeDto("C0001", "Mario", "Rossi", "Account Manager", "Team Nord",
+                "m.rossi@azienda.it"), "password1");
+        Employee lucia = registerEmployee(new EmployeeDto("C0002", "Lucia", "Bianchi", "Consulente", "Team Nord",
+                "l.bianchi@azienda.it"), "password2");
+        Employee giulia = registerEmployee(new EmployeeDto("C0003", "Giulia", "Verdi", "Project Manager", "Team Centro",
+                "g.verdi@azienda.it"), "password3");
 
         agendaByEmployee.put(mario.id(), FXCollections.observableArrayList(
                 new AgendaItem(LocalDateTime.of(2024, Month.DECEMBER, 12, 9, 0),
@@ -124,6 +125,78 @@ public class FxDataService {
         initializeNextEmployeeSequence();
     }
 
+    private Employee registerEmployee(EmployeeDto dto, String password) {
+        EmployeeDto normalized = dto;
+        String identifier = normalized.id();
+        if (identifier == null || identifier.isBlank()) {
+            identifier = generateNextEmployeeId();
+            normalized = new EmployeeDto(identifier, dto.firstName(), dto.lastName(), dto.role(), dto.team(), dto.email());
+        }
+        Employee employee = employeeAdapter.toModel(normalized);
+        EmployeeCredential existing = credentials.get(employee.id());
+        String resolvedPassword = password != null ? password : existing != null ? existing.password() : null;
+        credentials.put(employee.id(), new EmployeeCredential(employee, resolvedPassword));
+        ensureCollections(employee.id());
+        addTeamName(employee.teamName());
+        if (employee.teamName() != null && !employee.teamName().isBlank()) {
+            chatByTeam.computeIfAbsent(employee.teamName(), key -> FXCollections.observableArrayList());
+        }
+        updateSequenceFromId(employee.id());
+        return employee;
+    }
+
+    private void ensureCollections(String employeeId) {
+        agendaByEmployee.computeIfAbsent(employeeId, key -> FXCollections.observableArrayList());
+        notificationsByEmployee.computeIfAbsent(employeeId, key -> FXCollections.observableArrayList());
+        invoicesByEmployee.computeIfAbsent(employeeId, key -> FXCollections.observableArrayList());
+        paymentsByEmployee.computeIfAbsent(employeeId, key -> FXCollections.observableArrayList());
+        emailsByEmployee.computeIfAbsent(employeeId, key -> FXCollections.observableArrayList());
+    }
+
+    private void updateSequenceFromId(String id) {
+        if (id == null || !id.startsWith(GENERATED_ID_PREFIX)) {
+            return;
+        }
+        String numericPart = id.substring(GENERATED_ID_PREFIX.length());
+        if (numericPart.length() != GENERATED_ID_DIGITS) {
+            return;
+        }
+        try {
+            int numericValue = Integer.parseInt(numericPart);
+            nextEmployeeSequence = Math.max(nextEmployeeSequence, numericValue + 1);
+        } catch (NumberFormatException ignored) {
+            // Ignora identificativi non compatibili con il formato generato automaticamente.
+        }
+    }
+
+    public Employee addEmployeeFromDto(EmployeeDto dto, String password) {
+        return registerEmployee(dto, password);
+    }
+
+    public Optional<EmployeeDto> exportEmployee(String employeeId) {
+        return Optional.ofNullable(credentials.get(employeeId))
+                .map(EmployeeCredential::employee)
+                .map(employeeAdapter::toDto);
+    }
+
+    public void configureRemoteAgentService(RemoteAgentService remoteAgentService) {
+        this.remoteAgentProxy = remoteAgentService == null ? null : new RemoteAgentServiceProxy(remoteAgentService);
+    }
+
+    public int importFromRemote(String authToken) {
+        if (remoteAgentProxy == null) {
+            throw new IllegalStateException("Nessun servizio remoto configurato");
+        }
+        int imported = 0;
+        for (EmployeeDto dto : remoteAgentProxy.fetchAgents(authToken)) {
+            if (!credentials.containsKey(dto.id())) {
+                registerEmployee(dto, null);
+                imported++;
+            }
+        }
+        return imported;
+    }
+
     private void addTeamName(String teamName) {
         if (teamName == null) {
             return;
@@ -135,16 +208,8 @@ public class FxDataService {
     }
 
     private void initializeNextEmployeeSequence() {
-        int maxExisting = 0;
-        for (String id : credentials.keySet()) {
-            if (id != null && id.matches(GENERATED_ID_PREFIX + "\\d{" + GENERATED_ID_DIGITS + "}")) {
-                int value = Integer.parseInt(id.substring(GENERATED_ID_PREFIX.length()));
-                if (value > maxExisting) {
-                    maxExisting = value;
-                }
-            }
-        }
-        nextEmployeeSequence = Math.max(1, maxExisting + 1);
+        nextEmployeeSequence = 1;
+        credentials.keySet().forEach(this::updateSequenceFromId);
     }
 
     public String peekNextEmployeeId() {
@@ -157,21 +222,18 @@ public class FxDataService {
         return candidate;
     }
 
+    public synchronized String generateNextEmployeeId() {
+        String nextId = peekNextEmployeeId();
+        updateSequenceFromId(nextId);
+        return nextId;
+    }
+
     public ObservableList<String> getAvailableTeams() {
         return availableTeamsView;
     }
 
     public ObservableList<String> getAvailableRoles() {
         return availableRolesView;
-    }
-
-    private String nextAvailableEmployeeId() {
-        String candidate;
-        do {
-            candidate = formatGeneratedId(nextEmployeeSequence);
-            nextEmployeeSequence++;
-        } while (credentials.containsKey(candidate));
-        return candidate;
     }
 
     private String formatGeneratedId(int sequence) {
@@ -196,15 +258,11 @@ public class FxDataService {
             return Optional.empty();
         }
 
-        String generatedId = nextAvailableEmployeeId();
+        String generatedId = generateNextEmployeeId();
         Employee employee = new Employee(generatedId, trimmedName, trimmedRole, trimmedTeam, trimmedEmail);
         credentials.put(generatedId, new EmployeeCredential(employee, trimmedPassword));
 
-        agendaByEmployee.computeIfAbsent(generatedId, key -> FXCollections.observableArrayList());
-        notificationsByEmployee.computeIfAbsent(generatedId, key -> FXCollections.observableArrayList());
-        invoicesByEmployee.computeIfAbsent(generatedId, key -> FXCollections.observableArrayList());
-        paymentsByEmployee.computeIfAbsent(generatedId, key -> FXCollections.observableArrayList());
-        emailsByEmployee.computeIfAbsent(generatedId, key -> FXCollections.observableArrayList());
+        ensureCollections(generatedId);
         chatByTeam.computeIfAbsent(trimmedTeam, key -> FXCollections.observableArrayList());
         addTeamName(trimmedTeam);
 

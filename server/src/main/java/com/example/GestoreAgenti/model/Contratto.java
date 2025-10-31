@@ -4,9 +4,11 @@ import jakarta.persistence.*; // Importa tutte le annotazioni JPA necessarie per
 import java.math.BigDecimal; // Importa BigDecimal per rappresentare importi monetari con precisione.
 import java.time.LocalDate; // Importa LocalDate per gestire le date senza informazioni temporali.
 
+import com.example.GestoreAgenti.model.builder.ContrattoBuilder; // Importa il builder per creare istanze coerenti di Contratto.
+
 @Entity // Applica l'annotazione @Entity per configurare il componente.
 @Table(name = "contratto") // Applica l'annotazione @Table per configurare il componente.
-public class Contratto { // Dichiara la classe Contratto che incapsula la logica del dominio.
+public class Contratto implements Prototype<Contratto> { // Dichiara la classe Contratto che incapsula la logica del dominio.
 
     @Id // Applica l'annotazione @Id per configurare il componente.
     @GeneratedValue(strategy = GenerationType.IDENTITY) // Applica l'annotazione @GeneratedValue per configurare il componente.
@@ -61,6 +63,24 @@ public class Contratto { // Dichiara la classe Contratto che incapsula la logica
 
     public String getNote() { return note; } // Restituisce le note dell'entità.
     public void setNote(String note) { this.note = note; } // Imposta le note per l'entità.
+
+    @Override
+    public Contratto copia() {
+        Contratto copia = new Contratto();
+        copia.setCliente(this.cliente);
+        copia.setDipendente(this.dipendente);
+        copia.setServizio(this.servizio);
+        copia.setDataInizio(this.dataInizio);
+        copia.setDataFine(this.dataFine);
+        copia.setImporto(this.importo);
+        copia.setStato(this.stato);
+        copia.setNote(this.note);
+        return copia;
+    } // Duplica lo stato significativo del contratto senza propagare l'identificativo.
+
+    public static ContrattoBuilder builder(Cliente cliente, Dipendente dipendente, Servizio servizio) {
+        return ContrattoBuilder.nuovoContratto(cliente, dipendente, servizio);
+    } // Espone un factory method per creare builder coerenti con il pattern creazionale introdotto.
 } // Chiude il blocco di codice precedente.
 
 

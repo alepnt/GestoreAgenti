@@ -1,70 +1,79 @@
 package com.example.GestoreAgenti.service; // Definisce il pacchetto com.example.GestoreAgenti.service a cui appartiene questa classe.
 
-import java.util.List; // Importa List per gestire insiemi ordinati di elementi.
-import java.util.Optional; // Importa Optional per modellare risultati potenzialmente assenti.
-import java.util.function.Consumer; // Importa Consumer per applicare operazioni sulle transizioni di stato.
+import java.util.List;
+import java.util.Optional;
+import java.util.function.Consumer;
 
-import org.springframework.stereotype.Service; // Importa Service per dichiarare la classe come servizio dell'applicazione.
+import org.springframework.stereotype.Service;
 
-import com.example.GestoreAgenti.model.Pagamento; // Importa la classe Pagamento per lavorare con i pagamenti gestiti dal servizio.
-import com.example.GestoreAgenti.repository.PagamentoRepository; // Importa PagamentoRepository per effettuare query sui pagamenti.
+import com.example.GestoreAgenti.event.DomainEventPublisher;
+import com.example.GestoreAgenti.event.pagamento.PagamentoCreatedEvent;
+import com.example.GestoreAgenti.event.pagamento.PagamentoDeletedEvent;
+import com.example.GestoreAgenti.event.pagamento.PagamentoStatusChangedEvent;
+import com.example.GestoreAgenti.event.pagamento.PagamentoUpdatedEvent;
+import com.example.GestoreAgenti.model.Pagamento;
+import com.example.GestoreAgenti.repository.PagamentoRepository;
+import com.example.GestoreAgenti.service.crud.AbstractCrudService;
+import com.example.GestoreAgenti.service.crud.BeanCopyCrudEntityHandler;
 
-@Service // Applica l'annotazione @Service per configurare il componente.
-public class PagamentoService { // Dichiara la classe PagamentoService che incapsula la logica del dominio.
+@Service
+public class PagamentoService extends AbstractCrudService<Pagamento, Long> {
 
-    private final PagamentoRepository repository; // Mantiene il riferimento al repository PagamentoRepository per accedere ai dati persistenti.
+    private final DomainEventPublisher eventPublisher;
 
-    public PagamentoService(PagamentoRepository repository) { // Costruttore della classe PagamentoService che inizializza le dipendenze richieste.
-        this.repository = repository; // Aggiorna il campo dell'istanza con il valore ricevuto.
-    } // Chiude il blocco di codice precedente.
+    public PagamentoService(PagamentoRepository repository, DomainEventPublisher eventPublisher) {
+        super(repository, new BeanCopyCrudEntityHandler<>("idPagamento", "state"), "Pagamento");
+        this.eventPublisher = eventPublisher;
+    }
 
-    public List<Pagamento> getAllPagamenti() { // Restituisce la lista di i pagamenti gestiti dal sistema.
-        return repository.findAll(); // Restituisce il risultato dell'elaborazione al chiamante.
-    } // Chiude il blocco di codice precedente.
+    public List<Pagamento> getAllPagamenti() {
+        return findAll();
+    }
 
-    public Optional<Pagamento> getPagamentoById(Long id) { // Restituisce i dati di pagamento filtrati in base a ID.
-        return repository.findById(id); // Restituisce il risultato dell'elaborazione al chiamante.
-    } // Chiude il blocco di codice precedente.
+    public Optional<Pagamento> getPagamentoById(Long id) {
+        return findOptionalById(id);
+    }
 
-    public Pagamento createPagamento(Pagamento pagamento) { // Metodo create pagamento che gestisce la logica prevista.
-        return repository.save(pagamento); // Restituisce il risultato dell'elaborazione al chiamante.
-    } // Chiude il blocco di codice precedente.
+    public Pagamento createPagamento(Pagamento pagamento) {
+        Pagamento created = create(pagamento);
+        eventPublisher.publish(new PagamentoCreatedEvent(created));
+        return created;
+    }
 
-    public Pagamento updatePagamento(Long id, Pagamento pagamentoDetails) { // Aggiorna il pagamento applicando i dati forniti.
-        return repository.findById(id).map(pagamento -> { // Restituisce il risultato dell'elaborazione al chiamante.
-            pagamento.setFattura(pagamentoDetails.getFattura()); // Esegue questa istruzione come parte della logica del metodo.
-            pagamento.setDataPagamento(pagamentoDetails.getDataPagamento()); // Esegue questa istruzione come parte della logica del metodo.
-            pagamento.setImporto(pagamentoDetails.getImporto()); // Esegue questa istruzione come parte della logica del metodo.
-            pagamento.setMetodo(pagamentoDetails.getMetodo()); // Esegue questa istruzione come parte della logica del metodo.
-            return repository.save(pagamento); // Restituisce il risultato dell'elaborazione al chiamante.
-        }).orElseThrow(() -> new RuntimeException("Pagamento non trovato con id " + id)); // Elabora il risultato opzionale scegliendo il comportamento appropriato.
-    } // Chiude il blocco di codice precedente.
+    public Pagamento updatePagamento(Long id, Pagamento pagamentoDetails) {
+        Pagamento updated = update(id, pagamentoDetails);
+        eventPublisher.publish(new PagamentoUpdatedEvent(updated));
+        return updated;
+    }
 
-    public void deletePagamento(Long id) { // Elimina il pagamento identificato dall'input.
-        repository.deleteById(id); // Esegue questa istruzione come parte della logica del metodo.
-    } // Chiude il blocco di codice precedente.
+    public void deletePagamento(Long id) {
+        Pagamento deleted = delete(id);
+        eventPublisher.publish(new PagamentoDeletedEvent(deleted));
+    }
 
-    public Pagamento avviaElaborazione(Long id) { // Avvia l'elaborazione del pagamento.
+    public Pagamento avviaElaborazione(Long id) {
         return aggiornaStato(id, Pagamento::elabora);
-    } // Chiude il blocco di codice precedente.
+    }
 
-    public Pagamento completaPagamento(Long id) { // Completa il pagamento confermandolo.
+    public Pagamento completaPagamento(Long id) {
         return aggiornaStato(id, Pagamento::completa);
-    } // Chiude il blocco di codice precedente.
+    }
 
-    public Pagamento fallisciPagamento(Long id) { // Marca il pagamento come fallito.
+    public Pagamento fallisciPagamento(Long id) {
         return aggiornaStato(id, Pagamento::fallisci);
-    } // Chiude il blocco di codice precedente.
+    }
 
-    public Pagamento ripetiElaborazione(Long id) { // Ripete l'elaborazione partendo da uno stato fallito.
+    public Pagamento ripetiElaborazione(Long id) {
         return aggiornaStato(id, Pagamento::ripeti);
-    } // Chiude il blocco di codice precedente.
+    }
 
-    private Pagamento aggiornaStato(Long id, Consumer<Pagamento> operazione) { // Applica l'operazione di stato richiesta.
-        return repository.findById(id).map(pagamento -> {
-            operazione.accept(pagamento);
-            return repository.save(pagamento);
-        }).orElseThrow(() -> new RuntimeException("Pagamento non trovato con id " + id));
-    } // Chiude il blocco di codice precedente.
-} // Chiude il blocco di codice precedente.
+    private Pagamento aggiornaStato(Long id, Consumer<Pagamento> operazione) {
+        Pagamento pagamento = findRequiredById(id);
+        String statoPrecedente = pagamento.getStato();
+        operazione.accept(pagamento);
+        Pagamento salvato = repository().save(pagamento);
+        eventPublisher.publish(new PagamentoStatusChangedEvent(salvato, statoPrecedente, salvato.getStato()));
+        return salvato;
+    }
+}
 

@@ -2,6 +2,10 @@ package com.example.GestoreAgenti.controller; // Definisce il pacchetto com.exam
 
 import java.util.List; // Importa List per gestire insiemi ordinati di elementi.
 
+import org.springframework.core.io.ByteArrayResource; // Importa ByteArrayResource per fornire file binari come risposta.
+import org.springframework.core.io.Resource; // Importa Resource per modellare la risposta del file.
+import org.springframework.http.HttpHeaders; // Importa HttpHeaders per configurare gli header della risposta.
+import org.springframework.http.MediaType; // Importa MediaType per descrivere il tipo di contenuto.
 import org.springframework.http.ResponseEntity; // Importa ResponseEntity per restituire risposte HTTP ricche di metadati.
 import org.springframework.web.bind.annotation.DeleteMapping; // Importa DeleteMapping per mappare le richieste HTTP DELETE.
 import org.springframework.web.bind.annotation.GetMapping; // Importa GetMapping per mappare le richieste HTTP GET.
@@ -14,20 +18,35 @@ import org.springframework.web.bind.annotation.RestController; // Importa RestCo
 
 import com.example.GestoreAgenti.model.Fattura; // Importa la classe Fattura per accedere alle informazioni di fatturazione.
 import com.example.GestoreAgenti.service.FatturaService; // Importa FatturaService per coordinare la gestione delle fatture.
+import com.example.GestoreAgenti.service.report.FatturaExcelReportService; // Importa il servizio per generare il report Excel delle fatture.
 
 @RestController // Applica l'annotazione @RestController per configurare il componente.
 @RequestMapping("/api/fatture") // Applica l'annotazione @RequestMapping per configurare il componente.
 public class FatturaController { // Dichiara la classe FatturaController che incapsula la logica del dominio.
 
-    private final FatturaService service; // Mantiene il riferimento al servizio applicativo FatturaService per delegare le operazioni di business.
+    private static final MediaType EXCEL_MEDIA_TYPE = MediaType.parseMediaType(
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"); // Media type dell'Excel generato.
 
-    public FatturaController(FatturaService service) { // Costruttore della classe FatturaController che inizializza le dipendenze richieste.
+    private final FatturaService service; // Mantiene il riferimento al servizio applicativo FatturaService per delegare le operazioni di business.
+    private final FatturaExcelReportService reportService; // Servizio per generare il layout Excel differenziato per tipo di fattura.
+
+    public FatturaController(FatturaService service, FatturaExcelReportService reportService) { // Costruttore della classe FatturaController che inizializza le dipendenze richieste.
         this.service = service; // Aggiorna il campo dell'istanza con il valore ricevuto.
+        this.reportService = reportService; // Aggiorna il campo dell'istanza con il servizio dedicato ai report Excel.
     } // Chiude il blocco di codice precedente.
 
     @GetMapping // Applica l'annotazione @GetMapping per configurare il componente.
     public List<Fattura> getAllFatture() { // Restituisce la lista di le fatture gestiti dal sistema.
         return service.getAllFatture(); // Restituisce il risultato dell'elaborazione al chiamante.
+    } // Chiude il blocco di codice precedente.
+
+    @GetMapping(value = "/report", produces = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet") // Applica l'annotazione @GetMapping per esporre il report Excel.
+    public ResponseEntity<Resource> esportaReportFatture() { // Restituisce il file Excel generato.
+        byte[] workbook = reportService.generaReport(service.getAllFatture()); // Genera il report aggregando i layout differenti.
+        return ResponseEntity.ok() // Configura la risposta HTTP di successo.
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=fatture-report.xlsx") // Suggerisce il nome del file scaricato.
+                .contentType(EXCEL_MEDIA_TYPE) // Imposta il tipo di contenuto dell'Excel.
+                .body(new ByteArrayResource(workbook)); // Restituisce il file al client.
     } // Chiude il blocco di codice precedente.
 
     @GetMapping("/{id}") // Applica l'annotazione @GetMapping per configurare il componente.

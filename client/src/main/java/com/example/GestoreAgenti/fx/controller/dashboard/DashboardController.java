@@ -25,6 +25,9 @@ import javafx.css.PseudoClass;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.ContentDisplay;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
@@ -38,6 +41,8 @@ import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import javafx.stage.FileChooser;
+import javafx.stage.Window;
 
 import java.text.NumberFormat;
 import java.time.format.DateTimeFormatter;
@@ -46,6 +51,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 
 /**
  * Controller della dashboard principale con tutte le sezioni richieste.
@@ -235,6 +243,9 @@ public class DashboardController {
 
     @FXML
     private TableColumn<InvoiceRecord, String> invoicePaidTotalColumn;
+
+    @FXML
+    private Button exportInvoicesButton;
 
     @FXML
     private TableView<PaymentRecord> paymentsTable;
@@ -532,6 +543,36 @@ public class DashboardController {
         });
     }
 
+    private void showAlert(AlertType type, String title, String message) {
+        Alert alert = new Alert(type);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        Window window = contentStack.getScene() != null ? contentStack.getScene().getWindow() : null;
+        if (window != null) {
+            alert.initOwner(window);
+        }
+        alert.show();
+    }
+
+    private void saveReportToFile(byte[] report, File destination) {
+        try {
+            Files.write(destination.toPath(), report);
+            Platform.runLater(() -> showAlert(AlertType.INFORMATION, "Report fatture", "Report salvato in " + destination.getAbsolutePath()));
+        } catch (IOException e) {
+            Platform.runLater(() -> showAlert(AlertType.ERROR, "Errore esportazione", "Impossibile salvare il file: " + e.getMessage()));
+        }
+    }
+
+    private String extractErrorMessage(Throwable throwable) {
+        Throwable cause = throwable;
+        while (cause.getCause() != null) {
+            cause = cause.getCause();
+        }
+        String message = cause.getMessage();
+        return message == null || message.isBlank() ? cause.toString() : message;
+    }
+
     @SuppressWarnings("unused")
     @FXML
     private void showUtente(ActionEvent event) {
@@ -590,5 +631,30 @@ public class DashboardController {
     @FXML
     private void handleLogout(ActionEvent event) {
         executeCommand("logout");
+    }
+
+    @SuppressWarnings("unused")
+    @FXML
+    private void handleExportInvoices(ActionEvent event) {
+        if (dataService == null || exportInvoicesButton == null) {
+            return;
+        }
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Esporta report fatture");
+        fileChooser.setInitialFileName("fatture-report.xlsx");
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("File Excel (*.xlsx)", "*.xlsx"));
+        Stage stage = (Stage) contentStack.getScene().getWindow();
+        File destination = fileChooser.showSaveDialog(stage);
+        if (destination == null) {
+            return;
+        }
+        exportInvoicesButton.setDisable(true);
+        dataService.downloadInvoicesReport()
+                .thenAccept(report -> saveReportToFile(report, destination))
+                .exceptionally(error -> {
+                    Platform.runLater(() -> showAlert(AlertType.ERROR, "Errore esportazione", extractErrorMessage(error)));
+                    return null;
+                })
+                .whenComplete((ignored, throwable) -> Platform.runLater(() -> exportInvoicesButton.setDisable(false)));
     }
 }

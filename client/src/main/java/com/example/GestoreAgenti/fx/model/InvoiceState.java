@@ -1,7 +1,7 @@
 package com.example.GestoreAgenti.fx.model;
 
 /**
- * Stati gestiti per la fatturazione.
+ * Stati gestiti per la fatturazione mostrata nella GUI.
  */
 public enum InvoiceState {
     EMESSA("Emessa"),

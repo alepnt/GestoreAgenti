@@ -1,5 +1,6 @@
 package com.example.GestoreAgenti.model; // Definisce il pacchetto com.example.GestoreAgenti.model a cui appartiene questa classe.
 
+import com.example.GestoreAgenti.model.builder.FatturaBuilder; // Importa il builder per creare istanze coerenti di Fattura.
 import com.example.GestoreAgenti.model.state.BozzaState; // Importa lo stato Bozza per definire lo stato iniziale della fattura.
 import com.example.GestoreAgenti.model.state.FatturaState; // Importa l'interfaccia degli stati della fattura.
 import com.example.GestoreAgenti.model.state.FatturaStateFactory; // Importa la factory che restituisce le implementazioni degli stati.
@@ -94,5 +95,13 @@ public class Fattura { // Dichiara la classe Fattura che incapsula la logica del
         }
         return state;
     } // Risolve l'implementazione dello stato a partire dal valore persistito.
+
+    public static FatturaBuilder builder(Cliente cliente, Contratto contratto) {
+        return FatturaBuilder.nuovaFattura(cliente, contratto);
+    } // Espone un factory method per la creazione fluente.
+
+    public static FatturaBuilder builder(Contratto contratto) {
+        return FatturaBuilder.perContratto(contratto);
+    } // Shortcut per costruire la fattura a partire dal contratto.
 } // Chiude il blocco di codice precedente.
 

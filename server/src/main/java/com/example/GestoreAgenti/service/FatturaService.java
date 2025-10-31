@@ -1,10 +1,13 @@
 package com.example.GestoreAgenti.service; // Definisce il pacchetto com.example.GestoreAgenti.service a cui appartiene questa classe.
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
+import com.example.GestoreAgenti.model.Contratto;
 import com.example.GestoreAgenti.model.Fattura;
 import com.example.GestoreAgenti.model.state.AnnullataState;
 import com.example.GestoreAgenti.model.state.BozzaState;
@@ -111,6 +114,16 @@ public class FatturaService extends AbstractCrudService<Fattura, Long> {
         Fattura fattura = findRequiredById(id);
         fattura.annulla();
         return repository().save(fattura);
+    }
+
+    public Fattura creaDaContratto(Contratto contratto, String numeroFattura, LocalDate dataEmissione, BigDecimal aliquotaIva) {
+        Fattura fattura = GeneratoreFattura.getInstance()
+                .creaDaContratto(contratto, numeroFattura, dataEmissione, aliquotaIva);
+        return create(fattura);
+    }
+
+    public Fattura creaDaContratto(Contratto contratto, String numeroFattura, BigDecimal aliquotaIva) {
+        return creaDaContratto(contratto, numeroFattura, LocalDate.now(), aliquotaIva);
     }
 }
 

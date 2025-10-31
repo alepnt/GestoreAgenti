@@ -11,7 +11,7 @@ import jakarta.persistence.Table; // Importa Table per impostare il nome della t
 
 @Entity // Applica l'annotazione @Entity per configurare il componente.
 @Table(name = "servizio") // Applica l'annotazione @Table per configurare il componente.
-public class Servizio { // Dichiara la classe Servizio che incapsula la logica del dominio.
+public class Servizio implements Prototype<Servizio> { // Dichiara la classe Servizio che incapsula la logica del dominio.
 
     @Id // Applica l'annotazione @Id per configurare il componente.
     @GeneratedValue(strategy = GenerationType.IDENTITY) // Applica l'annotazione @GeneratedValue per configurare il componente.
@@ -41,4 +41,14 @@ public class Servizio { // Dichiara la classe Servizio che incapsula la logica d
 
     public BigDecimal getCommissionePercentuale() { return commissionePercentuale; } // Restituisce la percentuale di commissione dell'entità.
     public void setCommissionePercentuale(BigDecimal commissionePercentuale) { this.commissionePercentuale = commissionePercentuale; } // Imposta la percentuale di commissione per l'entità.
+
+    @Override
+    public Servizio copia() {
+        Servizio copia = new Servizio();
+        copia.setNome(this.nome);
+        copia.setDescrizione(this.descrizione);
+        copia.setPrezzoBase(this.prezzoBase);
+        copia.setCommissionePercentuale(this.commissionePercentuale);
+        return copia;
+    } // Crea una nuova istanza duplicando lo stato significativo senza propagare l'identificativo.
 } // Chiude il blocco di codice precedente.

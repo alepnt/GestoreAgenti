@@ -4,10 +4,9 @@ import java.awt.Color;
 import java.io.ByteArrayOutputStream;
 import java.text.NumberFormat;
 import java.time.format.DateTimeFormatter;
-import java.util.LinkedHashMap;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Objects;
+import java.util.function.Consumer;
 
 import org.springframework.stereotype.Service;
 
@@ -36,75 +35,67 @@ public class ContrattoPdfReportService {
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy");
     private static final NumberFormat CURRENCY_FORMATTER = NumberFormat.getCurrencyInstance(Locale.ITALY);
 
-    private final Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 18, Color.BLACK);
-    private final Font sectionFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 13, Color.BLACK);
-    private final Font labelFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10, Color.DARK_GRAY);
+    private static final Color PRIMARY_COLOR = new Color(32, 60, 117);
+    private static final Color LIGHT_BACKGROUND = new Color(244, 247, 252);
+
+    private final Font brandFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 16, Color.WHITE);
+    private final Font headerFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12, Color.WHITE);
+    private final Font headerSmallFont = FontFactory.getFont(FontFactory.HELVETICA, 9, Color.WHITE);
+    private final Font sectionFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12, PRIMARY_COLOR);
+    private final Font labelFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10, new Color(68, 68, 68));
     private final Font valueFont = FontFactory.getFont(FontFactory.HELVETICA, 10, Color.BLACK);
+    private final Font footerFont = FontFactory.getFont(FontFactory.HELVETICA_OBLIQUE, 8, new Color(120, 120, 120));
 
     public byte[] generaPdf(Contratto contratto) {
         Objects.requireNonNull(contratto, "contratto");
 
         try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-            Document document = new Document(PageSize.A4, 36, 36, 54, 36);
+            Document document = new Document(PageSize.A4, 42, 42, 60, 48);
             PdfWriter.getInstance(document, out);
             document.open();
 
-            aggiungiTitolo(document, "Contratto");
+            aggiungiIntestazione(document, "Contratto", formatoCodiceContratto(contratto));
+            aggiungiDivider(document);
 
-            LinkedHashMap<String, String> datiContratto = new LinkedHashMap<>();
-            datiContratto.put("Codice contratto",
-                    contratto.getIdContratto() != null ? String.valueOf(contratto.getIdContratto()) : "-");
-            datiContratto.put("Stato", valueOrPlaceholder(contratto.getStato()));
-            datiContratto.put("Data inizio",
-                    contratto.getDataInizio() != null ? DATE_FORMATTER.format(contratto.getDataInizio()) : "-");
-            datiContratto.put("Data fine",
-                    contratto.getDataFine() != null ? DATE_FORMATTER.format(contratto.getDataFine()) : "-");
-            datiContratto.put("Importo", formatCurrency(contratto.getImporto()));
-            aggiungiSezione(document, "Dati contratto", datiContratto);
+            aggiungiSezione(document, "Dati contratto", table -> {
+                aggiungiRiga(table, "Codice contratto",
+                        contratto.getIdContratto() != null ? String.valueOf(contratto.getIdContratto()) : "-");
+                aggiungiRiga(table, "Stato", valueOrPlaceholder(contratto.getStato()));
+                aggiungiRiga(table, "Data inizio",
+                        contratto.getDataInizio() != null ? DATE_FORMATTER.format(contratto.getDataInizio()) : "-");
+                aggiungiRiga(table, "Data fine",
+                        contratto.getDataFine() != null ? DATE_FORMATTER.format(contratto.getDataFine()) : "-");
+                aggiungiRiga(table, "Importo", formatCurrency(contratto.getImporto()));
+            });
 
             Cliente cliente = contratto.getCliente();
-            LinkedHashMap<String, String> datiCliente = new LinkedHashMap<>();
-            datiCliente.put("Cliente", renderPersona(cliente));
-            if (cliente != null) {
-                datiCliente.put("Email", valueOrPlaceholder(cliente.getEmail()));
-                datiCliente.put("Telefono", valueOrPlaceholder(cliente.getTelefono()));
-                datiCliente.put("Indirizzo", valueOrPlaceholder(cliente.getIndirizzo()));
-                datiCliente.put("Partita IVA", valueOrPlaceholder(cliente.getPartitaIva()));
-            }
-            aggiungiSezione(document, "Cliente", datiCliente);
+            aggiungiSezione(document, "Cliente", table -> {
+                aggiungiRiga(table, "Cliente", renderPersona(cliente));
+                aggiungiRiga(table, "Email", cliente != null ? valueOrPlaceholder(cliente.getEmail()) : "-");
+                aggiungiRiga(table, "Telefono", cliente != null ? valueOrPlaceholder(cliente.getTelefono()) : "-");
+                aggiungiRiga(table, "Indirizzo", cliente != null ? valueOrPlaceholder(cliente.getIndirizzo()) : "-");
+                aggiungiRiga(table, "Partita IVA", cliente != null ? valueOrPlaceholder(cliente.getPartitaIva()) : "-");
+            });
 
             Dipendente dipendente = contratto.getDipendente();
-            if (dipendente != null) {
-                LinkedHashMap<String, String> datiDipendente = new LinkedHashMap<>();
-                datiDipendente.put("Dipendente", renderPersona(dipendente));
-                datiDipendente.put("Email", valueOrPlaceholder(dipendente.getEmail()));
-                datiDipendente.put("Telefono", valueOrPlaceholder(dipendente.getTelefono()));
-                datiDipendente.put("Team", valueOrPlaceholder(dipendente.getTeam()));
-                datiDipendente.put("Ranking", valueOrPlaceholder(dipendente.getRanking()));
-                aggiungiSezione(document, "Consulente di riferimento", datiDipendente);
-            }
+            aggiungiSezione(document, "Consulente di riferimento", table -> {
+                aggiungiRiga(table, "Dipendente", renderPersona(dipendente));
+                aggiungiRiga(table, "Email", dipendente != null ? valueOrPlaceholder(dipendente.getEmail()) : "-");
+                aggiungiRiga(table, "Telefono", dipendente != null ? valueOrPlaceholder(dipendente.getTelefono()) : "-");
+                aggiungiRiga(table, "Team", dipendente != null ? valueOrPlaceholder(dipendente.getTeam()) : "-");
+                aggiungiRiga(table, "Ranking", dipendente != null ? valueOrPlaceholder(dipendente.getRanking()) : "-");
+            });
 
             Servizio servizio = contratto.getServizio();
-            if (servizio != null) {
-                LinkedHashMap<String, String> datiServizio = new LinkedHashMap<>();
-                datiServizio.put("Servizio", valueOrPlaceholder(servizio.getNome()));
-                datiServizio.put("Descrizione", valueOrPlaceholder(servizio.getDescrizione()));
-                datiServizio.put("Prezzo base", formatCurrency(servizio.getPrezzoBase()));
-                datiServizio.put("Commissione", formatPercentage(servizio.getCommissionePercentuale()));
-                aggiungiSezione(document, "Servizio erogato", datiServizio);
-            }
+            aggiungiSezione(document, "Servizio erogato", table -> {
+                aggiungiRiga(table, "Servizio", servizio != null ? valueOrPlaceholder(servizio.getNome()) : "-");
+                aggiungiRiga(table, "Descrizione", servizio != null ? valueOrPlaceholder(servizio.getDescrizione()) : "-");
+                aggiungiRiga(table, "Prezzo base", servizio != null ? formatCurrency(servizio.getPrezzoBase()) : "-");
+                aggiungiRiga(table, "Commissione", servizio != null ? formatPercentage(servizio.getCommissionePercentuale()) : "-");
+            });
 
-            if (contratto.getNote() != null && !contratto.getNote().isBlank()) {
-                Paragraph noteTitle = new Paragraph("Note", sectionFont);
-                noteTitle.setSpacingBefore(8f);
-                noteTitle.setSpacingAfter(6f);
-                document.add(noteTitle);
-
-                Paragraph noteContent = new Paragraph(contratto.getNote(), valueFont);
-                noteContent.setAlignment(Element.ALIGN_JUSTIFIED);
-                noteContent.setSpacingAfter(12f);
-                document.add(noteContent);
-            }
+            aggiungiBloccoNote(document, contratto.getNote());
+            aggiungiFooter(document);
 
             document.close();
             return out.toByteArray();
@@ -113,40 +104,120 @@ public class ContrattoPdfReportService {
         }
     }
 
-    private void aggiungiTitolo(Document document, String testo) throws DocumentException {
-        Paragraph title = new Paragraph(testo, titleFont);
-        title.setAlignment(Element.ALIGN_CENTER);
-        title.setSpacingAfter(18f);
-        document.add(title);
+    private void aggiungiIntestazione(Document document, String titolo, String codiceRiferimento) throws DocumentException {
+        PdfPTable header = new PdfPTable(new float[] { 2f, 1f });
+        header.setWidthPercentage(100f);
+        header.setSpacingAfter(16f);
+
+        PdfPCell brandCell = new PdfPCell();
+        brandCell.setPadding(12f);
+        brandCell.setBackgroundColor(PRIMARY_COLOR);
+        brandCell.setBorder(PdfPCell.NO_BORDER);
+
+        Paragraph brand = new Paragraph("Gestore Agenti", brandFont);
+        brand.setSpacingAfter(4f);
+        brandCell.addElement(brand);
+        Paragraph subtitle = new Paragraph("Soluzioni gestionali per reti commerciali", headerSmallFont);
+        brandCell.addElement(subtitle);
+        header.addCell(brandCell);
+
+        PdfPCell titleCell = new PdfPCell();
+        titleCell.setPadding(12f);
+        titleCell.setBackgroundColor(PRIMARY_COLOR);
+        titleCell.setBorder(PdfPCell.NO_BORDER);
+
+        Paragraph docTitle = new Paragraph(titolo.toUpperCase(Locale.ITALIAN), headerFont);
+        docTitle.setAlignment(Element.ALIGN_RIGHT);
+        titleCell.addElement(docTitle);
+
+        Paragraph docCode = new Paragraph("Riferimento: " + valueOrPlaceholder(codiceRiferimento), headerSmallFont);
+        docCode.setAlignment(Element.ALIGN_RIGHT);
+        titleCell.addElement(docCode);
+
+        header.addCell(titleCell);
+        document.add(header);
     }
 
-    private void aggiungiSezione(Document document, String titolo, Map<String, String> contenuto)
+    private void aggiungiDivider(Document document) throws DocumentException {
+        PdfPTable divider = new PdfPTable(1);
+        divider.setWidthPercentage(100f);
+        divider.setSpacingAfter(12f);
+
+        PdfPCell cell = new PdfPCell();
+        cell.setFixedHeight(2f);
+        cell.setBorder(PdfPCell.NO_BORDER);
+        cell.setBackgroundColor(PRIMARY_COLOR);
+        divider.addCell(cell);
+
+        document.add(divider);
+    }
+
+    private void aggiungiSezione(Document document, String titolo, Consumer<PdfPTable> builder)
             throws DocumentException {
-        Paragraph section = new Paragraph(titolo, sectionFont);
-        section.setSpacingBefore(8f);
-        section.setSpacingAfter(6f);
+        Paragraph section = new Paragraph(titolo.toUpperCase(Locale.ITALIAN), sectionFont);
+        section.setSpacingBefore(6f);
+        section.setSpacingAfter(4f);
         document.add(section);
 
-        PdfPTable table = new PdfPTable(new float[] { 1f, 2f });
-        table.setWidthPercentage(100f);
-        table.setSpacingAfter(12f);
-
-        for (Map.Entry<String, String> entry : contenuto.entrySet()) {
-            aggiungiCella(table, entry.getKey(), true);
-            aggiungiCella(table, entry.getValue(), false);
-        }
-
+        PdfPTable table = creaTabellaSezione();
+        builder.accept(table);
+        table.setSpacingAfter(14f);
         document.add(table);
     }
 
-    private void aggiungiCella(PdfPTable table, String testo, boolean label) {
-        PdfPCell cell = new PdfPCell(new Phrase(valueOrPlaceholder(testo), label ? labelFont : valueFont));
-        cell.setHorizontalAlignment(label ? Element.ALIGN_LEFT : Element.ALIGN_JUSTIFIED);
-        cell.setPadding(8f);
-        if (label) {
-            cell.setBackgroundColor(new Color(237, 240, 245));
+    private PdfPTable creaTabellaSezione() {
+        PdfPTable table = new PdfPTable(new float[] { 1f, 2f });
+        table.setWidthPercentage(100f);
+        table.setSpacingBefore(2f);
+        return table;
+    }
+
+    private void aggiungiRiga(PdfPTable table, String etichetta, String valore) {
+        PdfPCell labelCell = new PdfPCell(new Phrase(valueOrPlaceholder(etichetta), labelFont));
+        labelCell.setBackgroundColor(LIGHT_BACKGROUND);
+        labelCell.setPadding(8f);
+        labelCell.setBorderColor(new Color(220, 224, 231));
+        labelCell.setHorizontalAlignment(Element.ALIGN_LEFT);
+        table.addCell(labelCell);
+
+        PdfPCell valueCell = new PdfPCell(new Phrase(valueOrPlaceholder(valore), valueFont));
+        valueCell.setPadding(8f);
+        valueCell.setBorderColor(new Color(220, 224, 231));
+        valueCell.setHorizontalAlignment(Element.ALIGN_LEFT);
+        table.addCell(valueCell);
+    }
+
+    private void aggiungiBloccoNote(Document document, String note) throws DocumentException {
+        Paragraph section = new Paragraph("NOTE", sectionFont);
+        section.setSpacingBefore(6f);
+        section.setSpacingAfter(4f);
+        document.add(section);
+
+        PdfPCell noteCell = new PdfPCell(new Phrase(valueOrPlaceholder(note), valueFont));
+        noteCell.setPadding(10f);
+        noteCell.setBorderColor(new Color(220, 224, 231));
+
+        PdfPTable noteTable = new PdfPTable(1);
+        noteTable.setWidthPercentage(100f);
+        noteTable.addCell(noteCell);
+        noteTable.setSpacingAfter(14f);
+        document.add(noteTable);
+    }
+
+    private void aggiungiFooter(Document document) throws DocumentException {
+        Paragraph footer = new Paragraph(
+                "Gestore Agenti S.r.l. · Via Roma 1, 20100 Milano · info@gestoreagenti.example · P.IVA 01234567890",
+                footerFont);
+        footer.setAlignment(Element.ALIGN_CENTER);
+        footer.setSpacingBefore(24f);
+        document.add(footer);
+    }
+
+    private String formatoCodiceContratto(Contratto contratto) {
+        if (contratto == null || contratto.getIdContratto() == null) {
+            return "-";
         }
-        table.addCell(cell);
+        return "CTR-" + contratto.getIdContratto();
     }
 
     private String formatCurrency(java.math.BigDecimal value) {

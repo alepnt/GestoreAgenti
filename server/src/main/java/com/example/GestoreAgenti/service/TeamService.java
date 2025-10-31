@@ -34,8 +34,8 @@ public class TeamService extends AbstractCrudService<Team, Long> {
         return super.update(id, updatedTeam);
     }
 
-    public void delete(Long id) {
-        super.delete(id);
+    public Team delete(Long id) {
+        return super.delete(id);
     }
 }
 

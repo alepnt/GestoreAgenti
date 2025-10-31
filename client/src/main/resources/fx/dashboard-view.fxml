@@ -2,6 +2,7 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
+<?import javafx.scene.layout.Priority?>
 
 <BorderPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="com.example.GestoreAgenti.fx.controller.dashboard.DashboardController">
@@ -120,13 +121,31 @@
 
             <AnchorPane fx:id="notifichePane" visible="false" managed="false">
                 <BorderPane AnchorPane.topAnchor="0" AnchorPane.bottomAnchor="0" AnchorPane.leftAnchor="0" AnchorPane.rightAnchor="0">
+                    <top>
+                        <VBox spacing="4" padding="20">
+                            <Label text="Notifiche" styleClass="section-title"/>
+                            <Label text="Tieni traccia degli ultimi aggiornamenti operativi" styleClass="header-subtitle"/>
+                        </VBox>
+                    </top>
                     <left>
-                        <ListView fx:id="notificationsList" prefWidth="260"/>
+                        <VBox spacing="12" padding="20" prefWidth="320">
+                            <Label text="Elenco notifiche" styleClass="section-subtitle"/>
+                            <ListView fx:id="notificationsList" VBox.vgrow="ALWAYS" styleClass="notification-list"/>
+                        </VBox>
                     </left>
                     <center>
-                        <VBox spacing="10" padding="20">
-                            <Label fx:id="notificationTitleLabel" styleClass="section-subtitle" wrapText="true"/>
-                            <TextArea fx:id="notificationBodyArea" editable="false" wrapText="true" prefRowCount="12"/>
+                        <VBox spacing="12" padding="20">
+                            <Label text="Dettaglio" styleClass="section-subtitle"/>
+                            <Label fx:id="notificationTitleLabel" styleClass="notification-detail-title" wrapText="true"/>
+                            <HBox spacing="20">
+                                <Label text="Data" styleClass="detail-label"/>
+                                <Label fx:id="notificationDateLabel"/>
+                            </HBox>
+                            <HBox spacing="20">
+                                <Label text="Stato" styleClass="detail-label"/>
+                                <Label fx:id="notificationStatusLabel" styleClass="notification-status"/>
+                            </HBox>
+                            <TextArea fx:id="notificationBodyArea" editable="false" wrapText="true" prefRowCount="12" VBox.vgrow="ALWAYS"/>
                         </VBox>
                     </center>
                 </BorderPane>

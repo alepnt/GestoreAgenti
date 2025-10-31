@@ -116,3 +116,55 @@
 .list-view {
     -fx-background-color: white;
 }
+
+.notification-list .list-cell {
+    -fx-padding: 6 8 6 8;
+    -fx-background-color: transparent;
+}
+
+.notification-list .list-cell:filled:selected {
+    -fx-background-color: transparent;
+}
+
+.notification-item {
+    -fx-padding: 12;
+    -fx-background-color: transparent;
+    -fx-background-radius: 10;
+}
+
+.notification-item:unread {
+    -fx-background-color: rgba(49, 130, 206, 0.15);
+}
+
+.notification-item-title {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #2d3748;
+}
+
+.notification-item-message {
+    -fx-text-fill: #4a5568;
+    -fx-font-size: 13px;
+}
+
+.notification-item-date {
+    -fx-text-fill: #718096;
+    -fx-font-size: 12px;
+}
+
+.notification-detail-title {
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+}
+
+.notification-status {
+    -fx-background-color: #edf2f7;
+    -fx-text-fill: #2d3748;
+    -fx-padding: 4 12 4 12;
+    -fx-background-radius: 12;
+    -fx-font-weight: bold;
+}
+
+.notification-status:empty {
+    -fx-background-color: transparent;
+}

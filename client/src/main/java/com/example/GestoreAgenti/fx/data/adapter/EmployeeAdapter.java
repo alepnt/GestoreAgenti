@@ -1,9 +1,5 @@
 package com.example.GestoreAgenti.fx.data.adapter;
 
-import java.util.Arrays;
-import java.util.Objects;
-import java.util.stream.Collectors;
-
 import com.example.GestoreAgenti.fx.data.dto.EmployeeDto;
 import com.example.GestoreAgenti.fx.model.Employee;
 
@@ -16,19 +12,74 @@ public class EmployeeAdapter {
         if (dto == null) {
             return null;
         }
-        String fullName = Arrays.stream(new String[] {dto.firstName(), dto.lastName()})
-                .filter(part -> part != null && !part.isBlank())
-                .collect(Collectors.joining(" "));
-        return new Employee(dto.id(), fullName, dto.role(), dto.team(), dto.email());
+        String id = trimToNull(dto.id());
+        if (id == null) {
+            throw new IllegalArgumentException("L'identificativo del dipendente non può essere vuoto");
+        }
+        String fullName = buildFullName(trimToNull(dto.firstName()), trimToNull(dto.lastName()));
+        return new Employee(id,
+                fullName,
+                trimToNull(dto.role()),
+                trimToNull(dto.team()),
+                trimToNull(dto.email()));
     }
 
     public EmployeeDto toDto(Employee employee) {
         if (employee == null) {
             return null;
         }
-        String[] parts = Objects.toString(employee.fullName(), "").trim().split(" ", 2);
-        String firstName = parts.length > 0 ? parts[0] : "";
-        String lastName = parts.length > 1 ? parts[1] : "";
-        return new EmployeeDto(employee.id(), firstName, lastName, employee.role(), employee.teamName(), employee.email());
+        String id = safeTrim(employee.id());
+        NameParts parts = splitFullName(employee.fullName());
+        return new EmployeeDto(id,
+                parts.firstName(),
+                parts.lastName(),
+                safeTrim(employee.role()),
+                safeTrim(employee.teamName()),
+                safeTrim(employee.email()));
+    }
+
+    private String buildFullName(String firstName, String lastName) {
+        if (firstName == null && lastName == null) {
+            return "";
+        }
+        if (firstName == null) {
+            return lastName;
+        }
+        if (lastName == null) {
+            return firstName;
+        }
+        return firstName + " " + lastName;
+    }
+
+    private NameParts splitFullName(String fullName) {
+        if (fullName == null) {
+            return new NameParts("", "");
+        }
+        String normalized = fullName.trim();
+        if (normalized.isEmpty()) {
+            return new NameParts("", "");
+        }
+        int separatorIndex = normalized.indexOf(' ');
+        if (separatorIndex < 0) {
+            return new NameParts(normalized, "");
+        }
+        String first = normalized.substring(0, separatorIndex);
+        String last = normalized.substring(separatorIndex + 1).stripLeading();
+        return new NameParts(first, last);
+    }
+
+    private String trimToNull(String value) {
+        if (value == null) {
+            return null;
+        }
+        String trimmed = value.trim();
+        return trimmed.isEmpty() ? null : trimmed;
+    }
+
+    private String safeTrim(String value) {
+        return value == null ? null : value.trim();
+    }
+
+    private record NameParts(String firstName, String lastName) {
     }
 }

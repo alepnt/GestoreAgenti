@@ -26,14 +26,18 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.Month;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.Locale;
 
 /**
  * Servizio che fornisce dati dimostrativi e funzionalità minime per la GUI JavaFX.
@@ -44,6 +48,8 @@ public class FxDataService {
 
     private static final String GENERATED_ID_PREFIX = "C";
     private static final int GENERATED_ID_DIGITS = 4;
+    private static final Comparator<String> TEAM_NAME_COMPARATOR = Comparator.comparing(
+            name -> name.toLowerCase(Locale.ROOT));
 
     private final Map<String, EmployeeCredential> credentials = new HashMap<>();
     private final Map<String, ObservableList<AgendaItem>> agendaByEmployee = new HashMap<>();
@@ -58,6 +64,7 @@ public class FxDataService {
     private final ObservableList<String> availableTeamsView = FXCollections.unmodifiableObservableList(availableTeams);
     private final ObservableList<String> availableRoles = FXCollections.observableArrayList("Junior", "Senior", "Responsabile");
     private final ObservableList<String> availableRolesView = FXCollections.unmodifiableObservableList(availableRoles);
+    private final Set<String> teamNames = new LinkedHashSet<>();
     private final RemoteChatClient remoteChatClient = new RemoteChatClient();
     private final RemoteEmailClient remoteEmailClient = new RemoteEmailClient();
     private final Map<String, AutoCloseable> chatSubscriptions = new ConcurrentHashMap<>();
@@ -117,11 +124,13 @@ public class FxDataService {
         paymentsByEmployee.put(giulia.id(), FXCollections.observableArrayList(
                 new PaymentRecord("FT-2024-005", new BigDecimal("5100.00"), LocalDate.of(2024, Month.SEPTEMBER, 1), "Carta")));
 
-        chatByTeam.put("Team Nord", FXCollections.observableArrayList(
-                new ChatMessage("Team Nord", "Mario Rossi", LocalDateTime.now().minusMinutes(50), "Ricordatevi il meeting di oggi alle 14"),
-                new ChatMessage("Team Nord", "Lucia Bianchi", LocalDateTime.now().minusMinutes(45), "Perfetto, porterò il report clienti")));
-        chatByTeam.put("Team Centro", FXCollections.observableArrayList(
-                new ChatMessage("Team Centro", "Giulia Verdi", LocalDateTime.now().minusMinutes(30), "Aggiornato il backlog del progetto Gamma")));
+        String teamNord = requireTeamName("Team Nord");
+        String teamCentro = requireTeamName("Team Centro");
+        chatByTeam.put(teamNord, FXCollections.observableArrayList(
+                new ChatMessage(teamNord, "Mario Rossi", LocalDateTime.now().minusMinutes(50), "Ricordatevi il meeting di oggi alle 14"),
+                new ChatMessage(teamNord, "Lucia Bianchi", LocalDateTime.now().minusMinutes(45), "Perfetto, porterò il report clienti")));
+        chatByTeam.put(teamCentro, FXCollections.observableArrayList(
+                new ChatMessage(teamCentro, "Giulia Verdi", LocalDateTime.now().minusMinutes(30), "Aggiornato il backlog del progetto Gamma")));
 
         emailsByEmployee.put(mario.id(), FXCollections.observableArrayList(
                 new EmailMessage("clienti@alfa.it", mario.email(), "Richiesta aggiornamento",
@@ -144,13 +153,13 @@ public class FxDataService {
             identifier = generateNextEmployeeId();
             normalized = new EmployeeDto(identifier, dto.firstName(), dto.lastName(), dto.role(), dto.team(), dto.email());
         }
-        Employee employee = employeeAdapter.toModel(normalized);
+        Employee employee = ensureNormalizedTeam(employeeAdapter.toModel(normalized));
         EmployeeCredential existing = credentials.get(employee.id());
         String resolvedPassword = password != null ? password : existing != null ? existing.password() : null;
         credentials.put(employee.id(), new EmployeeCredential(employee, resolvedPassword));
         ensureCollections(employee.id());
         addTeamName(employee.teamName());
-        if (employee.teamName() != null && !employee.teamName().isBlank()) {
+        if (employee.teamName() != null) {
             chatByTeam.computeIfAbsent(employee.teamName(), key -> FXCollections.observableArrayList());
         }
         updateSequenceFromId(employee.id());
@@ -210,13 +219,15 @@ public class FxDataService {
     }
 
     private void addTeamName(String teamName) {
-        if (teamName == null) {
+        String normalized = normalizeTeamName(teamName);
+        if (normalized == null || !teamNames.add(normalized)) {
             return;
         }
-        String trimmed = teamName.trim();
-        if (!trimmed.isEmpty() && !availableTeams.contains(trimmed)) {
-            availableTeams.add(trimmed);
+        int insertionIndex = Collections.binarySearch(availableTeams, normalized, TEAM_NAME_COMPARATOR);
+        if (insertionIndex < 0) {
+            insertionIndex = -insertionIndex - 1;
         }
+        availableTeams.add(insertionIndex, normalized);
     }
 
     private void initializeNextEmployeeSequence() {
@@ -253,30 +264,32 @@ public class FxDataService {
     }
 
     public Optional<Employee> authenticate(String employeeId, String password) {
-        return Optional.ofNullable(credentials.get(employeeId))
-                .filter(credential -> credential.password().equals(password))
-                .map(EmployeeCredential::employee);
+        EmployeeCredential credential = credentials.get(employeeId);
+        if (credential == null || !Objects.equals(credential.password(), password)) {
+            return Optional.empty();
+        }
+        return Optional.of(credential.employee());
     }
 
     public Optional<Employee> registerEmployee(String fullName, String role, String teamName, String email, String password) {
-        String trimmedName = fullName == null ? "" : fullName.trim();
-        String trimmedRole = role == null ? "" : role.trim();
-        String trimmedTeam = teamName == null ? "" : teamName.trim();
-        String trimmedEmail = email == null ? "" : email.trim();
-        String trimmedPassword = password == null ? "" : password.trim();
+        String normalizedName = normalizeRequired(fullName);
+        String normalizedRole = normalizeRequired(role);
+        String normalizedTeam = normalizeTeamName(teamName);
+        String normalizedEmail = normalizeRequired(email);
+        String normalizedPassword = normalizeRequired(password);
 
-        if (trimmedName.isEmpty() || trimmedRole.isEmpty()
-                || trimmedTeam.isEmpty() || trimmedEmail.isEmpty() || trimmedPassword.isEmpty()) {
+        if (normalizedName.isEmpty() || normalizedRole.isEmpty()
+                || normalizedTeam == null || normalizedEmail.isEmpty() || normalizedPassword.isEmpty()) {
             return Optional.empty();
         }
 
         String generatedId = generateNextEmployeeId();
-        Employee employee = new Employee(generatedId, trimmedName, trimmedRole, trimmedTeam, trimmedEmail);
-        credentials.put(generatedId, new EmployeeCredential(employee, trimmedPassword));
+        Employee employee = new Employee(generatedId, normalizedName, normalizedRole, normalizedTeam, normalizedEmail);
+        credentials.put(generatedId, new EmployeeCredential(employee, normalizedPassword));
 
         ensureCollections(generatedId);
-        chatByTeam.computeIfAbsent(trimmedTeam, key -> FXCollections.observableArrayList());
-        addTeamName(trimmedTeam);
+        chatByTeam.computeIfAbsent(normalizedTeam, key -> FXCollections.observableArrayList());
+        addTeamName(normalizedTeam);
 
         return Optional.of(employee);
     }
@@ -298,19 +311,23 @@ public class FxDataService {
     }
 
     public ObservableList<ChatMessage> getTeamChat(Employee employee) {
-        return chatByTeam.computeIfAbsent(employee.teamName(), key -> FXCollections.observableArrayList());
+        Objects.requireNonNull(employee, "employee");
+        String teamName = requireTeamName(employee.teamName());
+        return chatByTeam.computeIfAbsent(teamName, key -> FXCollections.observableArrayList());
     }
 
     public void sendTeamMessage(Employee employee, String message) {
+        Objects.requireNonNull(employee, "employee");
         if (message == null || message.isBlank()) {
             return;
         }
         String trimmedMessage = message.trim();
-        remoteChatClient.sendTeamMessage(employee.teamName(), employee.fullName(), trimmedMessage)
+        String teamName = requireTeamName(employee.teamName());
+        remoteChatClient.sendTeamMessage(teamName, employee.fullName(), trimmedMessage)
                 .exceptionally(error -> {
                     System.err.println("Invio messaggio chat fallito: " + error.getMessage());
                     Platform.runLater(() -> {
-                        ChatMessage fallback = new ChatMessage(employee.teamName(), employee.fullName(),
+                        ChatMessage fallback = new ChatMessage(teamName, employee.fullName(),
                                 LocalDateTime.now(), trimmedMessage);
                         ObservableList<ChatMessage> chat = getTeamChat(employee);
                         chat.add(fallback);
@@ -321,10 +338,13 @@ public class FxDataService {
     }
 
     public void connectTeamChat(Employee employee) {
-        if (employee == null || employee.teamName() == null || employee.teamName().isBlank()) {
+        if (employee == null) {
             return;
         }
-        String teamName = employee.teamName().trim();
+        String teamName = normalizeTeamName(employee.teamName());
+        if (teamName == null) {
+            return;
+        }
         disconnectTeamChat(employee);
         desiredChatTeams.add(teamName);
         remoteChatClient.subscribeToTeam(teamName,
@@ -356,10 +376,13 @@ public class FxDataService {
     }
 
     public void disconnectTeamChat(Employee employee) {
-        if (employee == null || employee.teamName() == null || employee.teamName().isBlank()) {
+        if (employee == null) {
             return;
         }
-        String teamName = employee.teamName().trim();
+        String teamName = normalizeTeamName(employee.teamName());
+        if (teamName == null) {
+            return;
+        }
         desiredChatTeams.remove(teamName);
         AutoCloseable subscription = chatSubscriptions.remove(teamName);
         if (subscription != null) {
@@ -376,7 +399,11 @@ public class FxDataService {
         if (employee == null) {
             return;
         }
-        remoteChatClient.fetchTeamMessages(employee.teamName())
+        String teamName = normalizeTeamName(employee.teamName());
+        if (teamName == null) {
+            return;
+        }
+        remoteChatClient.fetchTeamMessages(teamName)
                 .thenAccept(messages -> Platform.runLater(() -> {
                     ObservableList<ChatMessage> chat = getTeamChat(employee);
                     chat.setAll(messages);
@@ -386,6 +413,37 @@ public class FxDataService {
                     System.err.println("Aggiornamento chat fallito: " + error.getMessage());
                     return null;
                 });
+    }
+
+    private Employee ensureNormalizedTeam(Employee employee) {
+        if (employee == null) {
+            return null;
+        }
+        String normalizedTeam = normalizeTeamName(employee.teamName());
+        if (Objects.equals(employee.teamName(), normalizedTeam)) {
+            return employee;
+        }
+        return new Employee(employee.id(), employee.fullName(), employee.role(), normalizedTeam, employee.email());
+    }
+
+    private static String normalizeRequired(String value) {
+        return value == null ? "" : value.trim();
+    }
+
+    private static String normalizeTeamName(String teamName) {
+        if (teamName == null) {
+            return null;
+        }
+        String trimmed = teamName.trim();
+        return trimmed.isEmpty() ? null : trimmed;
+    }
+
+    private static String requireTeamName(String teamName) {
+        String normalized = normalizeTeamName(teamName);
+        if (normalized == null) {
+            throw new IllegalArgumentException("Il nome del team non può essere vuoto");
+        }
+        return normalized;
     }
 
     public ObservableList<EmailMessage> getEmailsFor(Employee employee) {

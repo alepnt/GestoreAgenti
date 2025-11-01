@@ -1,11 +1,11 @@
 package com.example.GestoreAgenti.fx.data.remote;
 
+import com.example.GestoreAgenti.fx.data.dto.EmployeeDto;
+
 import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.List;
-
-import com.example.GestoreAgenti.fx.data.dto.EmployeeDto;
+import java.util.Objects;
 
 /**
  * Proxy che aggiunge caching e controlli di sicurezza alle chiamate verso il
@@ -23,8 +23,8 @@ public class RemoteAgentServiceProxy implements RemoteAgentService {
     }
 
     public RemoteAgentServiceProxy(RemoteAgentService delegate, Duration cacheDuration) {
-        this.delegate = delegate;
-        this.cacheDuration = cacheDuration;
+        this.delegate = Objects.requireNonNull(delegate, "delegate");
+        this.cacheDuration = Objects.requireNonNull(cacheDuration, "cacheDuration");
     }
 
     @Override
@@ -32,12 +32,18 @@ public class RemoteAgentServiceProxy implements RemoteAgentService {
         if (authToken == null || authToken.isBlank()) {
             throw new IllegalArgumentException("Token di autenticazione mancante");
         }
-        if (lastRefresh != null && Duration.between(lastRefresh, Instant.now()).compareTo(cacheDuration) < 0) {
-            return new ArrayList<>(cache);
+        Instant now = Instant.now();
+        if (isCacheValid(now)) {
+            return cache;
         }
         List<EmployeeDto> result = delegate.fetchAgents(authToken);
         cache = List.copyOf(result);
-        lastRefresh = Instant.now();
-        return new ArrayList<>(cache);
+        lastRefresh = now;
+        return cache;
+    }
+
+    private boolean isCacheValid(Instant now) {
+        return lastRefresh != null
+                && Duration.between(lastRefresh, now).compareTo(cacheDuration) < 0;
     }
 }

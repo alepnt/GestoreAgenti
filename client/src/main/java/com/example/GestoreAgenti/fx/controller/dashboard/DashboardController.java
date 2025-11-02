@@ -427,8 +427,7 @@ public class DashboardController {
                 emailStatusLabel,
                 emailRecipientField,
                 emailSubjectField,
-                emailBodyArea,
-                emailList));
+                emailBodyArea));
         commands.put("logout", new LogoutCommand(() -> (Stage) contentStack.getScene().getWindow(), dataService, this::cleanupSubscriptions));
     }
 

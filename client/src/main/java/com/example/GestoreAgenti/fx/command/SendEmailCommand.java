@@ -7,7 +7,6 @@ import com.example.GestoreAgenti.fx.data.FxDataService;
 import com.example.GestoreAgenti.fx.model.Employee;
 
 import javafx.scene.control.Label;
-import javafx.scene.control.ListView;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 
@@ -22,8 +21,6 @@ public class SendEmailCommand implements Command {
     private final TextField recipientField;
     private final TextField subjectField;
     private final TextArea bodyArea;
-    private final ListView<?> emailList;
-
     public SendEmailCommand(Supplier<String> recipientSupplier,
                             Supplier<String> subjectSupplier,
                             Supplier<String> bodySupplier,
@@ -32,8 +29,7 @@ public class SendEmailCommand implements Command {
                             Label statusLabel,
                             TextField recipientField,
                             TextField subjectField,
-                            TextArea bodyArea,
-                            ListView<?> emailList) {
+                            TextArea bodyArea) {
         this.recipientSupplier = Objects.requireNonNull(recipientSupplier, "recipientSupplier");
         this.subjectSupplier = Objects.requireNonNull(subjectSupplier, "subjectSupplier");
         this.bodySupplier = Objects.requireNonNull(bodySupplier, "bodySupplier");
@@ -43,7 +39,6 @@ public class SendEmailCommand implements Command {
         this.recipientField = Objects.requireNonNull(recipientField, "recipientField");
         this.subjectField = Objects.requireNonNull(subjectField, "subjectField");
         this.bodyArea = Objects.requireNonNull(bodyArea, "bodyArea");
-        this.emailList = Objects.requireNonNull(emailList, "emailList");
     }
 
     @Override

@@ -2,6 +2,7 @@ package com.example.GestoreAgenti.service.report;
 
 import java.awt.Color;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.text.NumberFormat;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
@@ -99,7 +100,7 @@ public class ContrattoPdfReportService {
 
             document.close();
             return out.toByteArray();
-        } catch (DocumentException e) {
+        } catch (DocumentException | IOException e) {
             throw new IllegalStateException("Impossibile generare il PDF del contratto", e);
         }
     }

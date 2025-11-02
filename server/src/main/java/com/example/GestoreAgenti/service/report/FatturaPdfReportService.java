@@ -52,10 +52,9 @@ public class FatturaPdfReportService {
     public byte[] generaPdf(Fattura fattura) {
         Objects.requireNonNull(fattura, "fattura");
 
-        try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-            Document document = new Document(PageSize.A4, 42, 42, 60, 48);
-            PdfWriter.getInstance(document, out);
-            document.open();
+        try (ByteArrayOutputStream out = new ByteArrayOutputStream();
+                DocumentContainer documentContainer = DocumentContainer.open(out)) {
+            Document document = documentContainer.document();
 
             aggiungiIntestazione(document, "Fattura", valueOrPlaceholder(fattura.getNumeroFattura()));
             aggiungiDivider(document);
@@ -107,8 +106,6 @@ public class FatturaPdfReportService {
             });
 
             aggiungiFooter(document);
-
-            document.close();
             return out.toByteArray();
         } catch (DocumentException | IOException e) {
             throw new IllegalStateException("Impossibile generare il PDF della fattura", e);
@@ -258,6 +255,31 @@ public class FatturaPdfReportService {
 
     private String valueOrPlaceholder(String value) {
         return value != null && !value.isBlank() ? value : "-";
+    }
+
+    private static final class DocumentContainer implements AutoCloseable {
+
+        private final Document document;
+
+        private DocumentContainer(Document document) {
+            this.document = document;
+        }
+
+        static DocumentContainer open(ByteArrayOutputStream out) throws DocumentException {
+            Document document = new Document(PageSize.A4, 42, 42, 60, 48);
+            PdfWriter.getInstance(document, out);
+            document.open();
+            return new DocumentContainer(document);
+        }
+
+        Document document() {
+            return document;
+        }
+
+        @Override
+        public void close() {
+            document.close();
+        }
     }
 }
 

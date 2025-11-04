@@ -16,6 +16,7 @@
                 <Label fx:id="teamLabel" styleClass="header-subtitle" text="Team"/>
             </VBox>
             <Pane HBox.hgrow="ALWAYS"/>
+            <fx:include source="components/logo-view.fxml"/>
             <Button text="Esci" onAction="#handleLogout"/>
         </HBox>
     </top>

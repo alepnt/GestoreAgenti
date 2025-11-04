@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.shape.Arc?>
+<?import javafx.scene.shape.Circle?>
+<?import javafx.scene.control.Label?>
+
+<StackPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+           styleClass="logo-container" prefWidth="80" prefHeight="80" maxWidth="80" maxHeight="80">
+    <padding>
+        <Insets top="5" right="5" bottom="5" left="5"/>
+    </padding>
+    <children>
+        <Circle radius="28" fill="white" strokeWidth="0"/>
+        <Arc radiusX="34" radiusY="34" startAngle="210" length="240"
+             stroke="#C99700" strokeWidth="8" fill="TRANSPARENT"/>
+        <Arc radiusX="34" radiusY="34" startAngle="60" length="240"
+             stroke="#2D3136" strokeWidth="8" fill="TRANSPARENT"/>
+        <Label text="A" styleClass="logo-letter"/>
+    </children>
+</StackPane>

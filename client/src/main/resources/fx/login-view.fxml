@@ -3,9 +3,18 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<StackPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
-           fx:controller="com.example.GestoreAgenti.fx.controller.LoginController">
-    <children>
+<BorderPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.example.GestoreAgenti.fx.controller.LoginController"
+            prefWidth="600" prefHeight="500">
+    <top>
+        <HBox alignment="CENTER_RIGHT">
+            <padding>
+                <Insets top="20" right="20" bottom="0" left="20"/>
+            </padding>
+            <fx:include source="components/logo-view.fxml"/>
+        </HBox>
+    </top>
+    <center>
         <VBox alignment="CENTER" spacing="20" styleClass="login-card">
             <padding>
                 <Insets top="40" right="40" bottom="40" left="40"/>
@@ -18,5 +27,5 @@
             <Button text="Registrati" maxWidth="Infinity" onAction="#handleRegister"/>
             <Label fx:id="errorLabel" styleClass="error-label" wrapText="true"/>
         </VBox>
-    </children>
-</StackPane>
+    </center>
+</BorderPane>

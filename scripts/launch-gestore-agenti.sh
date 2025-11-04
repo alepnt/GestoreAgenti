@@ -1,18 +1,42 @@
 #!/usr/bin/env bash
 
+# -----------------------------------------------------------------------------
+# Script di utilità che avvia l'intero stack "Gestore Agenti" in locale.
+# 1. Avvia (se necessario) il backend Spring Boot in background.
+# 2. Attende che la porta HTTP del server sia raggiungibile.
+# 3. Avvia il client JavaFX richiedendo a Maven di risolvere le dipendenze
+#    mancanti e di eseguire l'applicazione desktop.
+# -----------------------------------------------------------------------------
+
+# Termina lo script in caso di errori, variabili non inizializzate o pipe fallite.
 set -euo pipefail
 
+# -----------------------------------------------------------------------------
+# Percorsi utilizzati durante l'esecuzione
+# -----------------------------------------------------------------------------
+# Directory che contiene questo script. Serve per calcolare i path relativi.
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Directory radice del progetto Maven (una cartella sopra a scripts/).
 ROOT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
+# Cartella che ospita i file di log e il PID del server lato backend.
 LOG_DIR="${ROOT_DIR}/.desktop-launcher"
+# File che contiene l'identificativo di processo (PID) del server backend.
 SERVER_PID_FILE="${LOG_DIR}/server.pid"
+# File di log in cui viene rediretto l'output del server.
 SERVER_LOG_FILE="${LOG_DIR}/server.log"
+# Porta su cui il server Spring Boot espone le API HTTP.
 SERVER_PORT=8081
 
+# Garantisce l'esistenza della directory per PID e log.
 mkdir -p "${LOG_DIR}"
 
+# Flag che ci permette di capire se il server è stato avviato da questo script.
 started_server=false
 
+# -----------------------------------------------------------------------------
+# cleanup
+# -----------------------------------------------------------------------------
+# Gestisce la chiusura del server backend quando lo script termina.
 cleanup() {
     if [[ "${started_server}" == true ]] && [[ -f "${SERVER_PID_FILE}" ]]; then
         local pid
@@ -27,8 +51,15 @@ cleanup() {
     fi
 }
 
+# Assicura che cleanup venga sempre eseguito (uscita normale o per errore).
 trap cleanup EXIT
 
+# -----------------------------------------------------------------------------
+# ensure_server_running
+# -----------------------------------------------------------------------------
+# Avvia il server backend se non è già in esecuzione e attende la disponibilità
+# della porta HTTP, così da evitare che il client tenti la connessione troppo
+# presto.
 ensure_server_running() {
     if [[ -f "${SERVER_PID_FILE}" ]]; then
         local pid
@@ -79,6 +110,10 @@ PY
     return 0
 }
 
+# -----------------------------------------------------------------------------
+# main
+# -----------------------------------------------------------------------------
+# Punto di ingresso principale dello script.
 main() {
     ensure_server_running
 

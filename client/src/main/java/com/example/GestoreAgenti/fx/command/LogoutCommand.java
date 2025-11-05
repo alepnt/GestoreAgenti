@@ -48,6 +48,7 @@ public class LogoutCommand implements Command {
         } catch (IOException e) {
             LOGGER.log(Level.WARNING, "Impossibile completare il logout", e);
         } finally {
+            dataService.clearCurrentEmployee();
             cleanup.run();
         }
     }

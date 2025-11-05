@@ -83,6 +83,9 @@ public class LoginController {
             scene.getStylesheets().add(getClass().getResource("/fx/styles.css").toExternalForm());
             primaryStage.setScene(scene);
             primaryStage.setTitle("Gestore Agenti - Area di lavoro");
+            if (!primaryStage.isShowing()) {
+                primaryStage.show();
+            }
         } catch (IOException e) {
             errorLabel.setText("Impossibile aprire la dashboard");
         }

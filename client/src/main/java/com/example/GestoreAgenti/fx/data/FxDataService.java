@@ -73,6 +73,7 @@ public class FxDataService {
 
     private int nextEmployeeSequence;
     private RemoteAgentServiceProxy remoteAgentProxy;
+    private Employee currentEmployee;
 
     public FxDataService() {
         seedDemoData();
@@ -267,9 +268,19 @@ public class FxDataService {
     public Optional<Employee> authenticate(String employeeId, String password) {
         EmployeeCredential credential = credentials.get(employeeId);
         if (credential == null || !Objects.equals(credential.password(), password)) {
+            currentEmployee = null;
             return Optional.empty();
         }
-        return Optional.of(credential.employee());
+        currentEmployee = credential.employee();
+        return Optional.of(currentEmployee);
+    }
+
+    public Optional<Employee> getCurrentEmployee() {
+        return Optional.ofNullable(currentEmployee);
+    }
+
+    public void clearCurrentEmployee() {
+        currentEmployee = null;
     }
 
     public Optional<Employee> registerEmployee(String fullName, String role, String teamName, String email, String password) {

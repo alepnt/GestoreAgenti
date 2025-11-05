@@ -60,4 +60,6 @@ INSERT INTO notification (recipient_id, type, title, message, created_at, is_rea
 INSERT INTO utente (username, password_hash, ruolo, id_dipendente) VALUES
     ('admin', '$2a$10$7Fh1uO17s8b9L0G0v1apUeqWJkLkS9YyH1kUuXjz7wA7kVdRkBp5G', 'ADMIN', NULL),
     ('lrossi', '$2a$10$3YB2FLS7hfrnVQx9Xj9UVeE6zK1d4bnQ0rXjW8w1D03Gf6X4B8yOm', 'AGENTE', 1),
-    ('sconti', '$2a$10$IRL3n5wA0O9KQz1rY2ZJ1uP7x2/9C8dA9nT6GQ0mP5sV7yR4jX8y2', 'AGENTE', 2);
+    ('sconti', '$2a$10$IRL3n5wA0O9KQz1rY2ZJ1uP7x2/9C8dA9nT6GQ0mP5sV7yR4jX8y2', 'TEAM_LEAD', 2),
+    ('dleone', '$2a$10$3YB2FLS7hfrnVQx9Xj9UVeE6zK1d4bnQ0rXjW8w1D03Gf6X4B8yOm', 'SALES_MANAGER', 3),
+    ('support', '$2a$10$7Fh1uO17s8b9L0G0v1apUeqWJkLkS9YyH1kUuXjz7wA7kVdRkBp5G', 'OPERATIONS', NULL);

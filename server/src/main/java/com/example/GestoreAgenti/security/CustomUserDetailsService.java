@@ -26,7 +26,7 @@ public class CustomUserDetailsService implements UserDetailsService { // Dichiar
         return User.builder() // Restituisce il risultato dell'elaborazione al chiamante.
                 .username(utente.getUsername()) // Imposta il nome utente nel builder dell'utente autenticato.
                 .password(utente.getPasswordHash()) // Imposta l'hash della password nel builder dell'utente autenticato.
-                .roles(utente.getRuolo()) // 👈 fondamentale per Autorizzazioni // Assegna i ruoli autorizzativi all'utente costruito.
+                .roles(utente.getRuolo().name()) // 👈 fondamentale per Autorizzazioni // Assegna i ruoli autorizzativi all'utente costruito.
                 .build(); // Finalizza il parser JWT configurato.
     } // Chiude il blocco di codice precedente.
 } // Chiude il blocco di codice precedente.

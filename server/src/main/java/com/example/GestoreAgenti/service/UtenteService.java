@@ -2,6 +2,7 @@ package com.example.GestoreAgenti.service; // Definisce il pacchetto com.example
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Objects;
 
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -23,6 +24,7 @@ public class UtenteService extends AbstractCrudService<Utente, Long> {
 
         @Override
         public Utente prepareForCreate(Utente entity) {
+            Objects.requireNonNull(entity.getRuolo(), "ruolo");
             entity.setPasswordHash(encoder.encode(entity.getPasswordHash()));
             return entity;
         }
@@ -30,7 +32,9 @@ public class UtenteService extends AbstractCrudService<Utente, Long> {
         @Override
         public Utente merge(Utente existing, Utente changes) {
             existing.setUsername(changes.getUsername());
-            existing.setRuolo(changes.getRuolo());
+            if (changes.getRuolo() != null) {
+                existing.setRuolo(changes.getRuolo());
+            }
             existing.setDipendente(changes.getDipendente());
             if (changes.getPasswordHash() != null && !changes.getPasswordHash().isBlank()) {
                 existing.setPasswordHash(encoder.encode(changes.getPasswordHash()));

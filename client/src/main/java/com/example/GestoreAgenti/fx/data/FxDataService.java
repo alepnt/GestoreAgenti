@@ -15,9 +15,10 @@ import com.example.GestoreAgenti.fx.model.ChatMessage;
 import com.example.GestoreAgenti.fx.model.EmailMessage;
 import com.example.GestoreAgenti.fx.model.Employee;
 import com.example.GestoreAgenti.fx.model.InvoiceRecord;
-import com.example.GestoreAgenti.invoice.InvoiceState;
 import com.example.GestoreAgenti.fx.model.Notification;
 import com.example.GestoreAgenti.fx.model.PaymentRecord;
+import com.example.GestoreAgenti.invoice.InvoiceState;
+import com.example.GestoreAgenti.security.UserRole;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -62,7 +63,7 @@ public class FxDataService {
     private final EmployeeAdapter employeeAdapter = new EmployeeAdapter();
     private final ObservableList<String> availableTeams = FXCollections.observableArrayList();
     private final ObservableList<String> availableTeamsView = FXCollections.unmodifiableObservableList(availableTeams);
-    private final ObservableList<String> availableRoles = FXCollections.observableArrayList("Junior", "Senior", "Responsabile");
+    private final ObservableList<String> availableRoles = FXCollections.observableArrayList(UserRole.getDisplayNames());
     private final ObservableList<String> availableRolesView = FXCollections.unmodifiableObservableList(availableRoles);
     private final Set<String> teamNames = new LinkedHashSet<>();
     private final RemoteChatClient remoteChatClient = new RemoteChatClient();
@@ -273,7 +274,13 @@ public class FxDataService {
 
     public Optional<Employee> registerEmployee(String fullName, String role, String teamName, String email, String password) {
         String normalizedName = normalizeRequired(fullName);
-        String normalizedRole = normalizeRequired(role);
+        UserRole resolvedRole;
+        try {
+            resolvedRole = UserRole.resolve(role);
+        } catch (IllegalArgumentException ex) {
+            return Optional.empty();
+        }
+        String normalizedRole = resolvedRole.getDisplayName();
         String normalizedTeam = normalizeTeamName(teamName);
         String normalizedEmail = normalizeRequired(email);
         String normalizedPassword = normalizeRequired(password);

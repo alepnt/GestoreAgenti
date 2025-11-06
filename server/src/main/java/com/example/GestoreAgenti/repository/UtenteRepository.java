@@ -10,5 +10,7 @@ import com.example.GestoreAgenti.model.Utente; // Importa la classe Utente per u
 @Repository // Applica l'annotazione @Repository per configurare il componente.
 public interface UtenteRepository extends JpaRepository<Utente, Long> { // Dichiara l'interfaccia UtenteRepository che definisce le operazioni sui dati.
     Optional<Utente> findByUsername(String username); // Elabora il risultato opzionale scegliendo il comportamento appropriato.
+    Optional<Utente> findByDipendente_Id(Long dipendenteId); // Recupera l'utente collegato al dipendente richiesto.
+    Optional<Utente> findByCliente_Id(Long clienteId); // Recupera l'utente collegato al cliente richiesto.
 } // Chiude il blocco di codice precedente.
 

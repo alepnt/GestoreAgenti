@@ -15,11 +15,17 @@ import java.util.stream.Collectors;
  * evitando di duplicare le stringhe dei ruoli nelle varie componenti.
  */
 public enum UserRole {
-    ADMIN("Amministratore di sistema"),
-    SALES_MANAGER("Responsabile vendite"),
-    TEAM_LEAD("Coordinatore di team"),
-    AGENTE("Agente commerciale"),
-    OPERATIONS("Supporto operativo");
+    ADMIN("Amministratore di sistema", AccountAssociation.DIPENDENTE),
+    SALES_MANAGER("Responsabile vendite", AccountAssociation.DIPENDENTE),
+    TEAM_LEAD("Coordinatore di team", AccountAssociation.DIPENDENTE),
+    AGENTE("Agente commerciale", AccountAssociation.DIPENDENTE),
+    OPERATIONS("Supporto operativo", AccountAssociation.DIPENDENTE),
+    CLIENTE("Cliente", AccountAssociation.CLIENTE);
+
+    public enum AccountAssociation {
+        DIPENDENTE,
+        CLIENTE
+    }
 
     private static final Map<String, UserRole> LOOKUP_BY_NORMALIZED_DISPLAY =
             Collections.unmodifiableMap(Arrays.stream(values())
@@ -31,9 +37,11 @@ public enum UserRole {
                     .toList());
 
     private final String displayName;
+    private final AccountAssociation accountAssociation;
 
-    UserRole(String displayName) {
+    UserRole(String displayName, AccountAssociation accountAssociation) {
         this.displayName = displayName;
+        this.accountAssociation = accountAssociation;
     }
 
     /**
@@ -75,5 +83,12 @@ public enum UserRole {
 
     private static String normalize(String value) {
         return value.toLowerCase(Locale.ROOT).trim();
+    }
+
+    /**
+     * Indica quale tipo di entità (dipendente o cliente) deve essere associato al ruolo.
+     */
+    public AccountAssociation getAccountAssociation() {
+        return accountAssociation;
     }
 }

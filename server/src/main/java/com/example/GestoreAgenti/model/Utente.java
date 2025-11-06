@@ -8,7 +8,8 @@ import jakarta.persistence.GeneratedValue; // Importa GeneratedValue per definir
 import jakarta.persistence.GenerationType; // Importa GenerationType per specificare la strategia di generazione delle chiavi.
 import jakarta.persistence.Id; // Importa Id per identificare il campo chiave primaria dell'entità.
 import jakarta.persistence.JoinColumn; // Importa JoinColumn per descrivere la colonna di relazione nella tabella.
-import jakarta.persistence.ManyToOne; // Importa ManyToOne per modellare una relazione molti-a-uno.
+import jakarta.persistence.FetchType; // Importa FetchType per configurare il comportamento di caricamento dell'associazione.
+import jakarta.persistence.OneToOne; // Importa OneToOne per modellare una relazione uno-a-uno.
 import jakarta.persistence.Table; // Importa Table per impostare il nome della tabella su cui mappare l'entità.
 
 import com.example.GestoreAgenti.security.UserRole; // Importa l'enum condiviso che descrive i ruoli supportati.
@@ -31,9 +32,13 @@ public class Utente { // Dichiara la classe Utente che incapsula la logica del d
     @Column(nullable = false) // Impone la presenza di un ruolo per ogni utente.
     private UserRole ruolo; // Memorizza il ruolo dell'entità.
 
-    @ManyToOne // Applica l'annotazione @ManyToOne per configurare il componente.
-    @JoinColumn(name = "id_dipendente") // Applica l'annotazione @JoinColumn per configurare il componente.
-    private Dipendente dipendente; // opzionale // Memorizza il dipendente associato all'entità.
+    @OneToOne(fetch = FetchType.LAZY) // Applica l'annotazione @OneToOne per configurare il componente.
+    @JoinColumn(name = "id_dipendente", unique = true) // Impone l'associazione 1:1 con il dipendente quando previsto dal ruolo.
+    private Dipendente dipendente; // Memorizza il dipendente associato all'entità.
+
+    @OneToOne(fetch = FetchType.LAZY) // Applica l'annotazione @OneToOne per configurare il componente.
+    @JoinColumn(name = "id_cliente", unique = true) // Impone l'associazione 1:1 con il cliente quando previsto dal ruolo.
+    private Cliente cliente; // Memorizza il cliente associato all'entità.
 
     // Getters e Setters
     public Long getIdUtente() { return idUtente; } // Restituisce l'ID dell'utente dell'entità.
@@ -50,4 +55,7 @@ public class Utente { // Dichiara la classe Utente che incapsula la logica del d
 
     public Dipendente getDipendente() { return dipendente; } // Restituisce il dipendente dell'entità.
     public void setDipendente(Dipendente dipendente) { this.dipendente = dipendente; } // Imposta il dipendente per l'entità.
+
+    public Cliente getCliente() { return cliente; } // Restituisce il cliente dell'entità.
+    public void setCliente(Cliente cliente) { this.cliente = cliente; } // Imposta il cliente per l'entità.
 } // Chiude il blocco di codice precedente.

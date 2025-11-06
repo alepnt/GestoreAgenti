@@ -20,13 +20,13 @@ public class RoleController {
      * DTO minimale che restituisce sia il nome tecnico del ruolo (per la sicurezza)
      * sia la descrizione user-friendly da mostrare nelle interfacce.
      */
-    public record RoleResponse(String name, String displayName) {
+    public record RoleResponse(String name, String displayName, UserRole.AccountAssociation association) {
     }
 
     @GetMapping
     public List<RoleResponse> listRoles() {
         return Arrays.stream(UserRole.values())
-                .map(role -> new RoleResponse(role.name(), role.getDisplayName()))
+                .map(role -> new RoleResponse(role.name(), role.getDisplayName(), role.getAccountAssociation()))
                 .toList();
     }
 }

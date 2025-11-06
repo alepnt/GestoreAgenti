@@ -24,7 +24,9 @@ INSERT INTO cliente (nome, cognome, sesso, data_nascita, indirizzo, citta, cap, 
 INSERT INTO dipendente (nome, cognome, sesso, data_nascita, indirizzo, citta, cap, provincia, paese, email, telefono, username, password, ranking, team, contratto_no, tot_provvigione_mensile, tot_provvigione_annuale) VALUES
     ('Luca', 'Rossi', 'M', '1982-02-14', 'Via Manzoni 5', 'Milano', '20121', 'MI', 'Italia', 'luca.rossi@gestoreagenti.it', '+39-02-9988776', 'lrossi', '{noop}password1', 'Senior', 'Lombardia', 'CNT-001', 1850.75, 22209.00),
     ('Sara', 'Conti', 'F', '1991-07-03', 'Via Garibaldi 88', 'Torino', '10128', 'TO', 'Italia', 'sara.conti@gestoreagenti.it', '+39-011-5544332', 'sconti', '{noop}password2', 'Mid', 'Piemonte', 'CNT-002', 1320.40, 15844.80),
-    ('Davide', 'Leone', 'M', '1987-09-19', 'Via Indipendenza 22', 'Bologna', '40121', 'BO', 'Italia', 'davide.leone@gestoreagenti.it', '+39-051-8877665', 'dleone', '{noop}password3', 'Junior', 'Emilia', 'CNT-003', 940.00, 11280.00);
+    ('Davide', 'Leone', 'M', '1987-09-19', 'Via Indipendenza 22', 'Bologna', '40121', 'BO', 'Italia', 'davide.leone@gestoreagenti.it', '+39-051-8877665', 'dleone', '{noop}password3', 'Junior', 'Emilia', 'CNT-003', 940.00, 11280.00),
+    ('Anna', 'Moretti', 'F', '1980-01-05', 'Via Vittorio Veneto 12', 'Roma', '00187', 'RM', 'Italia', 'anna.moretti@gestoreagenti.it', '+39-06-1122334', 'admin', '{noop}password4', 'Executive', 'Direzione', 'CNT-004', 0.00, 0.00),
+    ('Paolo', 'Galli', 'M', '1992-08-27', 'Via Dante 9', 'Firenze', '50100', 'FI', 'Italia', 'paolo.galli@gestoreagenti.it', '+39-055-6677889', 'support', '{noop}password5', 'Operations', 'Supporto', 'CNT-005', 0.00, 0.00);
 
 INSERT INTO Team (provincia, responsabile_id, tot_profitto_mensile, tot_provvigione_mensile, tot_provvigione_annuo) VALUES
     ('Lombardia', 1, 48500.00, 6200.00, 74400.00),
@@ -57,9 +59,10 @@ INSERT INTO notification (recipient_id, type, title, message, created_at, is_rea
     (2, 'INVOICE_CREATED', 'Nuova fattura emessa', 'È stata generata la fattura FA-2024-002 per Fashion Lab S.p.A.', '2024-04-05T14:05:00', 1),
     (3, 'PAYMENT_EVENT', 'Pagamento in elaborazione', 'Il pagamento RID per il cliente Giorgio Russo è in corso di elaborazione.', '2024-06-12T10:45:00', 0);
 
-INSERT INTO utente (username, password_hash, ruolo, id_dipendente) VALUES
-    ('admin', '$2a$10$7Fh1uO17s8b9L0G0v1apUeqWJkLkS9YyH1kUuXjz7wA7kVdRkBp5G', 'ADMIN', NULL),
-    ('lrossi', '$2a$10$3YB2FLS7hfrnVQx9Xj9UVeE6zK1d4bnQ0rXjW8w1D03Gf6X4B8yOm', 'AGENTE', 1),
-    ('sconti', '$2a$10$IRL3n5wA0O9KQz1rY2ZJ1uP7x2/9C8dA9nT6GQ0mP5sV7yR4jX8y2', 'TEAM_LEAD', 2),
-    ('dleone', '$2a$10$3YB2FLS7hfrnVQx9Xj9UVeE6zK1d4bnQ0rXjW8w1D03Gf6X4B8yOm', 'SALES_MANAGER', 3),
-    ('support', '$2a$10$7Fh1uO17s8b9L0G0v1apUeqWJkLkS9YyH1kUuXjz7wA7kVdRkBp5G', 'OPERATIONS', NULL);
+INSERT INTO utente (username, password_hash, ruolo, id_dipendente, id_cliente) VALUES
+    ('admin', '$2a$10$7Fh1uO17s8b9L0G0v1apUeqWJkLkS9YyH1kUuXjz7wA7kVdRkBp5G', 'ADMIN', 4, NULL),
+    ('lrossi', '$2a$10$3YB2FLS7hfrnVQx9Xj9UVeE6zK1d4bnQ0rXjW8w1D03Gf6X4B8yOm', 'AGENTE', 1, NULL),
+    ('sconti', '$2a$10$IRL3n5wA0O9KQz1rY2ZJ1uP7x2/9C8dA9nT6GQ0mP5sV7yR4jX8y2', 'TEAM_LEAD', 2, NULL),
+    ('dleone', '$2a$10$3YB2FLS7hfrnVQx9Xj9UVeE6zK1d4bnQ0rXjW8w1D03Gf6X4B8yOm', 'SALES_MANAGER', 3, NULL),
+    ('support', '$2a$10$7Fh1uO17s8b9L0G0v1apUeqWJkLkS9YyH1kUuXjz7wA7kVdRkBp5G', 'OPERATIONS', 5, NULL),
+    ('mbianchi', '$2a$10$7Fh1uO17s8b9L0G0v1apUeqWJkLkS9YyH1kUuXjz7wA7kVdRkBp5G', 'CLIENTE', NULL, 1);

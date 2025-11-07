@@ -3,7 +3,7 @@ package com.example.GestoreAgenti.invoice;
 import java.util.Locale;
 
 /**
- * Stati gestiti per la fatturazione e riutilizzati da client e server.
+ * Stati gestiti per la fatturazione e riutilizzati dal client e dal server.
  */
 public enum InvoiceState {
     EMESSA("Emessa"),

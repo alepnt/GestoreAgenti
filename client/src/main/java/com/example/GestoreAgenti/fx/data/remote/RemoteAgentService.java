@@ -16,4 +16,4 @@ public interface RemoteAgentService { // Interfaccia che descrive le operazioni 
      * @return elenco di DTO ottenuti dal servizio remoto
      */
     List<EmployeeDto> fetchAgents(String authToken); // Metodo astratto che richiede un token e restituisce i dipendenti.
-}
+} // Esegue: }

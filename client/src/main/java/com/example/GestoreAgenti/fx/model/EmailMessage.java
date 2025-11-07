@@ -1,10 +1,10 @@
-package com.example.GestoreAgenti.fx.model;
+package com.example.GestoreAgenti.fx.model; // Esegue: package com.example.GestoreAgenti.fx.model;
 
-import java.time.LocalDateTime;
+import java.time.LocalDateTime; // Esegue: import java.time.LocalDateTime;
 
 /**
  * Rappresenta una comunicazione e-mail scambiata con un cliente.
  */
-public record EmailMessage(String sender, String recipient, String subject, String body,
-                           LocalDateTime timestamp, boolean incoming) {
-}
+public record EmailMessage(String sender, String recipient, String subject, String body, // Esegue: public record EmailMessage(String sender, String recipient, String subject, String body,
+                           LocalDateTime timestamp, boolean incoming) { // Esegue: LocalDateTime timestamp, boolean incoming) {
+} // Esegue: }

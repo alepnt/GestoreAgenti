@@ -30,9 +30,9 @@ public class AgentManagerApp extends Application { // Dichiara la classe princip
         primaryStage.setScene(scene); // Associa la scena preparata allo stage principale.
         primaryStage.setResizable(false); // Disabilita il ridimensionamento per mantenere una UI con layout fisso.
         primaryStage.show(); // Mostra la finestra iniziale completando la fase di avvio.
-    }
+    } // Esegue: }
 
     public static void main(String[] args) { // Entry point tradizionale per avviare l'applicazione.
         launch(args); // Delegata all'infrastruttura JavaFX per inizializzare l'ambiente grafico.
-    }
-}
+    } // Esegue: }
+} // Esegue: }

@@ -37,75 +37,48 @@ public class RemoteChatClient {
     private final ObjectMapper objectMapper;
     private final URI baseUri;
     private final Map<String, TeamConnection> activeConnections = new ConcurrentHashMap<>();
+    private final RemoteTaskScheduler taskScheduler;
+
+    public RemoteChatClient(RemoteTaskScheduler taskScheduler) {
+        this(taskScheduler,
+                HttpClient.newBuilder()
+                        .connectTimeout(DEFAULT_TIMEOUT)
+                        .build(),
+                defaultObjectMapper(),
+                resolveBaseUri());
+    }
 
     public RemoteChatClient() {
-        this.httpClient = HttpClient.newBuilder()
-                .connectTimeout(DEFAULT_TIMEOUT)
-                .build();
-        this.objectMapper = new ObjectMapper();
-        objectMapper.registerModule(new JavaTimeModule());
-        objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        this(new RemoteTaskScheduler(Math.max(1, Runtime.getRuntime().availableProcessors())));
+    }
 
-        String baseUrl = System.getProperty("gestoreagenti.server.url");
-        if (baseUrl == null || baseUrl.isBlank()) {
-            baseUrl = System.getenv("GESTOREAGENTI_SERVER_URL");
-        }
-        if (baseUrl == null || baseUrl.isBlank()) {
-            baseUrl = "http://localhost:8081";
-        }
-        if (!baseUrl.endsWith("/")) {
-            baseUrl = baseUrl + "/";
-        }
-        this.baseUri = URI.create(baseUrl);
+    RemoteChatClient(RemoteTaskScheduler taskScheduler,
+                     HttpClient httpClient,
+                     ObjectMapper objectMapper,
+                     URI baseUri) {
+        this.taskScheduler = Objects.requireNonNull(taskScheduler, "taskScheduler");
+        this.httpClient = Objects.requireNonNull(httpClient, "httpClient");
+        this.objectMapper = Objects.requireNonNull(objectMapper, "objectMapper");
+        this.baseUri = normalizeBaseUri(Objects.requireNonNull(baseUri, "baseUri"));
     }
 
     public CompletableFuture<List<ChatMessage>> fetchTeamMessages(String teamName) {
-        if (teamName == null || teamName.isBlank()) {
-            return CompletableFuture.completedFuture(List.of());
-        }
-        String encodedTeam = URLEncoder.encode(teamName, StandardCharsets.UTF_8);
-        URI uri = baseUri.resolve("api/chat/" + encodedTeam);
-        HttpRequest request = HttpRequest.newBuilder(uri)
-                .header("Accept", "application/json")
-                .GET()
-                .build();
-        return httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString())
-                .thenCompose(response -> {
-                    if (isSuccess(response.statusCode())) {
-                        try {
-                            List<ChatMessage> messages = objectMapper.readValue(response.body(), CHAT_LIST_TYPE);
-                            return CompletableFuture.completedFuture(messages);
-                        } catch (Exception e) {
-                            return CompletableFuture.failedFuture(e);
-                        }
-                    }
-                    return CompletableFuture.failedFuture(new IllegalStateException(
-                            "Unexpected response status: " + response.statusCode()));
-                });
-    }
-
-    public CompletableFuture<ChatMessage> sendTeamMessage(String teamName, String sender, String content) {
-        if (teamName == null || teamName.isBlank()
-                || sender == null || sender.isBlank()
-                || content == null || content.isBlank()) {
-            return CompletableFuture.failedFuture(
-                    new IllegalArgumentException("Team, mittente e contenuto devono essere valorizzati"));
-        }
-        String encodedTeam = URLEncoder.encode(teamName, StandardCharsets.UTF_8);
-        URI uri = baseUri.resolve("api/chat/" + encodedTeam);
-        try {
-            String payload = objectMapper.writeValueAsString(new OutgoingMessage(sender, content));
+        return taskScheduler.schedule(() -> {
+            if (teamName == null || teamName.isBlank()) {
+                return CompletableFuture.completedFuture(List.of());
+            }
+            String encodedTeam = URLEncoder.encode(teamName, StandardCharsets.UTF_8);
+            URI uri = baseUri.resolve("api/chat/" + encodedTeam);
             HttpRequest request = HttpRequest.newBuilder(uri)
                     .header("Accept", "application/json")
-                    .header("Content-Type", "application/json")
-                    .POST(HttpRequest.BodyPublishers.ofString(payload))
+                    .GET()
                     .build();
             return httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString())
                     .thenCompose(response -> {
                         if (isSuccess(response.statusCode())) {
                             try {
-                                ChatMessage message = objectMapper.readValue(response.body(), ChatMessage.class);
-                                return CompletableFuture.completedFuture(message);
+                                List<ChatMessage> messages = objectMapper.readValue(response.body(), CHAT_LIST_TYPE);
+                                return CompletableFuture.completedFuture(messages);
                             } catch (Exception e) {
                                 return CompletableFuture.failedFuture(e);
                             }
@@ -113,9 +86,43 @@ public class RemoteChatClient {
                         return CompletableFuture.failedFuture(new IllegalStateException(
                                 "Unexpected response status: " + response.statusCode()));
                     });
-        } catch (Exception e) {
-            return CompletableFuture.failedFuture(e);
-        }
+        });
+    }
+
+    public CompletableFuture<ChatMessage> sendTeamMessage(String teamName, String sender, String content) {
+        return taskScheduler.schedule(() -> {
+            if (teamName == null || teamName.isBlank()
+                    || sender == null || sender.isBlank()
+                    || content == null || content.isBlank()) {
+                return CompletableFuture.failedFuture(
+                        new IllegalArgumentException("Team, mittente e contenuto devono essere valorizzati"));
+            }
+            String encodedTeam = URLEncoder.encode(teamName, StandardCharsets.UTF_8);
+            URI uri = baseUri.resolve("api/chat/" + encodedTeam);
+            try {
+                String payload = objectMapper.writeValueAsString(new OutgoingMessage(sender, content));
+                HttpRequest request = HttpRequest.newBuilder(uri)
+                        .header("Accept", "application/json")
+                        .header("Content-Type", "application/json")
+                        .POST(HttpRequest.BodyPublishers.ofString(payload))
+                        .build();
+                return httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString())
+                        .thenCompose(response -> {
+                            if (isSuccess(response.statusCode())) {
+                                try {
+                                    ChatMessage message = objectMapper.readValue(response.body(), ChatMessage.class);
+                                    return CompletableFuture.completedFuture(message);
+                                } catch (Exception e) {
+                                    return CompletableFuture.failedFuture(e);
+                                }
+                            }
+                            return CompletableFuture.failedFuture(new IllegalStateException(
+                                    "Unexpected response status: " + response.statusCode()));
+                        });
+            } catch (Exception e) {
+                return CompletableFuture.failedFuture(e);
+            }
+        });
     }
 
     public CompletableFuture<AutoCloseable> subscribeToTeam(String teamName,
@@ -123,35 +130,37 @@ public class RemoteChatClient {
                                                             Consumer<Throwable> onError) {
         Objects.requireNonNull(onMessage, "onMessage");
         Objects.requireNonNull(onError, "onError");
-        if (teamName == null || teamName.isBlank()) {
-            return CompletableFuture.failedFuture(
-                    new IllegalArgumentException("Il nome del team non può essere vuoto"));
-        }
-        String trimmedTeam = teamName.trim();
-        String teamKey = normalizeKey(trimmedTeam);
-        disconnectFromTeam(trimmedTeam);
-        URI webSocketUri;
-        try {
-            webSocketUri = buildWebSocketUri(trimmedTeam);
-        } catch (URISyntaxException e) {
-            return CompletableFuture.failedFuture(e);
-        }
-        TeamWebSocketListener listener = new TeamWebSocketListener(objectMapper, onMessage, onError);
-        return httpClient.newWebSocketBuilder()
-                .connectTimeout(DEFAULT_TIMEOUT)
-                .buildAsync(webSocketUri, listener)
-                .thenApply(webSocket -> {
-                    TeamConnection connection = new TeamConnection(webSocket);
-                    activeConnections.put(teamKey, connection);
-                    return connection.asCloseable(teamKey, activeConnections);
-                })
-                .whenComplete((closer, error) -> {
-                    if (error != null) {
-                        Throwable cause = (error instanceof CompletionException && error.getCause() != null)
-                                ? error.getCause() : error;
-                        onError.accept(cause);
-                    }
-                });
+        return taskScheduler.schedule(() -> {
+            if (teamName == null || teamName.isBlank()) {
+                return CompletableFuture.failedFuture(
+                        new IllegalArgumentException("Il nome del team non può essere vuoto"));
+            }
+            String trimmedTeam = teamName.trim();
+            String teamKey = normalizeKey(trimmedTeam);
+            disconnectFromTeam(trimmedTeam);
+            URI webSocketUri;
+            try {
+                webSocketUri = buildWebSocketUri(trimmedTeam);
+            } catch (URISyntaxException e) {
+                return CompletableFuture.failedFuture(e);
+            }
+            TeamWebSocketListener listener = new TeamWebSocketListener(objectMapper, onMessage, onError);
+            return httpClient.newWebSocketBuilder()
+                    .connectTimeout(DEFAULT_TIMEOUT)
+                    .buildAsync(webSocketUri, listener)
+                    .thenApply(webSocket -> {
+                        TeamConnection connection = new TeamConnection(webSocket);
+                        activeConnections.put(teamKey, connection);
+                        return connection.asCloseable(teamKey, activeConnections);
+                    })
+                    .whenComplete((closer, error) -> {
+                        if (error != null) {
+                            Throwable cause = (error instanceof CompletionException && error.getCause() != null)
+                                    ? error.getCause() : error;
+                            onError.accept(cause);
+                        }
+                    });
+        });
     }
 
     public void disconnectFromTeam(String teamName) {
@@ -163,6 +172,11 @@ public class RemoteChatClient {
         if (connection != null) {
             connection.closeSilently();
         }
+    }
+
+    public void disconnectAll() {
+        activeConnections.values().forEach(TeamConnection::closeSilently);
+        activeConnections.clear();
     }
 
     private boolean isSuccess(int statusCode) {
@@ -192,6 +206,35 @@ public class RemoteChatClient {
 
     private String normalizeKey(String teamName) {
         return teamName.trim().toLowerCase(Locale.ROOT);
+    }
+
+    private static ObjectMapper defaultObjectMapper() {
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.registerModule(new JavaTimeModule());
+        mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        return mapper;
+    }
+
+    private static URI resolveBaseUri() {
+        String baseUrl = System.getProperty("gestoreagenti.server.url");
+        if (baseUrl == null || baseUrl.isBlank()) {
+            baseUrl = System.getenv("GESTOREAGENTI_SERVER_URL");
+        }
+        if (baseUrl == null || baseUrl.isBlank()) {
+            baseUrl = "http://localhost:8081";
+        }
+        if (!baseUrl.endsWith("/")) {
+            baseUrl = baseUrl + "/";
+        }
+        return URI.create(baseUrl);
+    }
+
+    private static URI normalizeBaseUri(URI baseUri) {
+        String baseUrl = baseUri.toString();
+        if (!baseUrl.endsWith("/")) {
+            baseUrl = baseUrl + "/";
+        }
+        return URI.create(baseUrl);
     }
 
     private record OutgoingMessage(String sender, String content) {

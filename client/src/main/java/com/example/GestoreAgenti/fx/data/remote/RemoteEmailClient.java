@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
@@ -25,13 +24,29 @@ public class RemoteEmailClient {
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
     private final URI baseUri;
+    private final RemoteTaskScheduler taskScheduler;
+
+    public RemoteEmailClient(RemoteTaskScheduler taskScheduler) {
+        this(taskScheduler,
+                HttpClient.newBuilder()
+                        .connectTimeout(DEFAULT_TIMEOUT)
+                        .build(),
+                new ObjectMapper(),
+                resolveBaseUri());
+    }
 
     public RemoteEmailClient() {
-        this.httpClient = HttpClient.newBuilder()
-                .connectTimeout(DEFAULT_TIMEOUT)
-                .build();
-        this.objectMapper = new ObjectMapper();
-        this.baseUri = resolveBaseUri();
+        this(new RemoteTaskScheduler(Math.max(1, Runtime.getRuntime().availableProcessors())));
+    }
+
+    RemoteEmailClient(RemoteTaskScheduler taskScheduler,
+                      HttpClient httpClient,
+                      ObjectMapper objectMapper,
+                      URI baseUri) {
+        this.taskScheduler = Objects.requireNonNull(taskScheduler, "taskScheduler");
+        this.httpClient = Objects.requireNonNull(httpClient, "httpClient");
+        this.objectMapper = Objects.requireNonNull(objectMapper, "objectMapper");
+        this.baseUri = normalizeBaseUri(Objects.requireNonNull(baseUri, "baseUri"));
     }
 
     public CompletableFuture<Void> sendEmail(String from, String to, String subject, String body) {
@@ -39,29 +54,31 @@ public class RemoteEmailClient {
         Objects.requireNonNull(to, "to");
         Objects.requireNonNull(subject, "subject");
         Objects.requireNonNull(body, "body");
-        URI uri = baseUri.resolve("api/email");
-        try {
-            String payload = objectMapper.writeValueAsString(new EmailPayload(from, to, subject, body));
-            HttpRequest request = HttpRequest.newBuilder(uri)
-                    .timeout(DEFAULT_TIMEOUT)
-                    .header("Accept", "application/json")
-                    .header("Content-Type", "application/json")
-                    .POST(HttpRequest.BodyPublishers.ofString(payload, StandardCharsets.UTF_8))
-                    .build();
-            return httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8))
-                    .thenCompose(response -> {
-                        if (isSuccess(response.statusCode())) {
-                            return CompletableFuture.completedFuture(null);
-                        }
-                        String errorMessage = extractErrorMessage(response);
-                        return CompletableFuture.failedFuture(new IllegalStateException(errorMessage));
-                    });
-        } catch (Exception e) {
-            return CompletableFuture.failedFuture(e);
-        }
+        return taskScheduler.schedule(() -> {
+            URI uri = baseUri.resolve("api/email");
+            try {
+                String payload = objectMapper.writeValueAsString(new EmailPayload(from, to, subject, body));
+                HttpRequest request = HttpRequest.newBuilder(uri)
+                        .timeout(DEFAULT_TIMEOUT)
+                        .header("Accept", "application/json")
+                        .header("Content-Type", "application/json")
+                        .POST(HttpRequest.BodyPublishers.ofString(payload, StandardCharsets.UTF_8))
+                        .build();
+                return httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8))
+                        .thenCompose(response -> {
+                            if (isSuccess(response.statusCode())) {
+                                return CompletableFuture.completedFuture(null);
+                            }
+                            String errorMessage = extractErrorMessage(response);
+                            return CompletableFuture.failedFuture(new IllegalStateException(errorMessage));
+                        });
+            } catch (Exception e) {
+                return CompletableFuture.failedFuture(e);
+            }
+        });
     }
 
-    private URI resolveBaseUri() {
+    private static URI resolveBaseUri() {
         String baseUrl = System.getProperty("gestoreagenti.server.url");
         if (baseUrl == null || baseUrl.isBlank()) {
             baseUrl = System.getenv("GESTOREAGENTI_SERVER_URL");
@@ -74,7 +91,19 @@ public class RemoteEmailClient {
         }
         try {
             return new URI(baseUrl);
-        } catch (URISyntaxException e) {
+        } catch (Exception e) {
+            throw new IllegalStateException("URL del server non valido: " + baseUrl, e);
+        }
+    }
+
+    private static URI normalizeBaseUri(URI baseUri) {
+        String baseUrl = baseUri.toString();
+        if (!baseUrl.endsWith("/")) {
+            baseUrl = baseUrl + "/";
+        }
+        try {
+            return new URI(baseUrl);
+        } catch (Exception e) {
             throw new IllegalStateException("URL del server non valido: " + baseUrl, e);
         }
     }

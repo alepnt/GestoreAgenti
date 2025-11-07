@@ -6,6 +6,7 @@ import com.example.GestoreAgenti.fx.data.remote.RemoteAgentService;
 import com.example.GestoreAgenti.fx.data.remote.RemoteAgentServiceProxy;
 import com.example.GestoreAgenti.fx.data.remote.RemoteChatClient;
 import com.example.GestoreAgenti.fx.data.remote.RemoteEmailClient;
+import com.example.GestoreAgenti.fx.data.remote.RemoteTaskScheduler;
 import com.example.GestoreAgenti.fx.event.EmailSentEvent;
 import com.example.GestoreAgenti.fx.event.FxEventBus;
 import com.example.GestoreAgenti.fx.event.NotificationUpdatedEvent;
@@ -66,8 +67,10 @@ public class FxDataService {
     private final ObservableList<String> availableRoles = FXCollections.observableArrayList(UserRole.getDisplayNames());
     private final ObservableList<String> availableRolesView = FXCollections.unmodifiableObservableList(availableRoles);
     private final Set<String> teamNames = new LinkedHashSet<>();
-    private final RemoteChatClient remoteChatClient = new RemoteChatClient();
-    private final RemoteEmailClient remoteEmailClient = new RemoteEmailClient();
+    private static final int REMOTE_MAX_CONCURRENCY = 4;
+    private final RemoteTaskScheduler remoteTaskScheduler = new RemoteTaskScheduler(REMOTE_MAX_CONCURRENCY);
+    private final RemoteChatClient remoteChatClient = new RemoteChatClient(remoteTaskScheduler);
+    private final RemoteEmailClient remoteEmailClient = new RemoteEmailClient(remoteTaskScheduler);
     private final Map<String, AutoCloseable> chatSubscriptions = new ConcurrentHashMap<>();
     private final Set<String> desiredChatTeams = ConcurrentHashMap.newKeySet();
 
@@ -500,4 +503,19 @@ public class FxDataService {
     public FxEventBus getEventBus() {
         return eventBus;
     }
+
+    public void shutdownAsyncOperations() {
+        remoteTaskScheduler.stop();
+        chatSubscriptions.values().forEach(subscription -> {
+            try {
+                subscription.close();
+            } catch (Exception ignored) {
+                // Ignored
+            }
+        });
+        chatSubscriptions.clear();
+        desiredChatTeams.clear();
+        remoteChatClient.disconnectAll();
+    }
+
 }

@@ -31,6 +31,7 @@ import javafx.collections.transformation.FilteredList; // Vista filtrata che sel
 import javafx.css.PseudoClass; // Gestisce pseudo-classi CSS dinamiche.
 import javafx.event.ActionEvent; // Evento generato da interazioni dell'utente.
 import javafx.fxml.FXML; // Annotation per collegare i campi ai nodi FXML.
+import javafx.scene.control.Button;
 import javafx.scene.control.ContentDisplay; // Configura come ListCell mostra testo e grafica.
 import javafx.scene.control.Label; // Controllo grafico che visualizza testo.
 import javafx.scene.control.ListCell; // Cella personalizzabile per ListView.
@@ -91,31 +92,24 @@ public class DashboardController { // Esegue: public class DashboardController {
     @FXML // Esegue: @FXML
     private ToggleGroup navigationGroup; // Gruppo che coordina la selezione dei pulsanti di navigazione.
 
-    @SuppressWarnings("unused") // Esegue: @SuppressWarnings("unused")
     @FXML // Esegue: @FXML
     private ToggleButton utenteButton; // Pulsante che porta alla scheda utente.
 
-    @SuppressWarnings("unused") // Esegue: @SuppressWarnings("unused")
     @FXML // Esegue: @FXML
     private ToggleButton agendaButton; // Pulsante che apre la sezione agenda.
 
-    @SuppressWarnings("unused") // Esegue: @SuppressWarnings("unused")
     @FXML // Esegue: @FXML
     private ToggleButton chatInternaButton; // Pulsante dedicato alla chat interna del team.
 
-    @SuppressWarnings("unused") // Esegue: @SuppressWarnings("unused")
     @FXML // Esegue: @FXML
     private ToggleButton chatEsternaButton; // Pulsante che mostra il pannello email/chat esterna.
 
-    @SuppressWarnings("unused") // Esegue: @SuppressWarnings("unused")
     @FXML // Esegue: @FXML
     private ToggleButton notificheButton; // Pulsante che porta alla sezione notifiche.
 
-    @SuppressWarnings("unused") // Esegue: @SuppressWarnings("unused")
     @FXML // Esegue: @FXML
     private ToggleButton fattureButton; // Pulsante che apre la sezione fatture.
 
-    @SuppressWarnings("unused") // Esegue: @SuppressWarnings("unused")
     @FXML // Esegue: @FXML
     private ToggleButton pagamentiButton; // Pulsante che mostra la sezione pagamenti.
 
@@ -164,6 +158,9 @@ public class DashboardController { // Esegue: public class DashboardController {
     @FXML // Esegue: @FXML
     private TextArea teamChatInput; // Area di input per scrivere un nuovo messaggio di team.
 
+    @FXML
+    private Button sendTeamMessageButton;
+
     @FXML // Esegue: @FXML
     private ListView<EmailMessage> emailList; // Lista che mostra le email ordinate cronologicamente.
 
@@ -187,6 +184,9 @@ public class DashboardController { // Esegue: public class DashboardController {
 
     @FXML // Esegue: @FXML
     private Label emailStatusLabel; // Etichetta che comunica lo stato di invio dell'email.
+
+    @FXML
+    private Button sendEmailButton;
 
     @FXML // Esegue: @FXML
     private ListView<Notification> notificationsList; // Lista che raccoglie tutte le notifiche dell'utente.
@@ -281,6 +281,9 @@ public class DashboardController { // Esegue: public class DashboardController {
     @FXML // Esegue: @FXML
     private TableColumn<PaymentRecord, String> paymentMethodColumn; // Colonna con il metodo di pagamento usato.
 
+    @FXML
+    private Button logoutButton;
+
     private FxDataService dataService; // Servizio dati condiviso dai controller.
     private Employee employee; // Dipendente attualmente visualizzato.
     private final Map<String, Command> commands = new HashMap<>(); // Mappa dei comandi invocabili tramite UI.
@@ -307,6 +310,8 @@ public class DashboardController { // Esegue: public class DashboardController {
         observeRevenueTrend();
 
         registerCommands(); // Registra i comandi necessari alla UI.
+        configureNavigationButtons();
+        configureActionButtons();
         subscribeToEvents(); // Sottoscrive gli handler agli eventi di dominio.
 
         showPane(utentePane); // Mostra il pannello utente come predefinito.
@@ -606,63 +611,59 @@ public class DashboardController { // Esegue: public class DashboardController {
         }); // Esegue: });
     } // Esegue: }
 
-    @SuppressWarnings("unused") // Esegue: @SuppressWarnings("unused")
-    @FXML // Esegue: @FXML
-    private void showUtente(ActionEvent event) { // Esegue: private void showUtente(ActionEvent event) {
-        executeCommand("showUtente"); // Esegue: executeCommand("showUtente");
-    } // Esegue: }
+    @FXML
+    private void handleNavigation(ActionEvent event) {
+        Object source = event.getSource();
+        if (source instanceof ToggleButton toggle) {
+            Object commandKey = toggle.getUserData();
+            if (commandKey instanceof String key) {
+                executeCommand(key);
+            }
+        }
+    }
 
-    @SuppressWarnings("unused") // Esegue: @SuppressWarnings("unused")
-    @FXML // Esegue: @FXML
-    private void showAgenda(ActionEvent event) { // Esegue: private void showAgenda(ActionEvent event) {
-        executeCommand("showAgenda"); // Esegue: executeCommand("showAgenda");
-    } // Esegue: }
-
-    @SuppressWarnings("unused") // Esegue: @SuppressWarnings("unused")
-    @FXML // Esegue: @FXML
-    private void showChatInterna(ActionEvent event) { // Esegue: private void showChatInterna(ActionEvent event) {
-        executeCommand("showChatInterna"); // Esegue: executeCommand("showChatInterna");
-    } // Esegue: }
-
-    @SuppressWarnings("unused") // Esegue: @SuppressWarnings("unused")
-    @FXML // Esegue: @FXML
-    private void showChatEsterna(ActionEvent event) { // Esegue: private void showChatEsterna(ActionEvent event) {
-        executeCommand("showChatEsterna"); // Esegue: executeCommand("showChatEsterna");
-    } // Esegue: }
-
-    @SuppressWarnings("unused") // Esegue: @SuppressWarnings("unused")
-    @FXML // Esegue: @FXML
-    private void showNotifiche(ActionEvent event) { // Esegue: private void showNotifiche(ActionEvent event) {
-        executeCommand("showNotifiche"); // Esegue: executeCommand("showNotifiche");
-    } // Esegue: }
-
-    @SuppressWarnings("unused") // Esegue: @SuppressWarnings("unused")
-    @FXML // Esegue: @FXML
-    private void showFatture(ActionEvent event) { // Esegue: private void showFatture(ActionEvent event) {
-        executeCommand("showFatture"); // Esegue: executeCommand("showFatture");
-    } // Esegue: }
-
-    @SuppressWarnings("unused") // Esegue: @SuppressWarnings("unused")
-    @FXML // Esegue: @FXML
-    private void showPagamenti(ActionEvent event) { // Esegue: private void showPagamenti(ActionEvent event) {
-        executeCommand("showPagamenti"); // Esegue: executeCommand("showPagamenti");
-    } // Esegue: }
-
-    @SuppressWarnings("unused") // Esegue: @SuppressWarnings("unused")
     @FXML // Esegue: @FXML
     private void handleSendTeamMessage(ActionEvent event) { // Esegue: private void handleSendTeamMessage(ActionEvent event) {
         executeCommand("sendTeamMessage"); // Esegue: executeCommand("sendTeamMessage");
     } // Esegue: }
 
-    @SuppressWarnings("unused") // Esegue: @SuppressWarnings("unused")
     @FXML // Esegue: @FXML
     private void handleSendEmail(ActionEvent event) { // Esegue: private void handleSendEmail(ActionEvent event) {
         executeCommand("sendEmail"); // Esegue: executeCommand("sendEmail");
     } // Esegue: }
 
-    @SuppressWarnings("unused") // Esegue: @SuppressWarnings("unused")
     @FXML // Esegue: @FXML
     private void handleLogout(ActionEvent event) { // Esegue: private void handleLogout(ActionEvent event) {
         executeCommand("logout"); // Esegue: executeCommand("logout");
     } // Esegue: }
+
+    private void configureNavigationButtons() {
+        Map<ToggleButton, String> navigationCommands = Map.of(
+                utenteButton, "showUtente",
+                agendaButton, "showAgenda",
+                chatInternaButton, "showChatInterna",
+                chatEsternaButton, "showChatEsterna",
+                notificheButton, "showNotifiche",
+                fattureButton, "showFatture",
+                pagamentiButton, "showPagamenti"
+        );
+        navigationCommands.forEach((button, commandKey) -> {
+            if (button != null) {
+                button.setUserData(commandKey);
+                button.setOnAction(this::handleNavigation);
+            }
+        });
+    }
+
+    private void configureActionButtons() {
+        if (sendTeamMessageButton != null) {
+            sendTeamMessageButton.setOnAction(this::handleSendTeamMessage);
+        }
+        if (sendEmailButton != null) {
+            sendEmailButton.setOnAction(this::handleSendEmail);
+        }
+        if (logoutButton != null) {
+            logoutButton.setOnAction(this::handleLogout);
+        }
+    }
 } // Esegue: }

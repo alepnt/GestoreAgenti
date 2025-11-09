@@ -247,8 +247,10 @@ public class FxDataService { // Esegue: public class FxDataService {
             if (snapshot == null) {
                 continue;
             }
-            int year = snapshot.year() != null ? snapshot.year() : 0;
-            int month = snapshot.month() != null ? snapshot.month() : 0;
+            Integer yearValue = snapshot.year();
+            Integer monthValue = snapshot.month();
+            int year = yearValue != null ? yearValue : 0;
+            int month = monthValue != null ? monthValue : 0;
             BigDecimal total = snapshot.total() != null ? snapshot.total() : BigDecimal.ZERO;
             values.add(new MonthlyRevenue(year, month, total));
         }
@@ -345,12 +347,19 @@ public class FxDataService { // Esegue: public class FxDataService {
         if (identifier == null) {
             return null;
         }
-        String digits = identifier.trim().replaceAll("[^0-9]", "");
-        if (digits.isEmpty()) {
+        String trimmed = identifier.trim();
+        StringBuilder digits = new StringBuilder(trimmed.length());
+        for (int i = 0; i < trimmed.length(); i++) {
+            char ch = trimmed.charAt(i);
+            if (Character.isDigit(ch)) {
+                digits.append(ch);
+            }
+        }
+        if (digits.length() == 0) {
             return null;
         }
         try {
-            return Long.parseLong(digits);
+            return Long.parseLong(digits.toString());
         } catch (NumberFormatException ex) {
             return null;
         }

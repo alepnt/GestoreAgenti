@@ -14,7 +14,7 @@ import java.net.http.HttpHeaders; // Esegue: import java.net.http.HttpHeaders;
 import java.net.http.HttpRequest; // Esegue: import java.net.http.HttpRequest;
 import java.net.http.HttpResponse; // Esegue: import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandler; // Esegue: import java.net.http.HttpResponse.BodyHandler;
-import java.net.http.HttpResponse.Trailers; // Esegue: import java.net.http.HttpResponse.Trailers;
+import java.net.http.HttpResponse.PushPromiseHandler; // Esegue: import java.net.http.HttpResponse.PushPromiseHandler;
 import java.net.http.WebSocket; // Esegue: import java.net.http.WebSocket;
 import java.nio.ByteBuffer; // Esegue: import java.nio.ByteBuffer;
 import java.time.Duration; // Esegue: import java.time.Duration;
@@ -209,28 +209,18 @@ class RemoteChatClientTest { // Esegue: class RemoteChatClientTest {
         } // Esegue: }
 
         @Override // Esegue: @Override
-        public Optional<Duration> timeout() { // Esegue: public Optional<Duration> timeout() {
-            return Optional.empty(); // Esegue: return Optional.empty();
+        public HttpClient.Version version() { // Esegue: public HttpClient.Version version() {
+            return HttpClient.Version.HTTP_1_1; // Esegue: return HttpClient.Version.HTTP_1_1;
         } // Esegue: }
 
         @Override // Esegue: @Override
-        public Version version() { // Esegue: public Version version() {
-            return Version.HTTP_1_1; // Esegue: return Version.HTTP_1_1;
-        } // Esegue: }
-
-        @Override // Esegue: @Override
-        public Optional<java.net.ssl.SSLSession> sslSession() { // Esegue: public Optional<java.net.ssl.SSLSession> sslSession() {
+        public Optional<javax.net.ssl.SSLSession> sslSession() { // Esegue: public Optional<javax.net.ssl.SSLSession> sslSession() {
             return Optional.empty(); // Esegue: return Optional.empty();
         } // Esegue: }
 
         @Override // Esegue: @Override
         public URI uri() { // Esegue: public URI uri() {
             return null; // Esegue: return null;
-        } // Esegue: }
-
-        @Override // Esegue: @Override
-        public Optional<HttpResponse<Trailers>> trailers() { // Esegue: public Optional<HttpResponse<Trailers>> trailers() {
-            return Optional.empty(); // Esegue: return Optional.empty();
         } // Esegue: }
 
         @Override // Esegue: @Override
@@ -277,6 +267,11 @@ class RemoteChatClientTest { // Esegue: class RemoteChatClientTest {
         } // Esegue: }
 
         @Override // Esegue: @Override
+        public <T> CompletableFuture<HttpResponse<T>> sendAsync(HttpRequest request, BodyHandler<T> handler, PushPromiseHandler<T> pushPromiseHandler) { // Esegue: public <T> CompletableFuture<HttpResponse<T>> sendAsync(HttpRequest request, BodyHandler<T> handler, PushPromiseHandler<T> pushPromiseHandler) {
+            return sendAsync(request, handler); // Esegue: return sendAsync(request, handler);
+        } // Esegue: }
+
+        @Override // Esegue: @Override
         public WebSocket.Builder newWebSocketBuilder() { // Esegue: public WebSocket.Builder newWebSocketBuilder() {
             return webSocketBuilder; // Esegue: return webSocketBuilder;
         } // Esegue: }
@@ -307,12 +302,12 @@ class RemoteChatClientTest { // Esegue: class RemoteChatClientTest {
         } // Esegue: }
 
         @Override // Esegue: @Override
-        public java.net.ssl.SSLContext sslContext() { // Esegue: public java.net.ssl.SSLContext sslContext() {
+        public javax.net.ssl.SSLContext sslContext() { // Esegue: public javax.net.ssl.SSLContext sslContext() {
             return null; // Esegue: return null;
         } // Esegue: }
 
         @Override // Esegue: @Override
-        public java.net.ssl.SSLParameters sslParameters() { // Esegue: public java.net.ssl.SSLParameters sslParameters() {
+        public javax.net.ssl.SSLParameters sslParameters() { // Esegue: public javax.net.ssl.SSLParameters sslParameters() {
             return null; // Esegue: return null;
         } // Esegue: }
 
@@ -361,6 +356,10 @@ class RemoteChatClientTest { // Esegue: class RemoteChatClientTest {
         } // Esegue: }
 
         @Override // Esegue: @Override
+        public WebSocket.Builder subprotocols(String first, String... more) { // Esegue: public WebSocket.Builder subprotocols(String first, String... more) {
+            return this; // Esegue: return this;
+        } // Esegue: }
+
         public WebSocket.Builder subprotocols(String... subprotocols) { // Esegue: public WebSocket.Builder subprotocols(String... subprotocols) {
             return this; // Esegue: return this;
         } // Esegue: }

@@ -355,7 +355,7 @@ class RemoteChatClientTest { // Esegue: class RemoteChatClientTest {
         } // Esegue: }
 
         @Override // Esegue: @Override
-        public WebSocket.Builder subprotocols(String... subprotocols) { // Esegue: public WebSocket.Builder subprotocols(String... subprotocols) {
+        public WebSocket.Builder subprotocols(String firstSubprotocol, String... additionalSubprotocols) { // Esegue: public WebSocket.Builder subprotocols(String firstSubprotocol, String... additionalSubprotocols) {
             return this; // Esegue: return this;
         } // Esegue: }
 

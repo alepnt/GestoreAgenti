@@ -54,7 +54,7 @@ class ModelRecordsTest { // Esegue: class ModelRecordsTest {
     @Test // Esegue: @Test
     void invoiceRecordStoresValues() { // Esegue: void invoiceRecordStoresValues() {
         LocalDate issueDate = LocalDate.now(); // Esegue: LocalDate issueDate = LocalDate.now();
-        InvoiceRecord invoice = new InvoiceRecord("INV-2", issueDate, "Cliente", InvoiceState.EMESSA, BigDecimal.ONE); // Esegue: InvoiceRecord invoice = new InvoiceRecord("INV-2", issueDate, "Cliente", InvoiceState.EMESSA, BigDecimal.ONE);
+        InvoiceRecord invoice = new InvoiceRecord("INV-2", issueDate, "Cliente", InvoiceState.EMESSA, BigDecimal.ONE, false); // Esegue: InvoiceRecord invoice = new InvoiceRecord("INV-2", issueDate, "Cliente", InvoiceState.EMESSA, BigDecimal.ONE, false);
         assertEquals("INV-2", invoice.number()); // Esegue: assertEquals("INV-2", invoice.number());
         assertEquals(issueDate, invoice.issueDate()); // Esegue: assertEquals(issueDate, invoice.issueDate());
         assertEquals("Cliente", invoice.customer()); // Esegue: assertEquals("Cliente", invoice.customer());

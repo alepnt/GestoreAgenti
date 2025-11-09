@@ -3,6 +3,7 @@ DELETE FROM notification;
 DELETE FROM pagamento;
 DELETE FROM provvigione;
 DELETE FROM fattura;
+DELETE FROM agenda_evento;
 DELETE FROM contratto;
 DELETE FROM utente;
 DELETE FROM dipendente;
@@ -47,10 +48,15 @@ INSERT INTO contratto (id_cliente, id_dipendente, id_servizio, data_inizio, data
     (2, 7, 2, '2024-03-01', '2024-09-30', 5100.00, 'ATTIVO', 'Percorso formativo dedicato al reparto retail.', 0),
     (3, 8, 3, '2024-05-10', NULL, 7800.00, 'IN_TRATTATIVA', 'Implementazione graduale del piano welfare privati.', 0);
 
-INSERT INTO fattura (numero_fattura, data_emissione, id_cliente, id_contratto, imponibile, iva, totale, stato) VALUES
-    ('FA-2024-001', '2024-02-01', 1, 1, 8000.00, 1760.00, 9760.00, 'EMESSA'),
-    ('FA-2024-002', '2024-04-05', 2, 2, 5100.00, 1122.00, 6222.00, 'PAGATA'),
-    ('FA-2024-003', '2024-06-12', 3, 3, 3900.00, 858.00, 4758.00, 'BOZZA');
+INSERT INTO fattura (numero_fattura, data_emissione, id_cliente, id_contratto, imponibile, iva, totale, stato, registrata) VALUES
+    ('FA-2024-001', '2024-02-01', 1, 1, 8000.00, 1760.00, 9760.00, 'EMESSA', 0),
+    ('FA-2024-002', '2024-04-05', 2, 2, 5100.00, 1122.00, 6222.00, 'PAGATA', 1),
+    ('FA-2024-003', '2024-06-12', 3, 3, 3900.00, 858.00, 4758.00, 'BOZZA', 0);
+
+INSERT INTO agenda_evento (dipendente_id, data, ora_inizio, ora_fine, titolo, descrizione, tipo, completato, creato_il, aggiornato_il) VALUES
+    (1, '2024-07-01', '09:00:00', '10:00:00', 'Kick-off nuovo cliente', 'Briefing con ACME Consulting', 'MEETING', 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    (7, '2024-07-02', '14:30:00', '15:00:00', 'Call Fashion Lab', 'Follow-up stato formazione', 'CALL', 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+    (8, '2024-07-03', '16:00:00', '17:00:00', 'Revisione contratto welfare', 'Allineamento interno sul piano welfare', 'TASK', 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
 
 INSERT INTO pagamento (id_fattura, data_pagamento, importo, metodo, stato) VALUES
     (1, NULL, 0.00, 'Bonifico', 'IN_ATTESA'),

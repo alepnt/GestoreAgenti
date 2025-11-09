@@ -17,7 +17,7 @@
             </VBox>
             <Pane HBox.hgrow="ALWAYS"/>
             <fx:include source="components/logo-view.fxml"/>
-            <Button text="Esci" onAction="#handleLogout"/>
+            <Button fx:id="logoutButton" text="Esci" onAction="#handleLogout"/>
         </HBox>
     </top>
     <left>
@@ -27,13 +27,13 @@
             </padding>
             <Label text="Navigazione" styleClass="side-menu-title"/>
             <ToggleGroup fx:id="navigationGroup"/>
-            <ToggleButton fx:id="utenteButton" text="Utente" toggleGroup="$navigationGroup" onAction="#showUtente"/>
-            <ToggleButton fx:id="agendaButton" text="Agenda" toggleGroup="$navigationGroup" onAction="#showAgenda"/>
-            <ToggleButton fx:id="chatInternaButton" text="Chat interna" toggleGroup="$navigationGroup" onAction="#showChatInterna"/>
-            <ToggleButton fx:id="chatEsternaButton" text="Chat esterna" toggleGroup="$navigationGroup" onAction="#showChatEsterna"/>
-            <ToggleButton fx:id="notificheButton" text="Notifiche" toggleGroup="$navigationGroup" onAction="#showNotifiche"/>
-            <ToggleButton fx:id="fattureButton" text="Fatture" toggleGroup="$navigationGroup" onAction="#showFatture"/>
-            <ToggleButton fx:id="pagamentiButton" text="Pagamenti" toggleGroup="$navigationGroup" onAction="#showPagamenti"/>
+            <ToggleButton fx:id="utenteButton" text="Utente" toggleGroup="$navigationGroup"/>
+            <ToggleButton fx:id="agendaButton" text="Agenda" toggleGroup="$navigationGroup"/>
+            <ToggleButton fx:id="chatInternaButton" text="Chat interna" toggleGroup="$navigationGroup"/>
+            <ToggleButton fx:id="chatEsternaButton" text="Chat esterna" toggleGroup="$navigationGroup"/>
+            <ToggleButton fx:id="notificheButton" text="Notifiche" toggleGroup="$navigationGroup"/>
+            <ToggleButton fx:id="fattureButton" text="Fatture" toggleGroup="$navigationGroup"/>
+            <ToggleButton fx:id="pagamentiButton" text="Pagamenti" toggleGroup="$navigationGroup"/>
         </VBox>
     </left>
     <center>
@@ -82,7 +82,7 @@
                             <Label text="Invia un messaggio al team"/>
                             <HBox spacing="10">
                                 <TextArea fx:id="teamChatInput" prefRowCount="2" HBox.hgrow="ALWAYS"/>
-                                <Button text="Invia" onAction="#handleSendTeamMessage"/>
+                                <Button fx:id="sendTeamMessageButton" text="Invia" onAction="#handleSendTeamMessage"/>
                             </HBox>
                         </VBox>
                     </bottom>
@@ -112,7 +112,7 @@
                             <TextField fx:id="emailSubjectField" promptText="Oggetto"/>
                             <TextArea fx:id="emailBodyArea" promptText="Scrivi il messaggio" prefRowCount="4"/>
                             <HBox spacing="10" alignment="CENTER_LEFT">
-                                <Button text="Invia" onAction="#handleSendEmail"/>
+                                <Button fx:id="sendEmailButton" text="Invia" onAction="#handleSendEmail"/>
                                 <Label fx:id="emailStatusLabel"/>
                             </HBox>
                         </VBox>
@@ -155,6 +155,14 @@
             <AnchorPane fx:id="fatturePane" visible="false" managed="false">
                 <VBox spacing="15" AnchorPane.topAnchor="20" AnchorPane.leftAnchor="20" AnchorPane.rightAnchor="20" AnchorPane.bottomAnchor="20">
                     <Label text="Fatture" styleClass="section-title"/>
+                    <LineChart fx:id="revenueTrendChart" legendVisible="false" prefHeight="200">
+                        <xAxis>
+                            <CategoryAxis label="Mese"/>
+                        </xAxis>
+                        <yAxis>
+                            <NumberAxis label="Totale"/>
+                        </yAxis>
+                    </LineChart>
                     <TabPane tabClosingPolicy="UNAVAILABLE">
                         <tabs>
                             <Tab text="Emesse">
@@ -189,6 +197,18 @@
                                             <TableColumn fx:id="invoicePaidDateColumn" text="Data" prefWidth="140"/>
                                             <TableColumn fx:id="invoicePaidCustomerColumn" text="Cliente" prefWidth="200"/>
                                             <TableColumn fx:id="invoicePaidTotalColumn" text="Totale" prefWidth="120"/>
+                                        </columns>
+                                    </TableView>
+                                </content>
+                            </Tab>
+                            <Tab text="Registrate">
+                                <content>
+                                    <TableView fx:id="invoicesRegisteredTable">
+                                        <columns>
+                                            <TableColumn fx:id="invoiceRegisteredNumberColumn" text="Numero" prefWidth="140"/>
+                                            <TableColumn fx:id="invoiceRegisteredDateColumn" text="Data" prefWidth="140"/>
+                                            <TableColumn fx:id="invoiceRegisteredCustomerColumn" text="Cliente" prefWidth="200"/>
+                                            <TableColumn fx:id="invoiceRegisteredTotalColumn" text="Totale" prefWidth="120"/>
                                         </columns>
                                     </TableView>
                                 </content>

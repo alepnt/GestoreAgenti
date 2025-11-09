@@ -1,5 +1,6 @@
 package com.example.GestoreAgenti.controller; // Definisce il pacchetto com.example.GestoreAgenti.controller a cui appartiene questa classe.
 
+import java.time.LocalDate;
 import java.util.List; // Importa List per gestire insiemi ordinati di elementi.
 
 import org.springframework.core.io.ByteArrayResource; // Importa ByteArrayResource per fornire file binari come risposta.
@@ -14,8 +15,10 @@ import org.springframework.web.bind.annotation.PostMapping; // Importa PostMappi
 import org.springframework.web.bind.annotation.PutMapping; // Importa PutMapping per mappare le richieste HTTP PUT.
 import org.springframework.web.bind.annotation.RequestBody; // Importa RequestBody per deserializzare il corpo della richiesta.
 import org.springframework.web.bind.annotation.RequestMapping; // Importa RequestMapping per definire il prefisso delle rotte del controller.
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController; // Importa RestController per esporre il controller come componente REST.
 
+import com.example.GestoreAgenti.controller.dto.MonthlyRevenueDto;
 import com.example.GestoreAgenti.model.Fattura; // Importa la classe Fattura per accedere alle informazioni di fatturazione.
 import com.example.GestoreAgenti.service.FatturaService; // Importa FatturaService per coordinare la gestione delle fatture.
 import com.example.GestoreAgenti.service.report.FatturaExcelReportService; // Importa il servizio per generare il report Excel delle fatture.
@@ -43,6 +46,33 @@ public class FatturaController { // Dichiara la classe FatturaController che inc
     public List<Fattura> getAllFatture() { // Restituisce la lista di le fatture gestiti dal sistema.
         return service.getAllFatture(); // Restituisce il risultato dell'elaborazione al chiamante.
     } // Chiude il blocco di codice precedente.
+
+    @GetMapping("/vendita")
+    public List<Fattura> getFattureVendita() {
+        return service.getFattureVendita();
+    }
+
+    @GetMapping("/registrate")
+    public List<Fattura> getFattureRegistrate() {
+        return service.getFattureRegistrate();
+    }
+
+    @PostMapping("/{id}/registrazione")
+    public Fattura registraFattura(@PathVariable Long id) {
+        return service.registraFattura(id);
+    }
+
+    @DeleteMapping("/{id}/registrazione")
+    public Fattura annullaRegistrazione(@PathVariable Long id) {
+        return service.annullaRegistrazione(id);
+    }
+
+    @GetMapping("/andamento")
+    public List<MonthlyRevenueDto> andamentoFatturato(
+            @RequestParam(name = "dal", required = false) LocalDate from,
+            @RequestParam(name = "al", required = false) LocalDate to) {
+        return service.getAndamentoFatturato(from, to);
+    }
 
     @GetMapping(value = "/report", produces = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet") // Applica l'annotazione @GetMapping per esporre il report Excel.
     public ResponseEntity<Resource> esportaReportFatture() { // Restituisce il file Excel generato.

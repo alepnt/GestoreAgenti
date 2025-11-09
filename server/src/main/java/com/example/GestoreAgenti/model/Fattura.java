@@ -35,6 +35,8 @@ public class Fattura { // Dichiara la classe Fattura che incapsula la logica del
 
     private String stato = BozzaState.NOME; // Memorizza lo stato dell'entità.
 
+    private boolean registrata;
+
     @Transient // Impedisce a JPA di persistere direttamente l'oggetto stato.
     private FatturaState state = new BozzaState(); // Riferimento all'implementazione concreta dello stato della fattura.
 
@@ -77,6 +79,10 @@ public class Fattura { // Dichiara la classe Fattura che incapsula la logica del
     public String getStato() { return risolviStato().getNome(); } // Restituisce lo stato dell'entità.
     public String getColoreStato() { return risolviStato().getColore(); } // Restituisce il colore associato allo stato.
     public void setStato(String stato) { setState(FatturaStateFactory.fromName(stato)); } // Imposta lo stato per l'entità.
+
+    public boolean isRegistrata() { return registrata; }
+
+    public void setRegistrata(boolean registrata) { this.registrata = registrata; }
 
     @JsonIgnore // Evita di esporre lo stato interno durante la serializzazione JSON.
     public FatturaState getState() { return risolviStato(); } // Restituisce l'implementazione dello stato.

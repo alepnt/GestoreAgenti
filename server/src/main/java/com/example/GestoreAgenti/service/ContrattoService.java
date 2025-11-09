@@ -45,6 +45,20 @@ public class ContrattoService extends AbstractCrudService<Contratto, Long> { // 
      * @return elenco dei contratti associati
      */
     public java.util.List<Contratto> getContrattiByDipendente(Long dipendenteId) { // Definisce il metodo getContrattiByDipendente che supporta la logica di dominio.
-        return ((ContrattoRepository) repository()).findByDipendente_Id(dipendenteId); // Restituisce il risultato dell'espressione ((ContrattoRepository) repository()).findByDipendente_Id(dipendenteId).
+        return ordinaPerData(((ContrattoRepository) repository()).findByDipendente_Id(dipendenteId));
     } // Chiude il blocco di codice precedente.
+
+    public java.util.List<Contratto> getContrattiByCliente(Long clienteId) {
+        return ordinaPerData(((ContrattoRepository) repository()).findByCliente_Id(clienteId));
+    }
+
+    public java.util.List<Contratto> getContrattiByTeam(String team) {
+        return ordinaPerData(((ContrattoRepository) repository()).findByDipendente_TeamIgnoreCase(team));
+    }
+
+    private java.util.List<Contratto> ordinaPerData(java.util.List<Contratto> contratti) {
+        contratti.sort(java.util.Comparator.comparing(Contratto::getDataInizio,
+                java.util.Comparator.nullsLast(java.time.LocalDate::compareTo)));
+        return contratti;
+    }
 } // Chiude il blocco di codice precedente.

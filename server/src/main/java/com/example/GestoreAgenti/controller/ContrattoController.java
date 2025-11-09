@@ -1,6 +1,7 @@
 package com.example.GestoreAgenti.controller; // Definisce il pacchetto com.example.GestoreAgenti.controller a cui appartiene questa classe.
 
 import java.util.List; // Importa List per gestire insiemi ordinati di elementi.
+import java.util.stream.Collectors;
 
 import org.springframework.core.io.ByteArrayResource; // Importa ByteArrayResource per restituire file binari al client.
 import org.springframework.core.io.Resource; // Importa Resource per modellare la risposta binaria.
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.PostMapping; // Importa PostMappi
 import org.springframework.web.bind.annotation.PutMapping; // Importa PutMapping per mappare le richieste HTTP PUT.
 import org.springframework.web.bind.annotation.RequestBody; // Importa RequestBody per deserializzare il corpo della richiesta.
 import org.springframework.web.bind.annotation.RequestMapping; // Importa RequestMapping per definire il prefisso delle rotte del controller.
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController; // Importa RestController per esporre il controller come componente REST.
 
 import com.example.GestoreAgenti.model.Contratto; // Importa la classe Contratto per manipolare i contratti esposti dall'API.
@@ -36,6 +38,27 @@ public class ContrattoController { // Dichiara la classe ContrattoController che
     public List<Contratto> getAllContratti() { // Restituisce la lista di i contratti gestiti dal sistema.
         return service.getAllContratti(); // Restituisce il risultato dell'elaborazione al chiamante.
     } // Chiude il blocco di codice precedente.
+
+    @GetMapping("/storico/dipendenti/{dipendenteId}")
+    public List<ContractHistoryResponse> getStoricoPerDipendente(@PathVariable Long dipendenteId) {
+        return service.getContrattiByDipendente(dipendenteId).stream()
+                .map(ContrattoController::toHistoryResponse)
+                .collect(Collectors.toList());
+    }
+
+    @GetMapping("/storico/clienti/{clienteId}")
+    public List<ContractHistoryResponse> getStoricoPerCliente(@PathVariable Long clienteId) {
+        return service.getContrattiByCliente(clienteId).stream()
+                .map(ContrattoController::toHistoryResponse)
+                .collect(Collectors.toList());
+    }
+
+    @GetMapping("/storico/team")
+    public List<ContractHistoryResponse> getStoricoPerTeam(@RequestParam("nome") String team) {
+        return service.getContrattiByTeam(team).stream()
+                .map(ContrattoController::toHistoryResponse)
+                .collect(Collectors.toList());
+    }
 
     @GetMapping("/{id}") // Applica l'annotazione @GetMapping per configurare il componente.
     public ResponseEntity<Contratto> getContrattoById(@PathVariable Long id) { // Restituisce i dati di contratto filtrati in base a ID.
@@ -70,5 +93,37 @@ public class ContrattoController { // Dichiara la classe ContrattoController che
                 .contentType(MediaType.APPLICATION_PDF) // Specifica il tipo di contenuto PDF.
                 .body(new ByteArrayResource(pdf)); // Restituisce il file al client.
     } // Chiude il blocco di codice precedente.
+
+    private static ContractHistoryResponse toHistoryResponse(Contratto contratto) {
+        String cliente = contratto.getCliente() != null
+                ? String.join(" ",
+                        nonNullOrEmpty(contratto.getCliente().getNome()),
+                        nonNullOrEmpty(contratto.getCliente().getCognome()),
+                        nonNullOrEmpty(contratto.getCliente().getRagioneSociale()))
+                : null;
+        String dipendente = contratto.getDipendente() != null
+                ? String.join(" ",
+                        nonNullOrEmpty(contratto.getDipendente().getNome()),
+                        nonNullOrEmpty(contratto.getDipendente().getCognome()))
+                : null;
+        String team = contratto.getDipendente() != null ? contratto.getDipendente().getTeam() : null;
+        return new ContractHistoryResponse(contratto.getIdContratto(),
+                contratto.getCliente() != null ? contratto.getCliente().getId() : null,
+                cliente != null ? cliente.trim() : null,
+                contratto.getDipendente() != null ? contratto.getDipendente().getId() : null,
+                dipendente != null ? dipendente.trim() : null,
+                team, contratto.getServizio() != null ? contratto.getServizio().getNome() : null,
+                contratto.getDataInizio(), contratto.getDataFine(), contratto.getImporto(), contratto.getStato());
+    }
+
+    private static String nonNullOrEmpty(String value) {
+        return value == null ? "" : value;
+    }
+
+    public record ContractHistoryResponse(Long id, Long clienteId, String cliente,
+            Long dipendenteId, String dipendente, String team,
+            String servizio, java.time.LocalDate dataInizio, java.time.LocalDate dataFine,
+            java.math.BigDecimal importo, String stato) {
+    }
 } // Chiude il blocco di codice precedente.
 

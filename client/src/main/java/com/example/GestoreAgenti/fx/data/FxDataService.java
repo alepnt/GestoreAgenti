@@ -1,6 +1,13 @@
 package com.example.GestoreAgenti.fx.data; // Esegue: package com.example.GestoreAgenti.fx.data;
 
 import com.example.GestoreAgenti.fx.data.adapter.EmployeeAdapter; // Esegue: import com.example.GestoreAgenti.fx.data.adapter.EmployeeAdapter;
+import com.example.GestoreAgenti.fx.data.backend.BackendGateway;
+import com.example.GestoreAgenti.fx.data.backend.BackendGateway.AgendaSnapshot;
+import com.example.GestoreAgenti.fx.data.backend.BackendGateway.EmployeeSnapshot;
+import com.example.GestoreAgenti.fx.data.backend.BackendGateway.InvoiceSnapshot;
+import com.example.GestoreAgenti.fx.data.backend.BackendGateway.MonthlyRevenueSnapshot;
+import com.example.GestoreAgenti.fx.data.backend.BackendGateway.NotificationSnapshot;
+import com.example.GestoreAgenti.fx.data.backend.BackendGateway.PaymentSnapshot;
 import com.example.GestoreAgenti.fx.data.dto.EmployeeDto; // Esegue: import com.example.GestoreAgenti.fx.data.dto.EmployeeDto;
 import com.example.GestoreAgenti.fx.data.remote.RemoteAgentService; // Esegue: import com.example.GestoreAgenti.fx.data.remote.RemoteAgentService;
 import com.example.GestoreAgenti.fx.data.remote.RemoteAgentServiceProxy; // Esegue: import com.example.GestoreAgenti.fx.data.remote.RemoteAgentServiceProxy;
@@ -18,6 +25,7 @@ import com.example.GestoreAgenti.fx.model.Employee; // Esegue: import com.exampl
 import com.example.GestoreAgenti.fx.model.InvoiceRecord; // Esegue: import com.example.GestoreAgenti.fx.model.InvoiceRecord;
 import com.example.GestoreAgenti.fx.model.Notification; // Esegue: import com.example.GestoreAgenti.fx.model.Notification;
 import com.example.GestoreAgenti.fx.model.PaymentRecord; // Esegue: import com.example.GestoreAgenti.fx.model.PaymentRecord;
+import com.example.GestoreAgenti.fx.model.MonthlyRevenue;
 import com.example.GestoreAgenti.invoice.InvoiceState; // Esegue: import com.example.GestoreAgenti.invoice.InvoiceState;
 import com.example.GestoreAgenti.security.UserRole; // Esegue: import com.example.GestoreAgenti.security.UserRole;
 import javafx.application.Platform; // Esegue: import javafx.application.Platform;
@@ -28,6 +36,7 @@ import java.math.BigDecimal; // Esegue: import java.math.BigDecimal;
 import java.time.LocalDate; // Esegue: import java.time.LocalDate;
 import java.time.LocalDateTime; // Esegue: import java.time.LocalDateTime;
 import java.time.Month; // Esegue: import java.time.Month;
+import java.util.ArrayList; // Esegue: import java.util.ArrayList;
 import java.util.Collections; // Esegue: import java.util.Collections;
 import java.util.Comparator; // Esegue: import java.util.Comparator;
 import java.util.HashMap; // Esegue: import java.util.HashMap;
@@ -73,15 +82,28 @@ public class FxDataService { // Esegue: public class FxDataService {
     private final Map<String, AutoCloseable> chatSubscriptions = new ConcurrentHashMap<>(); // Esegue: private final Map<String, AutoCloseable> chatSubscriptions = new ConcurrentHashMap<>();
     private final Set<String> desiredChatTeams = ConcurrentHashMap.newKeySet(); // Esegue: private final Set<String> desiredChatTeams = ConcurrentHashMap.newKeySet();
 
+    private final BackendGateway backendGateway;
+    private final Map<String, Long> backendEmployeeIds = new HashMap<>();
+    private final ObservableList<MonthlyRevenue> revenueTrend = FXCollections.observableArrayList();
+    private final ObservableList<MonthlyRevenue> revenueTrendView = FXCollections.unmodifiableObservableList(revenueTrend);
+
     private int nextEmployeeSequence; // Esegue: private int nextEmployeeSequence;
     private RemoteAgentServiceProxy remoteAgentProxy; // Esegue: private RemoteAgentServiceProxy remoteAgentProxy;
     private Employee currentEmployee; // Esegue: private Employee currentEmployee;
 
-    public FxDataService() { // Esegue: public FxDataService() {
-        seedDemoData(); // Esegue: seedDemoData();
-    } // Esegue: }
+    public FxDataService() {
+        this(new BackendGateway());
+    }
+
+    FxDataService(BackendGateway backendGateway) {
+        this.backendGateway = backendGateway;
+        if (!tryInitializeFromBackend()) {
+            seedDemoData();
+        }
+    }
 
     private void seedDemoData() { // Esegue: private void seedDemoData() {
+        resetState();
         Employee mario = registerEmployee(new EmployeeDto("C0001", "Mario", "Rossi", "Account Manager", "Team Nord", // Esegue: Employee mario = registerEmployee(new EmployeeDto("C0001", "Mario", "Rossi", "Account Manager", "Team Nord",
                 "m.rossi@azienda.it"), "password1"); // Esegue: "m.rossi@azienda.it"), "password1");
         Employee lucia = registerEmployee(new EmployeeDto("C0002", "Lucia", "Bianchi", "Consulente", "Team Nord", // Esegue: Employee lucia = registerEmployee(new EmployeeDto("C0002", "Lucia", "Bianchi", "Consulente", "Team Nord",
@@ -113,14 +135,19 @@ public class FxDataService { // Esegue: public class FxDataService {
         notificationsByEmployee.put(giulia.id(), FXCollections.observableArrayList( // Esegue: notificationsByEmployee.put(giulia.id(), FXCollections.observableArrayList(
                 new Notification("Nuovo messaggio", "Mario Rossi ha inviato un aggiornamento", LocalDateTime.now().minusMinutes(30), false))); // Esegue: new Notification("Nuovo messaggio", "Mario Rossi ha inviato un aggiornamento", LocalDateTime.now().minusMinutes(30), false)));
 
-        invoicesByEmployee.put(mario.id(), FXCollections.observableArrayList( // Esegue: invoicesByEmployee.put(mario.id(), FXCollections.observableArrayList(
-                new InvoiceRecord("FT-2024-001", LocalDate.of(2024, Month.NOVEMBER, 30), "Alfa S.p.A.", InvoiceState.EMESSA, new BigDecimal("1250.00")), // Esegue: new InvoiceRecord("FT-2024-001", LocalDate.of(2024, Month.NOVEMBER, 30), "Alfa S.p.A.", InvoiceState.EMESSA, new BigDecimal("1250.00")),
-                new InvoiceRecord("FT-2024-002", LocalDate.of(2024, Month.OCTOBER, 15), "Gamma SRL", InvoiceState.IN_SOLLECITO, new BigDecimal("3200.00")), // Esegue: new InvoiceRecord("FT-2024-002", LocalDate.of(2024, Month.OCTOBER, 15), "Gamma SRL", InvoiceState.IN_SOLLECITO, new BigDecimal("3200.00")),
-                new InvoiceRecord("FT-2024-003", LocalDate.of(2024, Month.SEPTEMBER, 10), "Delta Consulting", InvoiceState.SALDATA, new BigDecimal("890.00")))); // Esegue: new InvoiceRecord("FT-2024-003", LocalDate.of(2024, Month.SEPTEMBER, 10), "Delta Consulting", InvoiceState.SALDATA, new BigDecimal("890.00"))));
-        invoicesByEmployee.put(lucia.id(), FXCollections.observableArrayList( // Esegue: invoicesByEmployee.put(lucia.id(), FXCollections.observableArrayList(
-                new InvoiceRecord("FT-2024-004", LocalDate.of(2024, Month.NOVEMBER, 12), "Sigma Industries", InvoiceState.EMESSA, new BigDecimal("2100.00")))); // Esegue: new InvoiceRecord("FT-2024-004", LocalDate.of(2024, Month.NOVEMBER, 12), "Sigma Industries", InvoiceState.EMESSA, new BigDecimal("2100.00"))));
-        invoicesByEmployee.put(giulia.id(), FXCollections.observableArrayList( // Esegue: invoicesByEmployee.put(giulia.id(), FXCollections.observableArrayList(
-                new InvoiceRecord("FT-2024-005", LocalDate.of(2024, Month.AUGUST, 2), "Omega Spa", InvoiceState.SALDATA, new BigDecimal("5100.00")))); // Esegue: new InvoiceRecord("FT-2024-005", LocalDate.of(2024, Month.AUGUST, 2), "Omega Spa", InvoiceState.SALDATA, new BigDecimal("5100.00"))));
+        invoicesByEmployee.put(mario.id(), FXCollections.observableArrayList(
+                new InvoiceRecord("FT-2024-001", LocalDate.of(2024, Month.NOVEMBER, 30), "Alfa S.p.A.", InvoiceState.EMESSA,
+                        new BigDecimal("1250.00"), false),
+                new InvoiceRecord("FT-2024-002", LocalDate.of(2024, Month.OCTOBER, 15), "Gamma SRL",
+                        InvoiceState.IN_SOLLECITO, new BigDecimal("3200.00"), false),
+                new InvoiceRecord("FT-2024-003", LocalDate.of(2024, Month.SEPTEMBER, 10), "Delta Consulting",
+                        InvoiceState.SALDATA, new BigDecimal("890.00"), true)));
+        invoicesByEmployee.put(lucia.id(), FXCollections.observableArrayList(
+                new InvoiceRecord("FT-2024-004", LocalDate.of(2024, Month.NOVEMBER, 12), "Sigma Industries",
+                        InvoiceState.EMESSA, new BigDecimal("2100.00"), false)));
+        invoicesByEmployee.put(giulia.id(), FXCollections.observableArrayList(
+                new InvoiceRecord("FT-2024-005", LocalDate.of(2024, Month.AUGUST, 2), "Omega Spa",
+                        InvoiceState.SALDATA, new BigDecimal("5100.00"), true)));
 
         paymentsByEmployee.put(mario.id(), FXCollections.observableArrayList( // Esegue: paymentsByEmployee.put(mario.id(), FXCollections.observableArrayList(
                 new PaymentRecord("FT-2024-003", new BigDecimal("890.00"), LocalDate.of(2024, Month.OCTOBER, 5), "Bonifico"))); // Esegue: new PaymentRecord("FT-2024-003", new BigDecimal("890.00"), LocalDate.of(2024, Month.OCTOBER, 5), "Bonifico")));
@@ -148,7 +175,185 @@ public class FxDataService { // Esegue: public class FxDataService {
                         "Buongiorno, vi confermiamo il pagamento della fattura FT-2024-005.", // Esegue: "Buongiorno, vi confermiamo il pagamento della fattura FT-2024-005.",
                         LocalDateTime.now().minusDays(2), true))); // Esegue: LocalDateTime.now().minusDays(2), true)));
         initializeNextEmployeeSequence(); // Esegue: initializeNextEmployeeSequence();
+        revenueTrend.setAll(List.of(
+                new MonthlyRevenue(2024, 5, new BigDecimal("12000.00")),
+                new MonthlyRevenue(2024, 6, new BigDecimal("13800.00")),
+                new MonthlyRevenue(2024, 7, new BigDecimal("15100.00"))));
     } // Esegue: }
+
+    private boolean tryInitializeFromBackend() {
+        List<EmployeeSnapshot> snapshots = backendGateway.fetchEmployees();
+        if (snapshots.isEmpty()) {
+            return false;
+        }
+        resetState();
+        for (EmployeeSnapshot snapshot : snapshots) {
+            String identifier = resolveBackendIdentifier(snapshot);
+            EmployeeDto dto = new EmployeeDto(identifier,
+                    snapshot.firstName(), snapshot.lastName(), snapshot.role(), snapshot.team(), snapshot.email());
+            String password = snapshot.password() != null ? snapshot.password() : "";
+            Employee employee = registerEmployee(dto, password);
+            if (snapshot.id() != null) {
+                backendEmployeeIds.put(employee.id(), snapshot.id());
+            }
+        }
+        initializeNextEmployeeSequence();
+        refreshRevenueTrend();
+        return true;
+    }
+
+    private String resolveBackendIdentifier(EmployeeSnapshot snapshot) {
+        if (snapshot.username() != null && !snapshot.username().isBlank()) {
+            return snapshot.username().trim();
+        }
+        if (snapshot.id() != null) {
+            return "D" + snapshot.id();
+        }
+        return generateNextEmployeeId();
+    }
+
+    private void resetState() {
+        credentials.clear();
+        agendaByEmployee.clear();
+        notificationsByEmployee.clear();
+        invoicesByEmployee.clear();
+        paymentsByEmployee.clear();
+        emailsByEmployee.clear();
+        chatByTeam.clear();
+        availableTeams.clear();
+        teamNames.clear();
+        backendEmployeeIds.clear();
+        revenueTrend.clear();
+        chatSubscriptions.values().forEach(subscription -> {
+            try {
+                subscription.close();
+            } catch (Exception ignored) {
+            }
+        });
+        chatSubscriptions.clear();
+        desiredChatTeams.clear();
+        nextEmployeeSequence = 0;
+    }
+
+    private void refreshRevenueTrend() {
+        List<MonthlyRevenueSnapshot> snapshots = backendGateway.fetchMonthlyRevenue();
+        if (snapshots.isEmpty()) {
+            revenueTrend.clear();
+            return;
+        }
+        List<MonthlyRevenue> values = new ArrayList<>(snapshots.size());
+        for (MonthlyRevenueSnapshot snapshot : snapshots) {
+            if (snapshot == null) {
+                continue;
+            }
+            int year = snapshot.year() != null ? snapshot.year() : 0;
+            int month = snapshot.month() != null ? snapshot.month() : 0;
+            BigDecimal total = snapshot.total() != null ? snapshot.total() : BigDecimal.ZERO;
+            values.add(new MonthlyRevenue(year, month, total));
+        }
+        revenueTrend.setAll(values);
+    }
+
+    private void loadRemoteDataFor(Employee employee) {
+        if (employee == null || backendGateway == null) {
+            return;
+        }
+        if (backendEmployeeIds.isEmpty()) {
+            tryInitializeFromBackend();
+        }
+        Long backendId = backendEmployeeIds.get(employee.id());
+        if (backendId == null) {
+            backendId = parseBackendId(employee.id());
+            if (backendId != null) {
+                backendEmployeeIds.put(employee.id(), backendId);
+            }
+        }
+        if (backendId != null) {
+            List<AgendaSnapshot> agendaSnapshots = backendGateway.fetchAgenda(backendId);
+            List<AgendaItem> agendaItems = new ArrayList<>(agendaSnapshots.size());
+            for (AgendaSnapshot snapshot : agendaSnapshots) {
+                if (snapshot != null) {
+                    agendaItems.add(new AgendaItem(snapshot.start(), snapshot.end(),
+                            snapshot.title(), snapshot.description()));
+                }
+            }
+            getAgendaFor(employee).setAll(agendaItems);
+
+            List<NotificationSnapshot> notificationSnapshots = backendGateway.fetchNotifications(backendId);
+            List<Notification> notifications = new ArrayList<>(notificationSnapshots.size());
+            for (NotificationSnapshot snapshot : notificationSnapshots) {
+                Notification notification = toNotification(snapshot);
+                if (notification != null) {
+                    notifications.add(notification);
+                }
+            }
+            getNotificationsFor(employee).setAll(notifications);
+        }
+
+        List<InvoiceRecord> invoices = new ArrayList<>();
+        for (InvoiceSnapshot snapshot : backendGateway.fetchFattureVendita()) {
+            InvoiceRecord record = toInvoiceRecord(snapshot, false);
+            if (record != null) {
+                invoices.add(record);
+            }
+        }
+        for (InvoiceSnapshot snapshot : backendGateway.fetchFattureRegistrate()) {
+            InvoiceRecord record = toInvoiceRecord(snapshot, true);
+            if (record != null) {
+                invoices.add(record);
+            }
+        }
+        getInvoicesFor(employee).setAll(invoices);
+
+        List<PaymentRecord> payments = new ArrayList<>();
+        for (PaymentSnapshot snapshot : backendGateway.fetchPagamenti()) {
+            PaymentRecord record = toPaymentRecord(snapshot);
+            if (record != null) {
+                payments.add(record);
+            }
+        }
+        getPaymentsFor(employee).setAll(payments);
+        refreshRevenueTrend();
+    }
+
+    private Notification toNotification(NotificationSnapshot snapshot) {
+        if (snapshot == null) {
+            return null;
+        }
+        return new Notification(snapshot.title(), snapshot.message(), snapshot.createdAt(), snapshot.read());
+    }
+
+    private InvoiceRecord toInvoiceRecord(InvoiceSnapshot snapshot, boolean registered) {
+        if (snapshot == null) {
+            return null;
+        }
+        InvoiceState state = InvoiceState.fromPersistence(snapshot.state());
+        BigDecimal total = snapshot.total() != null ? snapshot.total() : BigDecimal.ZERO;
+        return new InvoiceRecord(snapshot.number(), snapshot.issueDate(), snapshot.customer(), state, total, registered);
+    }
+
+    private PaymentRecord toPaymentRecord(PaymentSnapshot snapshot) {
+        if (snapshot == null) {
+            return null;
+        }
+        BigDecimal amount = snapshot.amount() != null ? snapshot.amount() : BigDecimal.ZERO;
+        return new PaymentRecord(snapshot.invoiceNumber(), amount, snapshot.paymentDate(), snapshot.method());
+    }
+
+    private Long parseBackendId(String identifier) {
+        if (identifier == null) {
+            return null;
+        }
+        String digits = identifier.trim().replaceAll("[^0-9]", "");
+        if (digits.isEmpty()) {
+            return null;
+        }
+        try {
+            return Long.parseLong(digits);
+        } catch (NumberFormatException ex) {
+            return null;
+        }
+    }
 
     private Employee registerEmployee(EmployeeDto dto, String password) { // Esegue: private Employee registerEmployee(EmployeeDto dto, String password) {
         EmployeeDto normalized = dto; // Esegue: EmployeeDto normalized = dto;
@@ -263,6 +468,10 @@ public class FxDataService { // Esegue: public class FxDataService {
         return availableRolesView; // Esegue: return availableRolesView;
     } // Esegue: }
 
+    public ObservableList<MonthlyRevenue> getRevenueTrend() {
+        return revenueTrendView;
+    }
+
     private String formatGeneratedId(int sequence) { // Esegue: private String formatGeneratedId(int sequence) {
         return GENERATED_ID_PREFIX + String.format("%0" + GENERATED_ID_DIGITS + "d", sequence); // Esegue: return GENERATED_ID_PREFIX + String.format("%0" + GENERATED_ID_DIGITS + "d", sequence);
     } // Esegue: }
@@ -274,6 +483,7 @@ public class FxDataService { // Esegue: public class FxDataService {
             return Optional.empty(); // Esegue: return Optional.empty();
         } // Esegue: }
         currentEmployee = credential.employee(); // Esegue: currentEmployee = credential.employee();
+        loadRemoteDataFor(currentEmployee);
         return Optional.of(currentEmployee); // Esegue: return Optional.of(currentEmployee);
     } // Esegue: }
 

@@ -9,5 +9,5 @@ import com.example.GestoreAgenti.invoice.InvoiceState; // Esegue: import com.exa
  * Rappresenta una fattura gestita nelle schermate JavaFX.
  */
 public record InvoiceRecord(String number, LocalDate issueDate, String customer, // Esegue: public record InvoiceRecord(String number, LocalDate issueDate, String customer,
-                            InvoiceState state, BigDecimal total) { // Esegue: InvoiceState state, BigDecimal total) {
+                            InvoiceState state, BigDecimal total, boolean registered) { // Esegue: InvoiceState state, BigDecimal total) {
 } // Esegue: }

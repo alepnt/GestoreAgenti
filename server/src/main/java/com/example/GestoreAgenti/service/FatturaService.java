@@ -16,6 +16,7 @@ import com.example.GestoreAgenti.model.state.BozzaState; // Importa com.example.
 import com.example.GestoreAgenti.model.state.EmessaState; // Importa com.example.GestoreAgenti.model.state.EmessaState per abilitare le funzionalità utilizzate nel file.
 import com.example.GestoreAgenti.model.state.PagataState; // Importa com.example.GestoreAgenti.model.state.PagataState per abilitare le funzionalità utilizzate nel file.
 import com.example.GestoreAgenti.repository.FatturaRepository; // Importa com.example.GestoreAgenti.repository.FatturaRepository per abilitare le funzionalità utilizzate nel file.
+import com.example.GestoreAgenti.repository.projection.MonthlyRevenueProjection;
 import com.example.GestoreAgenti.service.crud.AbstractCrudService; // Importa com.example.GestoreAgenti.service.crud.AbstractCrudService per abilitare le funzionalità utilizzate nel file.
 import com.example.GestoreAgenti.service.crud.BeanCopyCrudEntityHandler; // Importa com.example.GestoreAgenti.service.crud.BeanCopyCrudEntityHandler per abilitare le funzionalità utilizzate nel file.
 
@@ -87,6 +88,14 @@ public class FatturaService extends AbstractCrudService<Fattura, Long> { // Defi
         return findAll(); // Restituisce il risultato dell'espressione findAll().
     } // Chiude il blocco di codice precedente.
 
+    public List<Fattura> getFattureVendita() {
+        return ((FatturaRepository) repository()).findByRegistrataFalseOrderByDataEmissioneDesc();
+    }
+
+    public List<Fattura> getFattureRegistrate() {
+        return ((FatturaRepository) repository()).findByRegistrataTrueOrderByDataEmissioneDesc();
+    }
+
     public Optional<Fattura> getFatturaById(Long id) { // Definisce il metodo getFatturaById che supporta la logica di dominio.
         return findOptionalById(id); // Restituisce il risultato dell'espressione findOptionalById(id).
     } // Chiude il blocco di codice precedente.
@@ -123,6 +132,18 @@ public class FatturaService extends AbstractCrudService<Fattura, Long> { // Defi
         return repository().save(fattura); // Restituisce il risultato dell'espressione repository().save(fattura).
     } // Chiude il blocco di codice precedente.
 
+    public Fattura registraFattura(Long id) {
+        Fattura fattura = findRequiredById(id);
+        fattura.setRegistrata(true);
+        return repository().save(fattura);
+    }
+
+    public Fattura annullaRegistrazione(Long id) {
+        Fattura fattura = findRequiredById(id);
+        fattura.setRegistrata(false);
+        return repository().save(fattura);
+    }
+
     public Fattura creaDaContratto(Contratto contratto, String numeroFattura, LocalDate dataEmissione, BigDecimal aliquotaIva) { // Definisce il metodo creaDaContratto che supporta la logica di dominio.
         Fattura fattura = GeneratoreFattura.getInstance() // Esegue l'istruzione necessaria alla logica applicativa.
                 .creaDaContratto(contratto, numeroFattura, dataEmissione, aliquotaIva); // Esegue l'istruzione terminata dal punto e virgola.
@@ -132,5 +153,12 @@ public class FatturaService extends AbstractCrudService<Fattura, Long> { // Defi
     public Fattura creaDaContratto(Contratto contratto, String numeroFattura, BigDecimal aliquotaIva) { // Definisce il metodo creaDaContratto che supporta la logica di dominio.
         return creaDaContratto(contratto, numeroFattura, LocalDate.now(), aliquotaIva); // Restituisce il risultato dell'espressione creaDaContratto(contratto, numeroFattura, LocalDate.now(), aliquotaIva).
     } // Chiude il blocco di codice precedente.
+
+    public List<com.example.GestoreAgenti.controller.dto.MonthlyRevenueDto> getAndamentoFatturato(LocalDate from, LocalDate to) {
+        List<MonthlyRevenueProjection> projections = ((FatturaRepository) repository()).sommaTotalePerMese(from, to);
+        return projections.stream()
+                .map(p -> new com.example.GestoreAgenti.controller.dto.MonthlyRevenueDto(p.getAnno(), p.getMese(), p.getTotale()))
+                .toList();
+    }
 } // Chiude il blocco di codice precedente.
 

@@ -155,6 +155,14 @@
             <AnchorPane fx:id="fatturePane" visible="false" managed="false">
                 <VBox spacing="15" AnchorPane.topAnchor="20" AnchorPane.leftAnchor="20" AnchorPane.rightAnchor="20" AnchorPane.bottomAnchor="20">
                     <Label text="Fatture" styleClass="section-title"/>
+                    <LineChart fx:id="revenueTrendChart" legendVisible="false" prefHeight="200">
+                        <xAxis>
+                            <CategoryAxis label="Mese"/>
+                        </xAxis>
+                        <yAxis>
+                            <NumberAxis label="Totale"/>
+                        </yAxis>
+                    </LineChart>
                     <TabPane tabClosingPolicy="UNAVAILABLE">
                         <tabs>
                             <Tab text="Emesse">
@@ -189,6 +197,18 @@
                                             <TableColumn fx:id="invoicePaidDateColumn" text="Data" prefWidth="140"/>
                                             <TableColumn fx:id="invoicePaidCustomerColumn" text="Cliente" prefWidth="200"/>
                                             <TableColumn fx:id="invoicePaidTotalColumn" text="Totale" prefWidth="120"/>
+                                        </columns>
+                                    </TableView>
+                                </content>
+                            </Tab>
+                            <Tab text="Registrate">
+                                <content>
+                                    <TableView fx:id="invoicesRegisteredTable">
+                                        <columns>
+                                            <TableColumn fx:id="invoiceRegisteredNumberColumn" text="Numero" prefWidth="140"/>
+                                            <TableColumn fx:id="invoiceRegisteredDateColumn" text="Data" prefWidth="140"/>
+                                            <TableColumn fx:id="invoiceRegisteredCustomerColumn" text="Cliente" prefWidth="200"/>
+                                            <TableColumn fx:id="invoiceRegisteredTotalColumn" text="Totale" prefWidth="120"/>
                                         </columns>
                                     </TableView>
                                 </content>

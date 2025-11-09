@@ -21,7 +21,7 @@
             </padding>
             <Label text="Gestore Agenti" styleClass="login-title"/>
             <Label text="Accedi con le credenziali aziendali" wrapText="true" styleClass="login-subtitle"/>
-            <TextField fx:id="employeeIdField" promptText="ID dipendente"/>
+            <TextField fx:id="employeeIdField" promptText="Username aziendale"/>
             <PasswordField fx:id="passwordField" promptText="Password"/>
             <Button text="Accedi" maxWidth="Infinity" onAction="#handleLogin"/>
             <Button text="Registrati" maxWidth="Infinity" onAction="#handleRegister"/>

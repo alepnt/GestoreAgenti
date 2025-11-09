@@ -93,17 +93,49 @@ public class AgentDomainFacade implements AgentOperations { // Definisce la clas
         return Optional.of(new AgentOverview(agent, clienti, contratti, provvigioni, assignedTeam)); // Restituisce il risultato dell'espressione Optional.of(new AgentOverview(agent, clienti, contratti, provvigioni, assignedTeam)).
     } // Chiude il blocco di codice precedente.
 
-    @Override // Applica l'annotazione @Override per configurare il componente.
-    public Dipendente assignAgentToTeam(Long agentId, Long teamId) { // Definisce il metodo assignAgentToTeam che supporta la logica di dominio.
-        Dipendente agent = dipendenteService.findById(agentId); // Assegna il valore calcolato alla variabile Dipendente agent.
-        if (agent == null) { // Valuta la condizione per controllare il flusso applicativo.
-            throw new IllegalArgumentException("Dipendente non trovato: " + agentId); // Propaga un'eccezione verso il chiamante.
-        } // Chiude il blocco di codice precedente.
-        Team team = teamService.findById(teamId) // Esegue l'istruzione necessaria alla logica applicativa.
-                .orElseThrow(() -> new IllegalArgumentException("Team non trovato: " + teamId)); // Esegue l'istruzione terminata dal punto e virgola.
-        agent.setTeam(team.getProvincia()); // Esegue l'istruzione terminata dal punto e virgola.
-        return dipendenteService.update(agentId, agent); // Restituisce il risultato dell'espressione dipendenteService.update(agentId, agent).
-    } // Chiude il blocco di codice precedente.
+    @Override
+    public Dipendente assignAgentToTeam(Long agentId, Long teamId) {
+        Dipendente agent = dipendenteService.findById(agentId);
+        if (agent == null) {
+            throw new IllegalArgumentException("Dipendente non trovato: " + agentId);
+        }
+        Team team = teamService.findById(teamId)
+                .orElseThrow(() -> new IllegalArgumentException("Team non trovato: " + teamId));
+
+        String teamKey = team.getProvincia();
+        List<Dipendente> membri = new ArrayList<>(dipendenteService.findByTeam(teamKey));
+        membri.removeIf(membro -> membro.getId() != null && membro.getId().equals(agentId));
+        membri.add(agent);
+
+        if (membri.size() > 6) {
+            throw new IllegalStateException("Ogni team può contenere al massimo sei agenti");
+        }
+
+        long seniorCount = membri.stream().filter(this::isSenior).count();
+        if (seniorCount < 3) {
+            throw new IllegalStateException("Ogni team deve includere almeno tre agenti senior");
+        }
+
+        boolean composizioneValida = membri.stream().allMatch(membro -> isSenior(membro) || isJuniorOrIntern(membro));
+        if (!composizioneValida) {
+            throw new IllegalStateException("I membri non senior devono essere classificati come Junior o Stagista");
+        }
+
+        agent.setTeam(teamKey);
+        return dipendenteService.update(agentId, agent);
+    }
+
+    private boolean isSenior(Dipendente dipendente) {
+        return dipendente.getRanking() != null && dipendente.getRanking().equalsIgnoreCase("Senior");
+    }
+
+    private boolean isJuniorOrIntern(Dipendente dipendente) {
+        if (dipendente.getRanking() == null) {
+            return false;
+        }
+        String ranking = dipendente.getRanking().trim();
+        return ranking.equalsIgnoreCase("Junior") || ranking.equalsIgnoreCase("Stagista");
+    }
 
     @Override // Applica l'annotazione @Override per configurare il componente.
     public TeamHierarchyNode buildHierarchy() { // Definisce il metodo buildHierarchy che supporta la logica di dominio.

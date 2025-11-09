@@ -1,86 +1,89 @@
-package com.example.GestoreAgenti.model; // Definisce il pacchetto com.example.GestoreAgenti.model a cui appartiene questa classe.
+package com.example.GestoreAgenti.model;
 
-import jakarta.persistence.*; // Importa tutte le annotazioni JPA necessarie per mappare l'entità nel database.
-import java.math.BigDecimal; // Importa BigDecimal per rappresentare importi monetari con precisione.
-import java.time.LocalDate; // Importa LocalDate per gestire le date senza informazioni temporali.
+import jakarta.persistence.*;
+import java.math.BigDecimal;
+import java.time.LocalDate;
 
-import com.example.GestoreAgenti.model.builder.ContrattoBuilder; // Importa il builder per creare istanze coerenti di Contratto.
+import com.example.GestoreAgenti.model.builder.ContrattoBuilder;
 
-@Entity // Applica l'annotazione @Entity per configurare il componente.
-@Table(name = "contratto") // Applica l'annotazione @Table per configurare il componente.
-public class Contratto implements Prototype<Contratto> { // Dichiara la classe Contratto che incapsula la logica del dominio.
+@Entity
+@Table(name = "contratto")
+public class Contratto implements Prototype<Contratto> {
 
-    @Id // Applica l'annotazione @Id per configurare il componente.
-    @GeneratedValue(strategy = GenerationType.IDENTITY) // Applica l'annotazione @GeneratedValue per configurare il componente.
-    private Long idContratto; // Memorizza l'ID del contratto dell'entità.
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long idContratto;
 
-    @ManyToOne // Applica l'annotazione @ManyToOne per configurare il componente.
-    @JoinColumn(name = "id_cliente", nullable = false) // Applica l'annotazione @JoinColumn per configurare il componente.
-    private Cliente cliente; // Memorizza il cliente associato all'entità.
+    @ManyToOne
+    @JoinColumn(name = "id_cliente", nullable = false)
+    private Cliente cliente;
 
-    @ManyToOne // Applica l'annotazione @ManyToOne per configurare il componente.
-    @JoinColumn(name = "id_dipendente", nullable = false) // Applica l'annotazione @JoinColumn per configurare il componente.
-    private Dipendente dipendente; // Memorizza il dipendente associato all'entità.
+    @ManyToOne
+    @JoinColumn(name = "id_dipendente", nullable = false)
+    private Dipendente dipendente;
 
-    @ManyToOne // Applica l'annotazione @ManyToOne per configurare il componente.
-    @JoinColumn(name = "id_servizio", nullable = false) // Applica l'annotazione @JoinColumn per configurare il componente.
-    private Servizio servizio; // Memorizza il servizio associato all'entità.
+    @ManyToOne
+    @JoinColumn(name = "id_servizio", nullable = false)
+    private Servizio servizio;
 
-    private LocalDate dataInizio; // Memorizza la data di inizio dell'entità.
-    private LocalDate dataFine; // Memorizza la data di fine dell'entità.
+    private LocalDate dataInizio;
+    private LocalDate dataFine;
 
-    private BigDecimal importo; // Memorizza l'importo dell'entità.
+    private BigDecimal importo;
 
-    private String stato; // Memorizza lo stato dell'entità.
+    private String stato;
 
-    @Column(columnDefinition = "TEXT") // Applica l'annotazione @Column per configurare il componente.
-    private String note; // Memorizza le note dell'entità.
+    @Column(columnDefinition = "TEXT")
+    private String note;
 
-    // Getters e Setters
-    public Long getIdContratto() { return idContratto; } // Restituisce l'ID del contratto dell'entità.
-    public void setIdContratto(Long idContratto) { this.idContratto = idContratto; } // Imposta l'ID del contratto per l'entità.
+    private boolean provvigioneAllaFirma = true;
 
-    public Cliente getCliente() { return cliente; } // Restituisce il cliente dell'entità.
-    public void setCliente(Cliente cliente) { this.cliente = cliente; } // Imposta il cliente per l'entità.
+    public Long getIdContratto() { return idContratto; }
+    public void setIdContratto(Long idContratto) { this.idContratto = idContratto; }
 
-    public Dipendente getDipendente() { return dipendente; } // Restituisce il dipendente dell'entità.
-    public void setDipendente(Dipendente dipendente) { this.dipendente = dipendente; } // Imposta il dipendente per l'entità.
+    public Cliente getCliente() { return cliente; }
+    public void setCliente(Cliente cliente) { this.cliente = cliente; }
 
-    public Servizio getServizio() { return servizio; } // Restituisce il servizio dell'entità.
-    public void setServizio(Servizio servizio) { this.servizio = servizio; } // Imposta il servizio per l'entità.
+    public Dipendente getDipendente() { return dipendente; }
+    public void setDipendente(Dipendente dipendente) { this.dipendente = dipendente; }
 
-    public LocalDate getDataInizio() { return dataInizio; } // Restituisce la data di inizio dell'entità.
-    public void setDataInizio(LocalDate dataInizio) { this.dataInizio = dataInizio; } // Imposta la data di inizio per l'entità.
+    public Servizio getServizio() { return servizio; }
+    public void setServizio(Servizio servizio) { this.servizio = servizio; }
 
-    public LocalDate getDataFine() { return dataFine; } // Restituisce la data di fine dell'entità.
-    public void setDataFine(LocalDate dataFine) { this.dataFine = dataFine; } // Imposta la data di fine per l'entità.
+    public LocalDate getDataInizio() { return dataInizio; }
+    public void setDataInizio(LocalDate dataInizio) { this.dataInizio = dataInizio; }
 
-    public BigDecimal getImporto() { return importo; } // Restituisce l'importo dell'entità.
-    public void setImporto(BigDecimal importo) { this.importo = importo; } // Imposta l'importo per l'entità.
+    public LocalDate getDataFine() { return dataFine; }
+    public void setDataFine(LocalDate dataFine) { this.dataFine = dataFine; }
 
-    public String getStato() { return stato; } // Restituisce lo stato dell'entità.
-    public void setStato(String stato) { this.stato = stato; } // Imposta lo stato per l'entità.
+    public BigDecimal getImporto() { return importo; }
+    public void setImporto(BigDecimal importo) { this.importo = importo; }
 
-    public String getNote() { return note; } // Restituisce le note dell'entità.
-    public void setNote(String note) { this.note = note; } // Imposta le note per l'entità.
+    public String getStato() { return stato; }
+    public void setStato(String stato) { this.stato = stato; }
 
-    @Override // Applica l'annotazione @Override per configurare il componente.
-    public Contratto copia() { // Definisce il metodo copia che supporta la logica di dominio.
-        Contratto copia = new Contratto(); // Assegna il valore calcolato alla variabile Contratto copia.
-        copia.setCliente(this.cliente); // Esegue l'istruzione terminata dal punto e virgola.
-        copia.setDipendente(this.dipendente); // Esegue l'istruzione terminata dal punto e virgola.
-        copia.setServizio(this.servizio); // Esegue l'istruzione terminata dal punto e virgola.
-        copia.setDataInizio(this.dataInizio); // Esegue l'istruzione terminata dal punto e virgola.
-        copia.setDataFine(this.dataFine); // Esegue l'istruzione terminata dal punto e virgola.
-        copia.setImporto(this.importo); // Esegue l'istruzione terminata dal punto e virgola.
-        copia.setStato(this.stato); // Esegue l'istruzione terminata dal punto e virgola.
-        copia.setNote(this.note); // Esegue l'istruzione terminata dal punto e virgola.
-        return copia; // Restituisce il risultato dell'espressione copia.
-    } // Duplica lo stato significativo del contratto senza propagare l'identificativo.
+    public String getNote() { return note; }
+    public void setNote(String note) { this.note = note; }
 
-    public static ContrattoBuilder builder(Cliente cliente, Dipendente dipendente, Servizio servizio) { // Definisce il metodo builder che supporta la logica di dominio.
-        return ContrattoBuilder.nuovoContratto(cliente, dipendente, servizio); // Restituisce il risultato dell'espressione ContrattoBuilder.nuovoContratto(cliente, dipendente, servizio).
-    } // Espone un factory method per creare builder coerenti con il pattern creazionale introdotto.
-} // Chiude il blocco di codice precedente.
+    public boolean isProvvigioneAllaFirma() { return provvigioneAllaFirma; }
+    public void setProvvigioneAllaFirma(boolean provvigioneAllaFirma) { this.provvigioneAllaFirma = provvigioneAllaFirma; }
 
+    @Override
+    public Contratto copia() {
+        Contratto copia = new Contratto();
+        copia.setCliente(this.cliente);
+        copia.setDipendente(this.dipendente);
+        copia.setServizio(this.servizio);
+        copia.setDataInizio(this.dataInizio);
+        copia.setDataFine(this.dataFine);
+        copia.setImporto(this.importo);
+        copia.setStato(this.stato);
+        copia.setNote(this.note);
+        copia.setProvvigioneAllaFirma(this.provvigioneAllaFirma);
+        return copia;
+    }
 
+    public static ContrattoBuilder builder(Cliente cliente, Dipendente dipendente, Servizio servizio) {
+        return ContrattoBuilder.nuovoContratto(cliente, dipendente, servizio);
+    }
+}

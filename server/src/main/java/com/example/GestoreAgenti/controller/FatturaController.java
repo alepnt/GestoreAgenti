@@ -1,51 +1,55 @@
-package com.example.GestoreAgenti.controller; // Definisce il pacchetto com.example.GestoreAgenti.controller a cui appartiene questa classe.
+package com.example.GestoreAgenti.controller;
 
 import java.time.LocalDate;
-import java.util.List; // Importa List per gestire insiemi ordinati di elementi.
+import java.util.List;
 
-import org.springframework.core.io.ByteArrayResource; // Importa ByteArrayResource per fornire file binari come risposta.
-import org.springframework.core.io.Resource; // Importa Resource per modellare la risposta del file.
-import org.springframework.http.HttpHeaders; // Importa HttpHeaders per configurare gli header della risposta.
-import org.springframework.http.MediaType; // Importa MediaType per descrivere il tipo di contenuto.
-import org.springframework.http.ResponseEntity; // Importa ResponseEntity per restituire risposte HTTP ricche di metadati.
-import org.springframework.web.bind.annotation.DeleteMapping; // Importa DeleteMapping per mappare le richieste HTTP DELETE.
-import org.springframework.web.bind.annotation.GetMapping; // Importa GetMapping per mappare le richieste HTTP GET.
-import org.springframework.web.bind.annotation.PathVariable; // Importa PathVariable per leggere gli identificativi dalla rotta.
-import org.springframework.web.bind.annotation.PostMapping; // Importa PostMapping per mappare le richieste HTTP POST.
-import org.springframework.web.bind.annotation.PutMapping; // Importa PutMapping per mappare le richieste HTTP PUT.
-import org.springframework.web.bind.annotation.RequestBody; // Importa RequestBody per deserializzare il corpo della richiesta.
-import org.springframework.web.bind.annotation.RequestMapping; // Importa RequestMapping per definire il prefisso delle rotte del controller.
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController; // Importa RestController per esporre il controller come componente REST.
+import org.springframework.web.bind.annotation.RestController;
 
 import com.example.GestoreAgenti.controller.dto.MonthlyRevenueDto;
-import com.example.GestoreAgenti.model.Fattura; // Importa la classe Fattura per accedere alle informazioni di fatturazione.
-import com.example.GestoreAgenti.service.FatturaService; // Importa FatturaService per coordinare la gestione delle fatture.
-import com.example.GestoreAgenti.service.report.FatturaExcelReportService; // Importa il servizio per generare il report Excel delle fatture.
-import com.example.GestoreAgenti.service.report.FatturaPdfReportService; // Importa il servizio per generare il PDF delle fatture.
+import com.example.GestoreAgenti.model.Fattura;
+import com.example.GestoreAgenti.service.FatturaService;
+import com.example.GestoreAgenti.service.report.FatturaExcelReportService;
+import com.example.GestoreAgenti.service.report.FatturaPdfReportService;
 
-@RestController // Applica l'annotazione @RestController per configurare il componente.
-@RequestMapping("/api/fatture") // Applica l'annotazione @RequestMapping per configurare il componente.
-public class FatturaController { // Dichiara la classe FatturaController che incapsula la logica del dominio.
+/**
+ * Gestisce le fatture offrendo CRUD, reportistica e transizioni di stato.
+ */
+@RestController
+@RequestMapping("/api/fatture")
+public class FatturaController {
 
-    private static final MediaType EXCEL_MEDIA_TYPE = MediaType.parseMediaType( // Definisce il metodo MediaType.parseMediaType che supporta la logica di dominio.
-            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"); // Media type dell'Excel generato.
+    private static final MediaType EXCEL_MEDIA_TYPE = MediaType
+            .parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
 
-    private final FatturaService service; // Mantiene il riferimento al servizio applicativo FatturaService per delegare le operazioni di business.
-    private final FatturaExcelReportService reportService; // Servizio per generare il layout Excel differenziato per tipo di fattura.
-    private final FatturaPdfReportService pdfReportService; // Servizio per generare il template PDF condiviso delle fatture.
+    private final FatturaService service;
+    private final FatturaExcelReportService reportService;
+    private final FatturaPdfReportService pdfReportService;
 
-    public FatturaController(FatturaService service, FatturaExcelReportService reportService, // Definisce il metodo FatturaController che supporta la logica di dominio.
-            FatturaPdfReportService pdfReportService) { // Costruttore della classe FatturaController che inizializza le dipendenze richieste.
-        this.service = service; // Aggiorna il campo dell'istanza con il valore ricevuto.
-        this.reportService = reportService; // Aggiorna il campo dell'istanza con il servizio dedicato ai report Excel.
-        this.pdfReportService = pdfReportService; // Aggiorna il campo dell'istanza con il servizio dedicato al PDF.
-    } // Chiude il blocco di codice precedente.
+    public FatturaController(FatturaService service, FatturaExcelReportService reportService,
+            FatturaPdfReportService pdfReportService) {
+        this.service = service;
+        this.reportService = reportService;
+        this.pdfReportService = pdfReportService;
+    }
 
-    @GetMapping // Applica l'annotazione @GetMapping per configurare il componente.
-    public List<Fattura> getAllFatture() { // Restituisce la lista di le fatture gestiti dal sistema.
-        return service.getAllFatture(); // Restituisce il risultato dell'elaborazione al chiamante.
-    } // Chiude il blocco di codice precedente.
+    /** Restituisce tutte le fatture presenti a sistema. */
+    @GetMapping
+    public List<Fattura> getAllFatture() {
+        return service.getAllFatture();
+    }
 
     @GetMapping("/vendita")
     public List<Fattura> getFattureVendita() {
@@ -74,62 +78,71 @@ public class FatturaController { // Dichiara la classe FatturaController che inc
         return service.getAndamentoFatturato(from, to);
     }
 
-    @GetMapping(value = "/report", produces = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet") // Applica l'annotazione @GetMapping per esporre il report Excel.
-    public ResponseEntity<Resource> esportaReportFatture() { // Restituisce il file Excel generato.
-        byte[] workbook = reportService.generaReport(service.getAllFatture()); // Genera il report aggregando i layout differenti.
-        return ResponseEntity.ok() // Configura la risposta HTTP di successo.
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=fatture-report.xlsx") // Suggerisce il nome del file scaricato.
-                .contentType(EXCEL_MEDIA_TYPE) // Imposta il tipo di contenuto dell'Excel.
-                .body(new ByteArrayResource(workbook)); // Restituisce il file al client.
-    } // Chiude il blocco di codice precedente.
+    /** Esporta un report Excel contenente tutte le fatture. */
+    @GetMapping(value = "/report", produces = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    public ResponseEntity<Resource> esportaReportFatture() {
+        byte[] workbook = reportService.generaReport(service.getAllFatture());
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=fatture-report.xlsx")
+                .contentType(EXCEL_MEDIA_TYPE)
+                .body(new ByteArrayResource(workbook));
+    }
 
-    @GetMapping(value = "/{id}/pdf", produces = MediaType.APPLICATION_PDF_VALUE) // Applica l'annotazione @GetMapping per esporre il report PDF della fattura.
-    public ResponseEntity<Resource> esportaFatturaPdf(@PathVariable Long id) { // Restituisce il template PDF generato.
-        Fattura fattura = service.findRequiredById(id); // Recupera la fattura da rappresentare.
-        byte[] pdf = pdfReportService.generaPdf(fattura); // Genera il PDF utilizzando il template condiviso.
-        String filename = "fattura-" + (fattura.getNumeroFattura() != null ? fattura.getNumeroFattura() : id) + ".pdf"; // Determina il nome del file.
-        return ResponseEntity.ok() // Configura la risposta HTTP di successo.
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + filename) // Suggerisce il nome del file scaricato.
-                .contentType(MediaType.APPLICATION_PDF) // Imposta il tipo di contenuto del PDF.
-                .body(new ByteArrayResource(pdf)); // Restituisce il file al client.
-    } // Chiude il blocco di codice precedente.
+    /** Produce il PDF della fattura indicata. */
+    @GetMapping(value = "/{id}/pdf", produces = MediaType.APPLICATION_PDF_VALUE)
+    public ResponseEntity<Resource> esportaFatturaPdf(@PathVariable Long id) {
+        Fattura fattura = service.findRequiredById(id);
+        byte[] pdf = pdfReportService.generaPdf(fattura);
+        String filename = "fattura-" + (fattura.getNumeroFattura() != null ? fattura.getNumeroFattura() : id) + ".pdf";
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + filename)
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(new ByteArrayResource(pdf));
+    }
 
-    @GetMapping("/{id}") // Applica l'annotazione @GetMapping per configurare il componente.
-    public ResponseEntity<Fattura> getFatturaById(@PathVariable Long id) { // Restituisce i dati di fattura filtrati in base a ID.
-        return service.getFatturaById(id) // Restituisce il risultato dell'elaborazione al chiamante.
-                .map(ResponseEntity::ok) // Gestisce la risposta HTTP per l'endpoint REST.
-                .orElse(ResponseEntity.notFound().build()); // Gestisce la risposta HTTP per l'endpoint REST.
-    } // Chiude il blocco di codice precedente.
+    /** Restituisce la fattura individuata dall'ID specificato. */
+    @GetMapping("/{id}")
+    public ResponseEntity<Fattura> getFatturaById(@PathVariable Long id) {
+        return service.getFatturaById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
 
-    @PostMapping // Applica l'annotazione @PostMapping per configurare il componente.
-    public Fattura createFattura(@RequestBody Fattura fattura) { // Metodo create fattura che gestisce la logica prevista.
-        return service.createFattura(fattura); // Restituisce il risultato dell'elaborazione al chiamante.
-    } // Chiude il blocco di codice precedente.
+    /** Registra una nuova fattura. */
+    @PostMapping
+    public Fattura createFattura(@RequestBody Fattura fattura) {
+        return service.createFattura(fattura);
+    }
 
-    @PutMapping("/{id}") // Applica l'annotazione @PutMapping per configurare il componente.
-    public Fattura updateFattura(@PathVariable Long id, @RequestBody Fattura fattura) { // Aggiorna la fattura applicando i dati forniti.
-        return service.updateFattura(id, fattura); // Restituisce il risultato dell'elaborazione al chiamante.
-    } // Chiude il blocco di codice precedente.
+    /** Aggiorna le informazioni della fattura specificata. */
+    @PutMapping("/{id}")
+    public Fattura updateFattura(@PathVariable Long id, @RequestBody Fattura fattura) {
+        return service.updateFattura(id, fattura);
+    }
 
-    @DeleteMapping("/{id}") // Applica l'annotazione @DeleteMapping per configurare il componente.
-    public ResponseEntity<Void> deleteFattura(@PathVariable Long id) { // Elimina la fattura identificato dall'input.
-        service.deleteFattura(id); // Esegue questa istruzione come parte della logica del metodo.
-        return ResponseEntity.noContent().build(); // Restituisce il risultato dell'elaborazione al chiamante.
-    } // Chiude il blocco di codice precedente.
+    /** Elimina la fattura indicata dal chiamante. */
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteFattura(@PathVariable Long id) {
+        service.deleteFattura(id);
+        return ResponseEntity.noContent().build();
+    }
 
-    @PostMapping("/{id}/emetti") // Applica l'annotazione @PostMapping per configurare il componente.
-    public Fattura emettiFattura(@PathVariable Long id) { // Richiede l'emissione della fattura rispettando le regole di stato.
-        return service.emettiFattura(id); // Delega la logica di transizione al servizio applicativo.
-    } // Chiude il blocco di codice precedente.
+    /** Passa la fattura in stato "emessa" se consentito. */
+    @PostMapping("/{id}/emetti")
+    public Fattura emettiFattura(@PathVariable Long id) {
+        return service.emettiFattura(id);
+    }
 
-    @PostMapping("/{id}/paga") // Applica l'annotazione @PostMapping per configurare il componente.
-    public Fattura pagaFattura(@PathVariable Long id) { // Richiede il pagamento della fattura rispettando le regole di stato.
-        return service.pagaFattura(id); // Delega la logica di transizione al servizio applicativo.
-    } // Chiude il blocco di codice precedente.
+    /** Segna la fattura come pagata applicando la logica di dominio. */
+    @PostMapping("/{id}/paga")
+    public Fattura pagaFattura(@PathVariable Long id) {
+        return service.pagaFattura(id);
+    }
 
-    @PostMapping("/{id}/annulla") // Applica l'annotazione @PostMapping per configurare il componente.
-    public Fattura annullaFattura(@PathVariable Long id) { // Richiede l'annullamento della fattura rispettando le regole di stato.
-        return service.annullaFattura(id); // Delega la logica di transizione al servizio applicativo.
-    } // Chiude il blocco di codice precedente.
-} // Chiude il blocco di codice precedente.
+    /** Annulla la fattura portandola nello stato dedicato. */
+    @PostMapping("/{id}/annulla")
+    public Fattura annullaFattura(@PathVariable Long id) {
+        return service.annullaFattura(id);
+    }
+}
 

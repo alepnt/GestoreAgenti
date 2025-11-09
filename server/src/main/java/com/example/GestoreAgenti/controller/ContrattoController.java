@@ -1,43 +1,48 @@
-package com.example.GestoreAgenti.controller; // Definisce il pacchetto com.example.GestoreAgenti.controller a cui appartiene questa classe.
+package com.example.GestoreAgenti.controller;
 
-import java.util.List; // Importa List per gestire insiemi ordinati di elementi.
+import java.util.List;
 import java.util.stream.Collectors;
 
-import org.springframework.core.io.ByteArrayResource; // Importa ByteArrayResource per restituire file binari al client.
-import org.springframework.core.io.Resource; // Importa Resource per modellare la risposta binaria.
-import org.springframework.http.HttpHeaders; // Importa HttpHeaders per configurare gli header della risposta.
-import org.springframework.http.MediaType; // Importa MediaType per descrivere il tipo di contenuto del file.
-import org.springframework.http.ResponseEntity; // Importa ResponseEntity per restituire risposte HTTP ricche di metadati.
-import org.springframework.web.bind.annotation.DeleteMapping; // Importa DeleteMapping per mappare le richieste HTTP DELETE.
-import org.springframework.web.bind.annotation.GetMapping; // Importa GetMapping per mappare le richieste HTTP GET.
-import org.springframework.web.bind.annotation.PathVariable; // Importa PathVariable per leggere gli identificativi dalla rotta.
-import org.springframework.web.bind.annotation.PostMapping; // Importa PostMapping per mappare le richieste HTTP POST.
-import org.springframework.web.bind.annotation.PutMapping; // Importa PutMapping per mappare le richieste HTTP PUT.
-import org.springframework.web.bind.annotation.RequestBody; // Importa RequestBody per deserializzare il corpo della richiesta.
-import org.springframework.web.bind.annotation.RequestMapping; // Importa RequestMapping per definire il prefisso delle rotte del controller.
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController; // Importa RestController per esporre il controller come componente REST.
+import org.springframework.web.bind.annotation.RestController;
 
-import com.example.GestoreAgenti.model.Contratto; // Importa la classe Contratto per manipolare i contratti esposti dall'API.
-import com.example.GestoreAgenti.service.ContrattoService; // Importa ContrattoService per utilizzare la logica dei contratti.
-import com.example.GestoreAgenti.service.report.ContrattoPdfReportService; // Importa il servizio che produce il PDF del contratto.
+import com.example.GestoreAgenti.model.Contratto;
+import com.example.GestoreAgenti.service.ContrattoService;
+import com.example.GestoreAgenti.service.report.ContrattoPdfReportService;
 
-@RestController // Applica l'annotazione @RestController per configurare il componente.
-@RequestMapping("/api/contratti") // Applica l'annotazione @RequestMapping per configurare il componente.
-public class ContrattoController { // Dichiara la classe ContrattoController che incapsula la logica del dominio.
+/**
+ * Espone le operazioni REST dedicate ai contratti, inclusa l'esportazione dello
+ * storico e del PDF.
+ */
+@RestController
+@RequestMapping("/api/contratti")
+public class ContrattoController {
 
-    private final ContrattoService service; // Mantiene il riferimento al servizio applicativo ContrattoService per delegare le operazioni di business.
-    private final ContrattoPdfReportService pdfReportService; // Servizio incaricato di produrre il template PDF condiviso.
+    private final ContrattoService service;
+    private final ContrattoPdfReportService pdfReportService;
 
-    public ContrattoController(ContrattoService service, ContrattoPdfReportService pdfReportService) { // Costruttore della classe ContrattoController che inizializza le dipendenze richieste.
-        this.service = service; // Aggiorna il campo dell'istanza con il valore ricevuto.
-        this.pdfReportService = pdfReportService; // Aggiorna il campo dell'istanza con il servizio dedicato al PDF.
-    } // Chiude il blocco di codice precedente.
+    public ContrattoController(ContrattoService service, ContrattoPdfReportService pdfReportService) {
+        this.service = service;
+        this.pdfReportService = pdfReportService;
+    }
 
-    @GetMapping // Applica l'annotazione @GetMapping per configurare il componente.
-    public List<Contratto> getAllContratti() { // Restituisce la lista di i contratti gestiti dal sistema.
-        return service.getAllContratti(); // Restituisce il risultato dell'elaborazione al chiamante.
-    } // Chiude il blocco di codice precedente.
+    /** Restituisce tutti i contratti gestiti dal sistema. */
+    @GetMapping
+    public List<Contratto> getAllContratti() {
+        return service.getAllContratti();
+    }
 
     @GetMapping("/storico/dipendenti/{dipendenteId}")
     public List<ContractHistoryResponse> getStoricoPerDipendente(@PathVariable Long dipendenteId) {
@@ -60,39 +65,44 @@ public class ContrattoController { // Dichiara la classe ContrattoController che
                 .collect(Collectors.toList());
     }
 
-    @GetMapping("/{id}") // Applica l'annotazione @GetMapping per configurare il componente.
-    public ResponseEntity<Contratto> getContrattoById(@PathVariable Long id) { // Restituisce i dati di contratto filtrati in base a ID.
-        return service.getContrattoById(id) // Restituisce il risultato dell'elaborazione al chiamante.
-                .map(ResponseEntity::ok) // Gestisce la risposta HTTP per l'endpoint REST.
-                .orElse(ResponseEntity.notFound().build()); // Gestisce la risposta HTTP per l'endpoint REST.
-    } // Chiude il blocco di codice precedente.
+    /** Restituisce il contratto identificato dall'ID fornito. */
+    @GetMapping("/{id}")
+    public ResponseEntity<Contratto> getContrattoById(@PathVariable Long id) {
+        return service.getContrattoById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
 
-    @PostMapping // Applica l'annotazione @PostMapping per configurare il componente.
-    public Contratto createContratto(@RequestBody Contratto contratto) { // Metodo create contratto che gestisce la logica prevista.
-        return service.createContratto(contratto); // Restituisce il risultato dell'elaborazione al chiamante.
-    } // Chiude il blocco di codice precedente.
+    /** Crea un nuovo contratto con i dati ricevuti dal client. */
+    @PostMapping
+    public Contratto createContratto(@RequestBody Contratto contratto) {
+        return service.createContratto(contratto);
+    }
 
-    @PutMapping("/{id}") // Applica l'annotazione @PutMapping per configurare il componente.
-    public Contratto updateContratto(@PathVariable Long id, @RequestBody Contratto contratto) { // Aggiorna il contratto applicando i dati forniti.
-        return service.updateContratto(id, contratto); // Restituisce il risultato dell'elaborazione al chiamante.
-    } // Chiude il blocco di codice precedente.
+    /** Aggiorna un contratto esistente sovrascrivendo i dati con quelli ricevuti. */
+    @PutMapping("/{id}")
+    public Contratto updateContratto(@PathVariable Long id, @RequestBody Contratto contratto) {
+        return service.updateContratto(id, contratto);
+    }
 
-    @DeleteMapping("/{id}") // Applica l'annotazione @DeleteMapping per configurare il componente.
-    public ResponseEntity<Void> deleteContratto(@PathVariable Long id) { // Elimina il contratto identificato dall'input.
-        service.deleteContratto(id); // Esegue questa istruzione come parte della logica del metodo.
-        return ResponseEntity.noContent().build(); // Restituisce il risultato dell'elaborazione al chiamante.
-    } // Chiude il blocco di codice precedente.
+    /** Rimuove il contratto indicato e restituisce una risposta senza contenuto. */
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteContratto(@PathVariable Long id) {
+        service.deleteContratto(id);
+        return ResponseEntity.noContent().build();
+    }
 
-    @GetMapping(value = "/{id}/pdf", produces = MediaType.APPLICATION_PDF_VALUE) // Applica l'annotazione @GetMapping per esporre il template PDF del contratto.
-    public ResponseEntity<Resource> esportaContrattoPdf(@PathVariable Long id) { // Restituisce il file PDF generato.
-        Contratto contratto = service.findRequiredById(id); // Recupera il contratto da rappresentare.
-        byte[] pdf = pdfReportService.generaPdf(contratto); // Genera il PDF applicando il template condiviso.
-        String filename = "contratto-" + id + ".pdf"; // Suggerisce un nome file consistente.
-        return ResponseEntity.ok() // Configura la risposta HTTP di successo.
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + filename) // Imposta il nome del file.
-                .contentType(MediaType.APPLICATION_PDF) // Specifica il tipo di contenuto PDF.
-                .body(new ByteArrayResource(pdf)); // Restituisce il file al client.
-    } // Chiude il blocco di codice precedente.
+    /** Esporta il contratto richiesto in formato PDF. */
+    @GetMapping(value = "/{id}/pdf", produces = MediaType.APPLICATION_PDF_VALUE)
+    public ResponseEntity<Resource> esportaContrattoPdf(@PathVariable Long id) {
+        Contratto contratto = service.findRequiredById(id);
+        byte[] pdf = pdfReportService.generaPdf(contratto);
+        String filename = "contratto-" + id + ".pdf";
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + filename)
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(new ByteArrayResource(pdf));
+    }
 
     private static ContractHistoryResponse toHistoryResponse(Contratto contratto) {
         String cliente = contratto.getCliente() != null
@@ -125,5 +135,5 @@ public class ContrattoController { // Dichiara la classe ContrattoController che
             String servizio, java.time.LocalDate dataInizio, java.time.LocalDate dataFine,
             java.math.BigDecimal importo, String stato) {
     }
-} // Chiude il blocco di codice precedente.
+}
 

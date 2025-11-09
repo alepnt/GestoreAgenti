@@ -25,6 +25,10 @@ import com.example.GestoreAgenti.model.agenda.AgendaEvento;
 import com.example.GestoreAgenti.model.agenda.AgendaItemType;
 import com.example.GestoreAgenti.service.AgendaService;
 
+/**
+ * Gestisce gli eventi di agenda dei dipendenti offrendo operazioni CRUD e
+ * filtri temporali.
+ */
 @RestController
 @RequestMapping("/api/agenda")
 public class AgendaController {

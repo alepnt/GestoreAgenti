@@ -1,75 +1,88 @@
-package com.example.GestoreAgenti.controller; // Definisce il pacchetto com.example.GestoreAgenti.controller a cui appartiene questa classe.
+package com.example.GestoreAgenti.controller;
 
-import java.util.List; // Importa List per gestire insiemi ordinati di elementi.
+import java.util.List;
 
-import org.springframework.http.ResponseEntity; // Importa ResponseEntity per restituire risposte HTTP ricche di metadati.
-import org.springframework.web.bind.annotation.DeleteMapping; // Importa DeleteMapping per mappare le richieste HTTP DELETE.
-import org.springframework.web.bind.annotation.GetMapping; // Importa GetMapping per mappare le richieste HTTP GET.
-import org.springframework.web.bind.annotation.PathVariable; // Importa PathVariable per leggere gli identificativi dalla rotta.
-import org.springframework.web.bind.annotation.PostMapping; // Importa PostMapping per mappare le richieste HTTP POST.
-import org.springframework.web.bind.annotation.PutMapping; // Importa PutMapping per mappare le richieste HTTP PUT.
-import org.springframework.web.bind.annotation.RequestBody; // Importa RequestBody per deserializzare il corpo della richiesta.
-import org.springframework.web.bind.annotation.RequestMapping; // Importa RequestMapping per definire il prefisso delle rotte del controller.
-import org.springframework.web.bind.annotation.RestController; // Importa RestController per esporre il controller come componente REST.
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-import com.example.GestoreAgenti.model.Pagamento; // Importa la classe Pagamento per lavorare con i pagamenti gestiti dal servizio.
-import com.example.GestoreAgenti.service.PagamentoService; // Importa PagamentoService per applicare la logica sui pagamenti.
+import com.example.GestoreAgenti.model.Pagamento;
+import com.example.GestoreAgenti.service.PagamentoService;
 
-@RestController // Applica l'annotazione @RestController per configurare il componente.
-@RequestMapping("/api/pagamenti") // Applica l'annotazione @RequestMapping per configurare il componente.
-public class PagamentoController { // Dichiara la classe PagamentoController che incapsula la logica del dominio.
+/**
+ * Espone le operazioni sui pagamenti e le transizioni di stato legate al loro
+ * ciclo di vita.
+ */
+@RestController
+@RequestMapping("/api/pagamenti")
+public class PagamentoController {
 
-    private final PagamentoService service; // Mantiene il riferimento al servizio applicativo PagamentoService per delegare le operazioni di business.
+    private final PagamentoService service;
 
-    public PagamentoController(PagamentoService service) { // Costruttore della classe PagamentoController che inizializza le dipendenze richieste.
-        this.service = service; // Aggiorna il campo dell'istanza con il valore ricevuto.
-    } // Chiude il blocco di codice precedente.
+    public PagamentoController(PagamentoService service) {
+        this.service = service;
+    }
 
-    @GetMapping // Applica l'annotazione @GetMapping per configurare il componente.
-    public List<Pagamento> getAllPagamenti() { // Restituisce la lista di i pagamenti gestiti dal sistema.
-        return service.getAllPagamenti(); // Restituisce il risultato dell'elaborazione al chiamante.
-    } // Chiude il blocco di codice precedente.
+    /** Restituisce tutti i pagamenti gestiti dal sistema. */
+    @GetMapping
+    public List<Pagamento> getAllPagamenti() {
+        return service.getAllPagamenti();
+    }
 
-    @GetMapping("/{id}") // Applica l'annotazione @GetMapping per configurare il componente.
-    public ResponseEntity<Pagamento> getPagamentoById(@PathVariable Long id) { // Restituisce i dati di pagamento filtrati in base a ID.
-        return service.getPagamentoById(id) // Restituisce il risultato dell'elaborazione al chiamante.
-                .map(ResponseEntity::ok) // Gestisce la risposta HTTP per l'endpoint REST.
-                .orElse(ResponseEntity.notFound().build()); // Gestisce la risposta HTTP per l'endpoint REST.
-    } // Chiude il blocco di codice precedente.
+    /** Recupera un pagamento per identificativo. */
+    @GetMapping("/{id}")
+    public ResponseEntity<Pagamento> getPagamentoById(@PathVariable Long id) {
+        return service.getPagamentoById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
 
-    @PostMapping // Applica l'annotazione @PostMapping per configurare il componente.
-    public Pagamento createPagamento(@RequestBody Pagamento pagamento) { // Metodo create pagamento che gestisce la logica prevista.
-        return service.createPagamento(pagamento); // Restituisce il risultato dell'elaborazione al chiamante.
-    } // Chiude il blocco di codice precedente.
+    /** Registra un nuovo pagamento. */
+    @PostMapping
+    public Pagamento createPagamento(@RequestBody Pagamento pagamento) {
+        return service.createPagamento(pagamento);
+    }
 
-    @PutMapping("/{id}") // Applica l'annotazione @PutMapping per configurare il componente.
-    public Pagamento updatePagamento(@PathVariable Long id, @RequestBody Pagamento pagamento) { // Aggiorna il pagamento applicando i dati forniti.
-        return service.updatePagamento(id, pagamento); // Restituisce il risultato dell'elaborazione al chiamante.
-    } // Chiude il blocco di codice precedente.
+    /** Aggiorna i dati di un pagamento esistente. */
+    @PutMapping("/{id}")
+    public Pagamento updatePagamento(@PathVariable Long id, @RequestBody Pagamento pagamento) {
+        return service.updatePagamento(id, pagamento);
+    }
 
-    @DeleteMapping("/{id}") // Applica l'annotazione @DeleteMapping per configurare il componente.
-    public ResponseEntity<Void> deletePagamento(@PathVariable Long id) { // Elimina il pagamento identificato dall'input.
-        service.deletePagamento(id); // Esegue questa istruzione come parte della logica del metodo.
-        return ResponseEntity.noContent().build(); // Restituisce il risultato dell'elaborazione al chiamante.
-    } // Chiude il blocco di codice precedente.
+    /** Elimina definitivamente il pagamento indicato. */
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deletePagamento(@PathVariable Long id) {
+        service.deletePagamento(id);
+        return ResponseEntity.noContent().build();
+    }
 
-    @PostMapping("/{id}/elabora") // Applica l'annotazione @PostMapping per configurare il componente.
-    public Pagamento avviaElaborazione(@PathVariable Long id) { // Avvia l'elaborazione del pagamento rispettando le regole di stato.
-        return service.avviaElaborazione(id); // Delega la logica di transizione al servizio applicativo.
-    } // Chiude il blocco di codice precedente.
+    /** Avvia l'elaborazione del pagamento. */
+    @PostMapping("/{id}/elabora")
+    public Pagamento avviaElaborazione(@PathVariable Long id) {
+        return service.avviaElaborazione(id);
+    }
 
-    @PostMapping("/{id}/completa") // Applica l'annotazione @PostMapping per configurare il componente.
-    public Pagamento completaPagamento(@PathVariable Long id) { // Completa il pagamento rispettando le regole di stato.
-        return service.completaPagamento(id); // Delega la logica di transizione al servizio applicativo.
-    } // Chiude il blocco di codice precedente.
+    /** Conclude con successo l'elaborazione del pagamento. */
+    @PostMapping("/{id}/completa")
+    public Pagamento completaPagamento(@PathVariable Long id) {
+        return service.completaPagamento(id);
+    }
 
-    @PostMapping("/{id}/fallisci") // Applica l'annotazione @PostMapping per configurare il componente.
-    public Pagamento fallisciPagamento(@PathVariable Long id) { // Marca il pagamento come fallito rispettando le regole di stato.
-        return service.fallisciPagamento(id); // Delega la logica di transizione al servizio applicativo.
-    } // Chiude il blocco di codice precedente.
+    /** Contrassegna il pagamento come fallito. */
+    @PostMapping("/{id}/fallisci")
+    public Pagamento fallisciPagamento(@PathVariable Long id) {
+        return service.fallisciPagamento(id);
+    }
 
-    @PostMapping("/{id}/ripeti") // Applica l'annotazione @PostMapping per configurare il componente.
-    public Pagamento ripetiElaborazione(@PathVariable Long id) { // Ripete l'elaborazione del pagamento rispettando le regole di stato.
-        return service.ripetiElaborazione(id); // Delega la logica di transizione al servizio applicativo.
-    } // Chiude il blocco di codice precedente.
-} // Chiude il blocco di codice precedente.
+    /** Riporta il pagamento allo stato iniziale per ripetere l'elaborazione. */
+    @PostMapping("/{id}/ripeti")
+    public Pagamento ripetiElaborazione(@PathVariable Long id) {
+        return service.ripetiElaborazione(id);
+    }
+}

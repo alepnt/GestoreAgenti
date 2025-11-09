@@ -10,7 +10,8 @@ import java.net.http.HttpClient; // Esegue: import java.net.http.HttpClient;
 import java.net.http.HttpHeaders; // Esegue: import java.net.http.HttpHeaders;
 import java.net.http.HttpRequest; // Esegue: import java.net.http.HttpRequest;
 import java.net.http.HttpResponse; // Esegue: import java.net.http.HttpResponse;
-import java.net.http.HttpResponse.Trailers; // Esegue: import java.net.http.HttpResponse.Trailers;
+import java.net.http.HttpResponse.BodyHandler; // Esegue: import java.net.http.HttpResponse.BodyHandler;
+import java.net.http.HttpResponse.PushPromiseHandler; // Esegue: import java.net.http.HttpResponse.PushPromiseHandler;
 import java.time.Duration; // Esegue: import java.time.Duration;
 import java.util.Map; // Esegue: import java.util.Map;
 import java.util.Optional; // Esegue: import java.util.Optional;
@@ -18,6 +19,10 @@ import java.util.concurrent.CompletableFuture; // Esegue: import java.util.concu
 import java.util.concurrent.CompletionException; // Esegue: import java.util.concurrent.CompletionException;
 import java.util.concurrent.Executor; // Esegue: import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicReference; // Esegue: import java.util.concurrent.atomic.AtomicReference;
+
+import javax.net.ssl.SSLContext; // Esegue: import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLParameters; // Esegue: import javax.net.ssl.SSLParameters;
+import javax.net.ssl.SSLSession; // Esegue: import javax.net.ssl.SSLSession;
 
 import static org.junit.jupiter.api.Assertions.*; // Esegue: import static org.junit.jupiter.api.Assertions.*;
 
@@ -131,23 +136,8 @@ class RemoteEmailClientTest { // Esegue: class RemoteEmailClientTest {
         } // Esegue: }
 
         @Override // Esegue: @Override
-        public Optional<java.net.ssl.SSLSession> sslSession() { // Esegue: public Optional<java.net.ssl.SSLSession> sslSession() {
+        public Optional<SSLSession> sslSession() { // Esegue: public Optional<SSLSession> sslSession() {
             return Optional.empty(); // Esegue: return Optional.empty();
-        } // Esegue: }
-
-        @Override // Esegue: @Override
-        public Optional<Duration> timeout() { // Esegue: public Optional<Duration> timeout() {
-            return Optional.empty(); // Esegue: return Optional.empty();
-        } // Esegue: }
-
-        @Override // Esegue: @Override
-        public Optional<HttpResponse<Trailers>> trailers() { // Esegue: public Optional<HttpResponse<Trailers>> trailers() {
-            return Optional.empty(); // Esegue: return Optional.empty();
-        } // Esegue: }
-
-        @Override // Esegue: @Override
-        public Map<String, Object> attributes() { // Esegue: public Map<String, Object> attributes() {
-            return Map.of(); // Esegue: return Map.of();
         } // Esegue: }
     } // Esegue: }
 
@@ -175,6 +165,11 @@ class RemoteEmailClientTest { // Esegue: class RemoteEmailClientTest {
                 HttpResponse<T> typed = (HttpResponse<T>) response; // Esegue: HttpResponse<T> typed = (HttpResponse<T>) response;
                 return typed; // Esegue: return typed;
             }); // Esegue: });
+        } // Esegue: }
+
+        @Override // Esegue: @Override
+        public <T> CompletableFuture<HttpResponse<T>> sendAsync(HttpRequest request, BodyHandler<T> handler, PushPromiseHandler<T> pushPromiseHandler) { // Esegue: public <T> CompletableFuture<HttpResponse<T>> sendAsync(HttpRequest request, BodyHandler<T> handler, PushPromiseHandler<T> pushPromiseHandler) {
+            return sendAsync(request, handler); // Esegue: return sendAsync(request, handler);
         } // Esegue: }
 
         @Override // Esegue: @Override
@@ -208,12 +203,12 @@ class RemoteEmailClientTest { // Esegue: class RemoteEmailClientTest {
         } // Esegue: }
 
         @Override // Esegue: @Override
-        public java.net.ssl.SSLContext sslContext() { // Esegue: public java.net.ssl.SSLContext sslContext() {
+        public SSLContext sslContext() { // Esegue: public SSLContext sslContext() {
             return null; // Esegue: return null;
         } // Esegue: }
 
         @Override // Esegue: @Override
-        public java.net.ssl.SSLParameters sslParameters() { // Esegue: public java.net.ssl.SSLParameters sslParameters() {
+        public SSLParameters sslParameters() { // Esegue: public SSLParameters sslParameters() {
             return null; // Esegue: return null;
         } // Esegue: }
 
@@ -223,8 +218,8 @@ class RemoteEmailClientTest { // Esegue: class RemoteEmailClientTest {
         } // Esegue: }
 
         @Override // Esegue: @Override
-        public Version version() { // Esegue: public Version version() {
-            return Version.HTTP_1_1; // Esegue: return Version.HTTP_1_1;
+        public HttpClient.Version version() { // Esegue: public HttpClient.Version version() {
+            return HttpClient.Version.HTTP_1_1; // Esegue: return HttpClient.Version.HTTP_1_1;
         } // Esegue: }
     } // Esegue: }
 } // Esegue: }

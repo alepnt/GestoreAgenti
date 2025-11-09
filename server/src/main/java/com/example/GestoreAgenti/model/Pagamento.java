@@ -34,14 +34,14 @@ public class Pagamento { // Dichiara la classe Pagamento che incapsula la logica
 
     @PrePersist // Assicura la coerenza tra valore testuale e implementazione prima del salvataggio.
     @PreUpdate // Assicura la coerenza tra valore testuale e implementazione prima dell'aggiornamento.
-    private void sincronizzaStatoPersistito() {
-        this.stato = risolviStato().getNome();
-    }
+    private void sincronizzaStatoPersistito() { // Definisce il metodo sincronizzaStatoPersistito che supporta la logica di dominio.
+        this.stato = risolviStato().getNome(); // Aggiorna il campo stato dell'istanza.
+    } // Chiude il blocco di codice precedente.
 
     @PostLoad // Ricostruisce l'oggetto stato dopo il caricamento dal database.
-    private void ricostruisciStato() {
-        this.state = PagamentoStateFactory.fromName(this.stato);
-    }
+    private void ricostruisciStato() { // Definisce il metodo ricostruisciStato che supporta la logica di dominio.
+        this.state = PagamentoStateFactory.fromName(this.stato); // Aggiorna il campo state dell'istanza.
+    } // Chiude il blocco di codice precedente.
 
     // Getters e Setters
     public Long getIdPagamento() { return idPagamento; } // Restituisce l'ID del pagamento dell'entità.
@@ -65,9 +65,9 @@ public class Pagamento { // Dichiara la classe Pagamento che incapsula la logica
 
     @JsonIgnore // Evita di serializzare lo stato interno durante le risposte REST.
     public PagamentoState getState() { return risolviStato(); } // Restituisce l'implementazione concreta dello stato.
-    public void setState(PagamentoState state) {
-        this.state = state;
-        this.stato = state.getNome();
+    public void setState(PagamentoState state) { // Definisce il metodo setState che supporta la logica di dominio.
+        this.state = state; // Aggiorna il campo state dell'istanza.
+        this.stato = state.getNome(); // Aggiorna il campo stato dell'istanza.
     } // Aggiorna implementazione concreta e valore persistito.
 
     public void elabora() { risolviStato().elabora(this); } // Richiede l'avvio dell'elaborazione del pagamento.
@@ -75,10 +75,10 @@ public class Pagamento { // Dichiara la classe Pagamento che incapsula la logica
     public void fallisci() { risolviStato().fallisci(this); } // Richiede di marcare il pagamento come fallito.
     public void ripeti() { risolviStato().ripeti(this); } // Richiede di ripetere l'elaborazione del pagamento.
 
-    private PagamentoState risolviStato() {
-        if (state == null) {
-            state = PagamentoStateFactory.fromName(stato);
-        }
-        return state;
+    private PagamentoState risolviStato() { // Definisce il metodo risolviStato che supporta la logica di dominio.
+        if (state == null) { // Valuta la condizione per controllare il flusso applicativo.
+            state = PagamentoStateFactory.fromName(stato); // Assegna il valore calcolato alla variabile state.
+        } // Chiude il blocco di codice precedente.
+        return state; // Restituisce il risultato dell'espressione state.
     } // Risolve l'implementazione dello stato partendo dal valore persistito.
 } // Chiude il blocco di codice precedente.

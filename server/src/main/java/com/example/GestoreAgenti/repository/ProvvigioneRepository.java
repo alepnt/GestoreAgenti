@@ -16,6 +16,6 @@ public interface ProvvigioneRepository extends JpaRepository<Provvigione, Long> 
      * @param dipendenteId identificativo del dipendente di interesse
      * @return provvigioni collegate al dipendente
      */
-    java.util.List<Provvigione> findByDipendente_Id(Long dipendenteId);
+    java.util.List<Provvigione> findByDipendente_Id(Long dipendenteId); // Esegue l'istruzione terminata dal punto e virgola.
 } // Chiude il blocco di codice precedente.
 

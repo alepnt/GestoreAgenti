@@ -40,14 +40,14 @@ public class Fattura { // Dichiara la classe Fattura che incapsula la logica del
 
     @PrePersist // Assicura che lo stato testuale sia coerente prima del salvataggio.
     @PreUpdate // Assicura che lo stato testuale sia coerente prima dell'aggiornamento.
-    private void sincronizzaStatoPersistito() {
-        this.stato = risolviStato().getNome();
-    }
+    private void sincronizzaStatoPersistito() { // Definisce il metodo sincronizzaStatoPersistito che supporta la logica di dominio.
+        this.stato = risolviStato().getNome(); // Aggiorna il campo stato dell'istanza.
+    } // Chiude il blocco di codice precedente.
 
     @PostLoad // Ricostruisce l'oggetto stato dopo il caricamento dal database.
-    private void ricostruisciStato() {
-        this.state = FatturaStateFactory.fromName(this.stato);
-    }
+    private void ricostruisciStato() { // Definisce il metodo ricostruisciStato che supporta la logica di dominio.
+        this.state = FatturaStateFactory.fromName(this.stato); // Aggiorna il campo state dell'istanza.
+    } // Chiude il blocco di codice precedente.
 
     // Getters e Setters
     public Long getIdFattura() { return idFattura; } // Restituisce l'ID della fattura dell'entità.
@@ -80,28 +80,28 @@ public class Fattura { // Dichiara la classe Fattura che incapsula la logica del
 
     @JsonIgnore // Evita di esporre lo stato interno durante la serializzazione JSON.
     public FatturaState getState() { return risolviStato(); } // Restituisce l'implementazione dello stato.
-    public void setState(FatturaState state) {
-        this.state = state;
-        this.stato = state.getNome();
+    public void setState(FatturaState state) { // Definisce il metodo setState che supporta la logica di dominio.
+        this.state = state; // Aggiorna il campo state dell'istanza.
+        this.stato = state.getNome(); // Aggiorna il campo stato dell'istanza.
     } // Aggiorna l'implementazione e il valore persistito dello stato.
 
     public void emetti() { risolviStato().emetti(this); } // Richiede l'emissione della fattura seguendo le regole dello stato.
     public void paga() { risolviStato().paga(this); } // Richiede il pagamento della fattura seguendo le regole dello stato.
     public void annulla() { risolviStato().annulla(this); } // Richiede l'annullamento della fattura seguendo le regole dello stato.
 
-    private FatturaState risolviStato() {
-        if (state == null) {
-            state = FatturaStateFactory.fromName(stato);
-        }
-        return state;
+    private FatturaState risolviStato() { // Definisce il metodo risolviStato che supporta la logica di dominio.
+        if (state == null) { // Valuta la condizione per controllare il flusso applicativo.
+            state = FatturaStateFactory.fromName(stato); // Assegna il valore calcolato alla variabile state.
+        } // Chiude il blocco di codice precedente.
+        return state; // Restituisce il risultato dell'espressione state.
     } // Risolve l'implementazione dello stato a partire dal valore persistito.
 
-    public static FatturaBuilder builder(Cliente cliente, Contratto contratto) {
-        return FatturaBuilder.nuovaFattura(cliente, contratto);
+    public static FatturaBuilder builder(Cliente cliente, Contratto contratto) { // Definisce il metodo builder che supporta la logica di dominio.
+        return FatturaBuilder.nuovaFattura(cliente, contratto); // Restituisce il risultato dell'espressione FatturaBuilder.nuovaFattura(cliente, contratto).
     } // Espone un factory method per la creazione fluente.
 
-    public static FatturaBuilder builder(Contratto contratto) {
-        return FatturaBuilder.perContratto(contratto);
+    public static FatturaBuilder builder(Contratto contratto) { // Definisce il metodo builder che supporta la logica di dominio.
+        return FatturaBuilder.perContratto(contratto); // Restituisce il risultato dell'espressione FatturaBuilder.perContratto(contratto).
     } // Shortcut per costruire la fattura a partire dal contratto.
 } // Chiude il blocco di codice precedente.
 

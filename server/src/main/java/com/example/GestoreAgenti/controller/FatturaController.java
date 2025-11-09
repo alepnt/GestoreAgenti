@@ -25,14 +25,14 @@ import com.example.GestoreAgenti.service.report.FatturaPdfReportService; // Impo
 @RequestMapping("/api/fatture") // Applica l'annotazione @RequestMapping per configurare il componente.
 public class FatturaController { // Dichiara la classe FatturaController che incapsula la logica del dominio.
 
-    private static final MediaType EXCEL_MEDIA_TYPE = MediaType.parseMediaType(
+    private static final MediaType EXCEL_MEDIA_TYPE = MediaType.parseMediaType( // Definisce il metodo MediaType.parseMediaType che supporta la logica di dominio.
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"); // Media type dell'Excel generato.
 
     private final FatturaService service; // Mantiene il riferimento al servizio applicativo FatturaService per delegare le operazioni di business.
     private final FatturaExcelReportService reportService; // Servizio per generare il layout Excel differenziato per tipo di fattura.
     private final FatturaPdfReportService pdfReportService; // Servizio per generare il template PDF condiviso delle fatture.
 
-    public FatturaController(FatturaService service, FatturaExcelReportService reportService,
+    public FatturaController(FatturaService service, FatturaExcelReportService reportService, // Definisce il metodo FatturaController che supporta la logica di dominio.
             FatturaPdfReportService pdfReportService) { // Costruttore della classe FatturaController che inizializza le dipendenze richieste.
         this.service = service; // Aggiorna il campo dell'istanza con il valore ricevuto.
         this.reportService = reportService; // Aggiorna il campo dell'istanza con il servizio dedicato ai report Excel.

@@ -1,78 +1,78 @@
-package com.example.GestoreAgenti.service.email;
+package com.example.GestoreAgenti.service.email; // Definisce il pacchetto com.example.GestoreAgenti.service.email che contiene questa classe.
 
-import jakarta.mail.MessagingException;
-import jakarta.mail.internet.MimeMessage;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.MailException;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
-import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
+import jakarta.mail.MessagingException; // Importa jakarta.mail.MessagingException per abilitare le funzionalità utilizzate nel file.
+import jakarta.mail.internet.MimeMessage; // Importa jakarta.mail.internet.MimeMessage per abilitare le funzionalità utilizzate nel file.
+import org.springframework.beans.factory.annotation.Value; // Importa org.springframework.beans.factory.annotation.Value per abilitare le funzionalità utilizzate nel file.
+import org.springframework.mail.MailException; // Importa org.springframework.mail.MailException per abilitare le funzionalità utilizzate nel file.
+import org.springframework.mail.javamail.JavaMailSender; // Importa org.springframework.mail.javamail.JavaMailSender per abilitare le funzionalità utilizzate nel file.
+import org.springframework.mail.javamail.MimeMessageHelper; // Importa org.springframework.mail.javamail.MimeMessageHelper per abilitare le funzionalità utilizzate nel file.
+import org.springframework.stereotype.Service; // Importa org.springframework.stereotype.Service per abilitare le funzionalità utilizzate nel file.
+import org.springframework.util.StringUtils; // Importa org.springframework.util.StringUtils per abilitare le funzionalità utilizzate nel file.
 
-import com.example.GestoreAgenti.event.DomainEventPublisher;
-import com.example.GestoreAgenti.event.email.EmailSentEvent;
+import com.example.GestoreAgenti.event.DomainEventPublisher; // Importa com.example.GestoreAgenti.event.DomainEventPublisher per abilitare le funzionalità utilizzate nel file.
+import com.example.GestoreAgenti.event.email.EmailSentEvent; // Importa com.example.GestoreAgenti.event.email.EmailSentEvent per abilitare le funzionalità utilizzate nel file.
 
 /**
  * Invia messaggi email utilizzando il {@link JavaMailSender} configurato in Spring Boot.
  */
-@Service
-public class EmailDeliveryService {
+@Service // Applica l'annotazione @Service per configurare il componente.
+public class EmailDeliveryService { // Definisce la classe EmailDeliveryService che incapsula la logica applicativa.
 
-    private final JavaMailSender mailSender;
-    private final boolean enabled;
-    private final String overrideSender;
-    private final DomainEventPublisher eventPublisher;
+    private final JavaMailSender mailSender; // Dichiara il campo mailSender dell'oggetto.
+    private final boolean enabled; // Dichiara il campo enabled dell'oggetto.
+    private final String overrideSender; // Dichiara il campo overrideSender dell'oggetto.
+    private final DomainEventPublisher eventPublisher; // Dichiara il campo eventPublisher dell'oggetto.
 
-    public EmailDeliveryService(JavaMailSender mailSender,
-                                @Value("${mail.enabled:false}") boolean enabled,
-                                @Value("${mail.override-sender:}") String overrideSender,
-                                DomainEventPublisher eventPublisher) {
-        this.mailSender = mailSender;
-        this.enabled = enabled;
-        this.overrideSender = overrideSender;
-        this.eventPublisher = eventPublisher;
-    }
+    public EmailDeliveryService(JavaMailSender mailSender, // Costruttore della classe EmailDeliveryService che inizializza le dipendenze necessarie.
+                                @Value("${mail.enabled:false}") boolean enabled, // Applica l'annotazione @Value per configurare il componente.
+                                @Value("${mail.override-sender:}") String overrideSender, // Applica l'annotazione @Value per configurare il componente.
+                                DomainEventPublisher eventPublisher) { // Apre il blocco di codice associato alla dichiarazione.
+        this.mailSender = mailSender; // Aggiorna il campo mailSender dell'istanza.
+        this.enabled = enabled; // Aggiorna il campo enabled dell'istanza.
+        this.overrideSender = overrideSender; // Aggiorna il campo overrideSender dell'istanza.
+        this.eventPublisher = eventPublisher; // Aggiorna il campo eventPublisher dell'istanza.
+    } // Chiude il blocco di codice precedente.
 
-    public void send(String from, String to, String subject, String body) {
-        if (!enabled) {
-            throw new EmailDeliveryDisabledException("L'invio email è disabilitato. Aggiorna mail.enabled=true per abilitarlo.");
-        }
-        String sanitizedFrom = resolveSender(from);
-        String sanitizedTo = requireNonBlank(to, "Il destinatario non può essere vuoto");
-        String sanitizedSubject = requireNonBlank(subject, "L'oggetto non può essere vuoto");
-        String sanitizedBody = requireNonBlank(body, "Il corpo del messaggio non può essere vuoto");
-        try {
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, "UTF-8");
-            helper.setFrom(sanitizedFrom);
-            helper.setTo(sanitizedTo);
-            helper.setSubject(sanitizedSubject);
-            helper.setText(sanitizedBody, false);
-            if (StringUtils.hasText(from) && !sanitizedFrom.equals(from.trim())) {
-                helper.setReplyTo(from.trim());
-            }
-            mailSender.send(message);
-            eventPublisher.publish(new EmailSentEvent(sanitizedFrom, sanitizedTo, sanitizedSubject));
-        } catch (MailException | MessagingException ex) {
-            String message = ex.getMessage();
-            if (!StringUtils.hasText(message)) {
-                message = ex.getClass().getSimpleName();
-            }
-            throw new EmailDeliveryException("Invio email fallito: " + message, ex);
-        }
-    }
+    public void send(String from, String to, String subject, String body) { // Definisce il metodo send che supporta la logica di dominio.
+        if (!enabled) { // Valuta la condizione per controllare il flusso applicativo.
+            throw new EmailDeliveryDisabledException("L'invio email è disabilitato. Aggiorna mail.enabled=true per abilitarlo."); // Propaga un'eccezione verso il chiamante.
+        } // Chiude il blocco di codice precedente.
+        String sanitizedFrom = resolveSender(from); // Assegna il valore calcolato alla variabile String sanitizedFrom.
+        String sanitizedTo = requireNonBlank(to, "Il destinatario non può essere vuoto"); // Assegna il valore calcolato alla variabile String sanitizedTo.
+        String sanitizedSubject = requireNonBlank(subject, "L'oggetto non può essere vuoto"); // Assegna il valore calcolato alla variabile String sanitizedSubject.
+        String sanitizedBody = requireNonBlank(body, "Il corpo del messaggio non può essere vuoto"); // Assegna il valore calcolato alla variabile String sanitizedBody.
+        try { // Avvia il blocco protetto per intercettare eventuali eccezioni.
+            MimeMessage message = mailSender.createMimeMessage(); // Assegna il valore calcolato alla variabile MimeMessage message.
+            MimeMessageHelper helper = new MimeMessageHelper(message, "UTF-8"); // Assegna il valore calcolato alla variabile MimeMessageHelper helper.
+            helper.setFrom(sanitizedFrom); // Esegue l'istruzione terminata dal punto e virgola.
+            helper.setTo(sanitizedTo); // Esegue l'istruzione terminata dal punto e virgola.
+            helper.setSubject(sanitizedSubject); // Esegue l'istruzione terminata dal punto e virgola.
+            helper.setText(sanitizedBody, false); // Esegue l'istruzione terminata dal punto e virgola.
+            if (StringUtils.hasText(from) && !sanitizedFrom.equals(from.trim())) { // Valuta la condizione per controllare il flusso applicativo.
+                helper.setReplyTo(from.trim()); // Esegue l'istruzione terminata dal punto e virgola.
+            } // Chiude il blocco di codice precedente.
+            mailSender.send(message); // Esegue l'istruzione terminata dal punto e virgola.
+            eventPublisher.publish(new EmailSentEvent(sanitizedFrom, sanitizedTo, sanitizedSubject)); // Esegue l'istruzione terminata dal punto e virgola.
+        } catch (MailException | MessagingException ex) { // Apre il blocco di codice associato alla dichiarazione.
+            String message = ex.getMessage(); // Assegna il valore calcolato alla variabile String message.
+            if (!StringUtils.hasText(message)) { // Valuta la condizione per controllare il flusso applicativo.
+                message = ex.getClass().getSimpleName(); // Assegna il valore calcolato alla variabile message.
+            } // Chiude il blocco di codice precedente.
+            throw new EmailDeliveryException("Invio email fallito: " + message, ex); // Propaga un'eccezione verso il chiamante.
+        } // Chiude il blocco di codice precedente.
+    } // Chiude il blocco di codice precedente.
 
-    private String resolveSender(String from) {
-        if (StringUtils.hasText(overrideSender)) {
-            return overrideSender.trim();
-        }
-        return requireNonBlank(from, "Il mittente non può essere vuoto").trim();
-    }
+    private String resolveSender(String from) { // Definisce il metodo resolveSender che supporta la logica di dominio.
+        if (StringUtils.hasText(overrideSender)) { // Valuta la condizione per controllare il flusso applicativo.
+            return overrideSender.trim(); // Restituisce il risultato dell'espressione overrideSender.trim().
+        } // Chiude il blocco di codice precedente.
+        return requireNonBlank(from, "Il mittente non può essere vuoto").trim(); // Restituisce il risultato dell'espressione requireNonBlank(from, "Il mittente non può essere vuoto").trim().
+    } // Chiude il blocco di codice precedente.
 
-    private String requireNonBlank(String value, String errorMessage) {
-        if (!StringUtils.hasText(value)) {
-            throw new EmailDeliveryException(errorMessage);
-        }
-        return value.trim();
-    }
-}
+    private String requireNonBlank(String value, String errorMessage) { // Definisce il metodo requireNonBlank che supporta la logica di dominio.
+        if (!StringUtils.hasText(value)) { // Valuta la condizione per controllare il flusso applicativo.
+            throw new EmailDeliveryException(errorMessage); // Propaga un'eccezione verso il chiamante.
+        } // Chiude il blocco di codice precedente.
+        return value.trim(); // Restituisce il risultato dell'espressione value.trim().
+    } // Chiude il blocco di codice precedente.
+} // Chiude il blocco di codice precedente.

@@ -41,6 +41,7 @@ import java.util.Collections; // Esegue: import java.util.Collections;
 import java.util.Comparator; // Esegue: import java.util.Comparator;
 import java.util.HashMap; // Esegue: import java.util.HashMap;
 import java.util.LinkedHashSet; // Esegue: import java.util.LinkedHashSet;
+import java.util.List; // Esegue: import java.util.List;
 import java.util.Map; // Esegue: import java.util.Map;
 import java.util.Objects; // Esegue: import java.util.Objects;
 import java.util.Optional; // Esegue: import java.util.Optional;

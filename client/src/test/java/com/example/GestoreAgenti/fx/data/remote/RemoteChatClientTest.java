@@ -29,6 +29,10 @@ import java.util.concurrent.atomic.AtomicBoolean; // Esegue: import java.util.co
 import java.util.concurrent.atomic.AtomicReference; // Esegue: import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function; // Esegue: import java.util.function.Function;
 
+import javax.net.ssl.SSLContext; // Esegue: import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLParameters; // Esegue: import javax.net.ssl.SSLParameters;
+import javax.net.ssl.SSLSession; // Esegue: import javax.net.ssl.SSLSession;
+
 import static org.junit.jupiter.api.Assertions.*; // Esegue: import static org.junit.jupiter.api.Assertions.*;
 
 class RemoteChatClientTest { // Esegue: class RemoteChatClientTest {
@@ -214,18 +218,13 @@ class RemoteChatClientTest { // Esegue: class RemoteChatClientTest {
         } // Esegue: }
 
         @Override // Esegue: @Override
-        public Optional<javax.net.ssl.SSLSession> sslSession() { // Esegue: public Optional<javax.net.ssl.SSLSession> sslSession() {
+        public Optional<SSLSession> sslSession() { // Esegue: public Optional<SSLSession> sslSession() {
             return Optional.empty(); // Esegue: return Optional.empty();
         } // Esegue: }
 
         @Override // Esegue: @Override
         public URI uri() { // Esegue: public URI uri() {
             return null; // Esegue: return null;
-        } // Esegue: }
-
-        @Override // Esegue: @Override
-        public Map<String, Object> attributes() { // Esegue: public Map<String, Object> attributes() {
-            return Map.of(); // Esegue: return Map.of();
         } // Esegue: }
     } // Esegue: }
 
@@ -302,12 +301,12 @@ class RemoteChatClientTest { // Esegue: class RemoteChatClientTest {
         } // Esegue: }
 
         @Override // Esegue: @Override
-        public javax.net.ssl.SSLContext sslContext() { // Esegue: public javax.net.ssl.SSLContext sslContext() {
+        public SSLContext sslContext() { // Esegue: public SSLContext sslContext() {
             return null; // Esegue: return null;
         } // Esegue: }
 
         @Override // Esegue: @Override
-        public javax.net.ssl.SSLParameters sslParameters() { // Esegue: public javax.net.ssl.SSLParameters sslParameters() {
+        public SSLParameters sslParameters() { // Esegue: public SSLParameters sslParameters() {
             return null; // Esegue: return null;
         } // Esegue: }
 
@@ -317,8 +316,8 @@ class RemoteChatClientTest { // Esegue: class RemoteChatClientTest {
         } // Esegue: }
 
         @Override // Esegue: @Override
-        public Version version() { // Esegue: public Version version() {
-            return Version.HTTP_1_1; // Esegue: return Version.HTTP_1_1;
+        public HttpClient.Version version() { // Esegue: public HttpClient.Version version() {
+            return HttpClient.Version.HTTP_1_1; // Esegue: return HttpClient.Version.HTTP_1_1;
         } // Esegue: }
     } // Esegue: }
 
@@ -356,10 +355,6 @@ class RemoteChatClientTest { // Esegue: class RemoteChatClientTest {
         } // Esegue: }
 
         @Override // Esegue: @Override
-        public WebSocket.Builder subprotocols(String first, String... more) { // Esegue: public WebSocket.Builder subprotocols(String first, String... more) {
-            return this; // Esegue: return this;
-        } // Esegue: }
-
         public WebSocket.Builder subprotocols(String... subprotocols) { // Esegue: public WebSocket.Builder subprotocols(String... subprotocols) {
             return this; // Esegue: return this;
         } // Esegue: }

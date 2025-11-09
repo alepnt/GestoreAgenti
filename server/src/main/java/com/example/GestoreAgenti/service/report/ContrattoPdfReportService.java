@@ -1,273 +1,273 @@
-package com.example.GestoreAgenti.service.report;
+package com.example.GestoreAgenti.service.report; // Definisce il pacchetto com.example.GestoreAgenti.service.report che contiene questa classe.
 
-import java.awt.Color;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.text.NumberFormat;
-import java.time.format.DateTimeFormatter;
-import java.util.Locale;
-import java.util.Objects;
-import java.util.function.Consumer;
+import java.awt.Color; // Importa java.awt.Color per abilitare le funzionalità utilizzate nel file.
+import java.io.ByteArrayOutputStream; // Importa java.io.ByteArrayOutputStream per abilitare le funzionalità utilizzate nel file.
+import java.io.IOException; // Importa java.io.IOException per abilitare le funzionalità utilizzate nel file.
+import java.text.NumberFormat; // Importa java.text.NumberFormat per abilitare le funzionalità utilizzate nel file.
+import java.time.format.DateTimeFormatter; // Importa java.time.format.DateTimeFormatter per abilitare le funzionalità utilizzate nel file.
+import java.util.Locale; // Importa java.util.Locale per abilitare le funzionalità utilizzate nel file.
+import java.util.Objects; // Importa java.util.Objects per abilitare le funzionalità utilizzate nel file.
+import java.util.function.Consumer; // Importa java.util.function.Consumer per abilitare le funzionalità utilizzate nel file.
 
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Service; // Importa org.springframework.stereotype.Service per abilitare le funzionalità utilizzate nel file.
 
-import com.example.GestoreAgenti.model.Cliente;
-import com.example.GestoreAgenti.model.Contratto;
-import com.example.GestoreAgenti.model.Dipendente;
-import com.example.GestoreAgenti.model.Servizio;
-import com.lowagie.text.Document;
-import com.lowagie.text.DocumentException;
-import com.lowagie.text.Element;
-import com.lowagie.text.Font;
-import com.lowagie.text.FontFactory;
-import com.lowagie.text.PageSize;
-import com.lowagie.text.Paragraph;
-import com.lowagie.text.Phrase;
-import com.lowagie.text.pdf.PdfPCell;
-import com.lowagie.text.pdf.PdfPTable;
-import com.lowagie.text.pdf.PdfWriter;
+import com.example.GestoreAgenti.model.Cliente; // Importa com.example.GestoreAgenti.model.Cliente per abilitare le funzionalità utilizzate nel file.
+import com.example.GestoreAgenti.model.Contratto; // Importa com.example.GestoreAgenti.model.Contratto per abilitare le funzionalità utilizzate nel file.
+import com.example.GestoreAgenti.model.Dipendente; // Importa com.example.GestoreAgenti.model.Dipendente per abilitare le funzionalità utilizzate nel file.
+import com.example.GestoreAgenti.model.Servizio; // Importa com.example.GestoreAgenti.model.Servizio per abilitare le funzionalità utilizzate nel file.
+import com.lowagie.text.Document; // Importa com.lowagie.text.Document per abilitare le funzionalità utilizzate nel file.
+import com.lowagie.text.DocumentException; // Importa com.lowagie.text.DocumentException per abilitare le funzionalità utilizzate nel file.
+import com.lowagie.text.Element; // Importa com.lowagie.text.Element per abilitare le funzionalità utilizzate nel file.
+import com.lowagie.text.Font; // Importa com.lowagie.text.Font per abilitare le funzionalità utilizzate nel file.
+import com.lowagie.text.FontFactory; // Importa com.lowagie.text.FontFactory per abilitare le funzionalità utilizzate nel file.
+import com.lowagie.text.PageSize; // Importa com.lowagie.text.PageSize per abilitare le funzionalità utilizzate nel file.
+import com.lowagie.text.Paragraph; // Importa com.lowagie.text.Paragraph per abilitare le funzionalità utilizzate nel file.
+import com.lowagie.text.Phrase; // Importa com.lowagie.text.Phrase per abilitare le funzionalità utilizzate nel file.
+import com.lowagie.text.pdf.PdfPCell; // Importa com.lowagie.text.pdf.PdfPCell per abilitare le funzionalità utilizzate nel file.
+import com.lowagie.text.pdf.PdfPTable; // Importa com.lowagie.text.pdf.PdfPTable per abilitare le funzionalità utilizzate nel file.
+import com.lowagie.text.pdf.PdfWriter; // Importa com.lowagie.text.pdf.PdfWriter per abilitare le funzionalità utilizzate nel file.
 
 /**
  * Genera un PDF basato su un template condiviso per tutti i contratti.
  */
-@Service
-public class ContrattoPdfReportService {
+@Service // Applica l'annotazione @Service per configurare il componente.
+public class ContrattoPdfReportService { // Definisce la classe ContrattoPdfReportService che incapsula la logica applicativa.
 
-    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-    private static final NumberFormat CURRENCY_FORMATTER = NumberFormat.getCurrencyInstance(Locale.ITALY);
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy"); // Definisce il metodo DateTimeFormatter.ofPattern che supporta la logica di dominio.
+    private static final NumberFormat CURRENCY_FORMATTER = NumberFormat.getCurrencyInstance(Locale.ITALY); // Definisce il metodo NumberFormat.getCurrencyInstance che supporta la logica di dominio.
 
-    private static final Color PRIMARY_COLOR = new Color(32, 60, 117);
-    private static final Color LIGHT_BACKGROUND = new Color(244, 247, 252);
+    private static final Color PRIMARY_COLOR = new Color(32, 60, 117); // Definisce il metodo Color che supporta la logica di dominio.
+    private static final Color LIGHT_BACKGROUND = new Color(244, 247, 252); // Definisce il metodo Color che supporta la logica di dominio.
 
-    private final Font brandFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 16, Color.WHITE);
-    private final Font headerFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12, Color.WHITE);
-    private final Font headerSmallFont = FontFactory.getFont(FontFactory.HELVETICA, 9, Color.WHITE);
-    private final Font sectionFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12, PRIMARY_COLOR);
-    private final Font labelFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10, new Color(68, 68, 68));
-    private final Font valueFont = FontFactory.getFont(FontFactory.HELVETICA, 10, Color.BLACK);
-    private final Font footerFont = FontFactory.getFont(FontFactory.HELVETICA_OBLIQUE, 8, new Color(120, 120, 120));
+    private final Font brandFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 16, Color.WHITE); // Definisce il metodo FontFactory.getFont che supporta la logica di dominio.
+    private final Font headerFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12, Color.WHITE); // Definisce il metodo FontFactory.getFont che supporta la logica di dominio.
+    private final Font headerSmallFont = FontFactory.getFont(FontFactory.HELVETICA, 9, Color.WHITE); // Definisce il metodo FontFactory.getFont che supporta la logica di dominio.
+    private final Font sectionFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12, PRIMARY_COLOR); // Definisce il metodo FontFactory.getFont che supporta la logica di dominio.
+    private final Font labelFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10, new Color(68, 68, 68)); // Definisce il metodo FontFactory.getFont che supporta la logica di dominio.
+    private final Font valueFont = FontFactory.getFont(FontFactory.HELVETICA, 10, Color.BLACK); // Definisce il metodo FontFactory.getFont che supporta la logica di dominio.
+    private final Font footerFont = FontFactory.getFont(FontFactory.HELVETICA_OBLIQUE, 8, new Color(120, 120, 120)); // Definisce il metodo FontFactory.getFont che supporta la logica di dominio.
 
-    public byte[] generaPdf(Contratto contratto) {
-        Objects.requireNonNull(contratto, "contratto");
+    public byte[] generaPdf(Contratto contratto) { // Definisce il metodo generaPdf che supporta la logica di dominio.
+        Objects.requireNonNull(contratto, "contratto"); // Esegue l'istruzione terminata dal punto e virgola.
 
-        try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-            Document document = new Document(PageSize.A4, 42, 42, 60, 48);
-            PdfWriter.getInstance(document, out);
-            document.open();
+        try (ByteArrayOutputStream out = new ByteArrayOutputStream()) { // Avvia il blocco protetto per intercettare eventuali eccezioni.
+            Document document = new Document(PageSize.A4, 42, 42, 60, 48); // Assegna il valore calcolato alla variabile Document document.
+            PdfWriter.getInstance(document, out); // Esegue l'istruzione terminata dal punto e virgola.
+            document.open(); // Esegue l'istruzione terminata dal punto e virgola.
 
-            aggiungiIntestazione(document, "Contratto", formatoCodiceContratto(contratto));
-            aggiungiDivider(document);
+            aggiungiIntestazione(document, "Contratto", formatoCodiceContratto(contratto)); // Esegue l'istruzione terminata dal punto e virgola.
+            aggiungiDivider(document); // Esegue l'istruzione terminata dal punto e virgola.
 
-            aggiungiSezione(document, "Dati contratto", table -> {
-                aggiungiRiga(table, "Codice contratto",
-                        contratto.getIdContratto() != null ? String.valueOf(contratto.getIdContratto()) : "-");
-                aggiungiRiga(table, "Stato", valueOrPlaceholder(contratto.getStato()));
-                aggiungiRiga(table, "Data inizio",
-                        contratto.getDataInizio() != null ? DATE_FORMATTER.format(contratto.getDataInizio()) : "-");
-                aggiungiRiga(table, "Data fine",
-                        contratto.getDataFine() != null ? DATE_FORMATTER.format(contratto.getDataFine()) : "-");
-                aggiungiRiga(table, "Importo", formatCurrency(contratto.getImporto()));
-            });
+            aggiungiSezione(document, "Dati contratto", table -> { // Apre il blocco di codice associato alla dichiarazione.
+                aggiungiRiga(table, "Codice contratto", // Esegue l'istruzione necessaria alla logica applicativa.
+                        contratto.getIdContratto() != null ? String.valueOf(contratto.getIdContratto()) : "-"); // Esegue l'istruzione terminata dal punto e virgola.
+                aggiungiRiga(table, "Stato", valueOrPlaceholder(contratto.getStato())); // Esegue l'istruzione terminata dal punto e virgola.
+                aggiungiRiga(table, "Data inizio", // Esegue l'istruzione necessaria alla logica applicativa.
+                        contratto.getDataInizio() != null ? DATE_FORMATTER.format(contratto.getDataInizio()) : "-"); // Esegue l'istruzione terminata dal punto e virgola.
+                aggiungiRiga(table, "Data fine", // Esegue l'istruzione necessaria alla logica applicativa.
+                        contratto.getDataFine() != null ? DATE_FORMATTER.format(contratto.getDataFine()) : "-"); // Esegue l'istruzione terminata dal punto e virgola.
+                aggiungiRiga(table, "Importo", formatCurrency(contratto.getImporto())); // Esegue l'istruzione terminata dal punto e virgola.
+            }); // Chiude il blocco di codice precedente.
 
-            Cliente cliente = contratto.getCliente();
-            aggiungiSezione(document, "Cliente", table -> {
-                aggiungiRiga(table, "Cliente", renderPersona(cliente));
-                aggiungiRiga(table, "Email", cliente != null ? valueOrPlaceholder(cliente.getEmail()) : "-");
-                aggiungiRiga(table, "Telefono", cliente != null ? valueOrPlaceholder(cliente.getTelefono()) : "-");
-                aggiungiRiga(table, "Indirizzo", cliente != null ? valueOrPlaceholder(cliente.getIndirizzo()) : "-");
-                aggiungiRiga(table, "Partita IVA", cliente != null ? valueOrPlaceholder(cliente.getPartitaIva()) : "-");
-            });
+            Cliente cliente = contratto.getCliente(); // Assegna il valore calcolato alla variabile Cliente cliente.
+            aggiungiSezione(document, "Cliente", table -> { // Apre il blocco di codice associato alla dichiarazione.
+                aggiungiRiga(table, "Cliente", renderPersona(cliente)); // Esegue l'istruzione terminata dal punto e virgola.
+                aggiungiRiga(table, "Email", cliente != null ? valueOrPlaceholder(cliente.getEmail()) : "-"); // Esegue l'istruzione terminata dal punto e virgola.
+                aggiungiRiga(table, "Telefono", cliente != null ? valueOrPlaceholder(cliente.getTelefono()) : "-"); // Esegue l'istruzione terminata dal punto e virgola.
+                aggiungiRiga(table, "Indirizzo", cliente != null ? valueOrPlaceholder(cliente.getIndirizzo()) : "-"); // Esegue l'istruzione terminata dal punto e virgola.
+                aggiungiRiga(table, "Partita IVA", cliente != null ? valueOrPlaceholder(cliente.getPartitaIva()) : "-"); // Esegue l'istruzione terminata dal punto e virgola.
+            }); // Chiude il blocco di codice precedente.
 
-            Dipendente dipendente = contratto.getDipendente();
-            aggiungiSezione(document, "Consulente di riferimento", table -> {
-                aggiungiRiga(table, "Dipendente", renderPersona(dipendente));
-                aggiungiRiga(table, "Email", dipendente != null ? valueOrPlaceholder(dipendente.getEmail()) : "-");
-                aggiungiRiga(table, "Telefono", dipendente != null ? valueOrPlaceholder(dipendente.getTelefono()) : "-");
-                aggiungiRiga(table, "Team", dipendente != null ? valueOrPlaceholder(dipendente.getTeam()) : "-");
-                aggiungiRiga(table, "Ranking", dipendente != null ? valueOrPlaceholder(dipendente.getRanking()) : "-");
-            });
+            Dipendente dipendente = contratto.getDipendente(); // Assegna il valore calcolato alla variabile Dipendente dipendente.
+            aggiungiSezione(document, "Consulente di riferimento", table -> { // Apre il blocco di codice associato alla dichiarazione.
+                aggiungiRiga(table, "Dipendente", renderPersona(dipendente)); // Esegue l'istruzione terminata dal punto e virgola.
+                aggiungiRiga(table, "Email", dipendente != null ? valueOrPlaceholder(dipendente.getEmail()) : "-"); // Esegue l'istruzione terminata dal punto e virgola.
+                aggiungiRiga(table, "Telefono", dipendente != null ? valueOrPlaceholder(dipendente.getTelefono()) : "-"); // Esegue l'istruzione terminata dal punto e virgola.
+                aggiungiRiga(table, "Team", dipendente != null ? valueOrPlaceholder(dipendente.getTeam()) : "-"); // Esegue l'istruzione terminata dal punto e virgola.
+                aggiungiRiga(table, "Ranking", dipendente != null ? valueOrPlaceholder(dipendente.getRanking()) : "-"); // Esegue l'istruzione terminata dal punto e virgola.
+            }); // Chiude il blocco di codice precedente.
 
-            Servizio servizio = contratto.getServizio();
-            aggiungiSezione(document, "Servizio erogato", table -> {
-                aggiungiRiga(table, "Servizio", servizio != null ? valueOrPlaceholder(servizio.getNome()) : "-");
-                aggiungiRiga(table, "Descrizione", servizio != null ? valueOrPlaceholder(servizio.getDescrizione()) : "-");
-                aggiungiRiga(table, "Prezzo base", servizio != null ? formatCurrency(servizio.getPrezzoBase()) : "-");
-                aggiungiRiga(table, "Commissione", servizio != null ? formatPercentage(servizio.getCommissionePercentuale()) : "-");
-            });
+            Servizio servizio = contratto.getServizio(); // Assegna il valore calcolato alla variabile Servizio servizio.
+            aggiungiSezione(document, "Servizio erogato", table -> { // Apre il blocco di codice associato alla dichiarazione.
+                aggiungiRiga(table, "Servizio", servizio != null ? valueOrPlaceholder(servizio.getNome()) : "-"); // Esegue l'istruzione terminata dal punto e virgola.
+                aggiungiRiga(table, "Descrizione", servizio != null ? valueOrPlaceholder(servizio.getDescrizione()) : "-"); // Esegue l'istruzione terminata dal punto e virgola.
+                aggiungiRiga(table, "Prezzo base", servizio != null ? formatCurrency(servizio.getPrezzoBase()) : "-"); // Esegue l'istruzione terminata dal punto e virgola.
+                aggiungiRiga(table, "Commissione", servizio != null ? formatPercentage(servizio.getCommissionePercentuale()) : "-"); // Esegue l'istruzione terminata dal punto e virgola.
+            }); // Chiude il blocco di codice precedente.
 
-            aggiungiBloccoNote(document, contratto.getNote());
-            aggiungiFooter(document);
+            aggiungiBloccoNote(document, contratto.getNote()); // Esegue l'istruzione terminata dal punto e virgola.
+            aggiungiFooter(document); // Esegue l'istruzione terminata dal punto e virgola.
 
-            document.close();
-            return out.toByteArray();
-        } catch (DocumentException | IOException e) {
-            throw new IllegalStateException("Impossibile generare il PDF del contratto", e);
-        }
-    }
+            document.close(); // Esegue l'istruzione terminata dal punto e virgola.
+            return out.toByteArray(); // Restituisce il risultato dell'espressione out.toByteArray().
+        } catch (DocumentException | IOException e) { // Apre il blocco di codice associato alla dichiarazione.
+            throw new IllegalStateException("Impossibile generare il PDF del contratto", e); // Propaga un'eccezione verso il chiamante.
+        } // Chiude il blocco di codice precedente.
+    } // Chiude il blocco di codice precedente.
 
-    private void aggiungiIntestazione(Document document, String titolo, String codiceRiferimento) throws DocumentException {
-        PdfPTable header = new PdfPTable(new float[] { 2f, 1f });
-        header.setWidthPercentage(100f);
-        header.setSpacingAfter(16f);
+    private void aggiungiIntestazione(Document document, String titolo, String codiceRiferimento) throws DocumentException { // Definisce il metodo aggiungiIntestazione che supporta la logica di dominio.
+        PdfPTable header = new PdfPTable(new float[] { 2f, 1f }); // Assegna il valore calcolato alla variabile PdfPTable header.
+        header.setWidthPercentage(100f); // Esegue l'istruzione terminata dal punto e virgola.
+        header.setSpacingAfter(16f); // Esegue l'istruzione terminata dal punto e virgola.
 
-        PdfPCell brandCell = new PdfPCell();
-        brandCell.setPadding(12f);
-        brandCell.setBackgroundColor(PRIMARY_COLOR);
-        brandCell.setBorder(PdfPCell.NO_BORDER);
+        PdfPCell brandCell = new PdfPCell(); // Assegna il valore calcolato alla variabile PdfPCell brandCell.
+        brandCell.setPadding(12f); // Esegue l'istruzione terminata dal punto e virgola.
+        brandCell.setBackgroundColor(PRIMARY_COLOR); // Esegue l'istruzione terminata dal punto e virgola.
+        brandCell.setBorder(PdfPCell.NO_BORDER); // Esegue l'istruzione terminata dal punto e virgola.
 
-        Paragraph brand = new Paragraph("Gestore Agenti", brandFont);
-        brand.setSpacingAfter(4f);
-        brandCell.addElement(brand);
-        Paragraph subtitle = new Paragraph("Soluzioni gestionali per reti commerciali", headerSmallFont);
-        brandCell.addElement(subtitle);
-        header.addCell(brandCell);
+        Paragraph brand = new Paragraph("Gestore Agenti", brandFont); // Assegna il valore calcolato alla variabile Paragraph brand.
+        brand.setSpacingAfter(4f); // Esegue l'istruzione terminata dal punto e virgola.
+        brandCell.addElement(brand); // Esegue l'istruzione terminata dal punto e virgola.
+        Paragraph subtitle = new Paragraph("Soluzioni gestionali per reti commerciali", headerSmallFont); // Assegna il valore calcolato alla variabile Paragraph subtitle.
+        brandCell.addElement(subtitle); // Esegue l'istruzione terminata dal punto e virgola.
+        header.addCell(brandCell); // Esegue l'istruzione terminata dal punto e virgola.
 
-        PdfPCell titleCell = new PdfPCell();
-        titleCell.setPadding(12f);
-        titleCell.setBackgroundColor(PRIMARY_COLOR);
-        titleCell.setBorder(PdfPCell.NO_BORDER);
+        PdfPCell titleCell = new PdfPCell(); // Assegna il valore calcolato alla variabile PdfPCell titleCell.
+        titleCell.setPadding(12f); // Esegue l'istruzione terminata dal punto e virgola.
+        titleCell.setBackgroundColor(PRIMARY_COLOR); // Esegue l'istruzione terminata dal punto e virgola.
+        titleCell.setBorder(PdfPCell.NO_BORDER); // Esegue l'istruzione terminata dal punto e virgola.
 
-        Paragraph docTitle = new Paragraph(titolo.toUpperCase(Locale.ITALIAN), headerFont);
-        docTitle.setAlignment(Element.ALIGN_RIGHT);
-        titleCell.addElement(docTitle);
+        Paragraph docTitle = new Paragraph(titolo.toUpperCase(Locale.ITALIAN), headerFont); // Assegna il valore calcolato alla variabile Paragraph docTitle.
+        docTitle.setAlignment(Element.ALIGN_RIGHT); // Esegue l'istruzione terminata dal punto e virgola.
+        titleCell.addElement(docTitle); // Esegue l'istruzione terminata dal punto e virgola.
 
-        Paragraph docCode = new Paragraph("Riferimento: " + valueOrPlaceholder(codiceRiferimento), headerSmallFont);
-        docCode.setAlignment(Element.ALIGN_RIGHT);
-        titleCell.addElement(docCode);
+        Paragraph docCode = new Paragraph("Riferimento: " + valueOrPlaceholder(codiceRiferimento), headerSmallFont); // Assegna il valore calcolato alla variabile Paragraph docCode.
+        docCode.setAlignment(Element.ALIGN_RIGHT); // Esegue l'istruzione terminata dal punto e virgola.
+        titleCell.addElement(docCode); // Esegue l'istruzione terminata dal punto e virgola.
 
-        header.addCell(titleCell);
-        document.add(header);
-    }
+        header.addCell(titleCell); // Esegue l'istruzione terminata dal punto e virgola.
+        document.add(header); // Esegue l'istruzione terminata dal punto e virgola.
+    } // Chiude il blocco di codice precedente.
 
-    private void aggiungiDivider(Document document) throws DocumentException {
-        PdfPTable divider = new PdfPTable(1);
-        divider.setWidthPercentage(100f);
-        divider.setSpacingAfter(12f);
+    private void aggiungiDivider(Document document) throws DocumentException { // Definisce il metodo aggiungiDivider che supporta la logica di dominio.
+        PdfPTable divider = new PdfPTable(1); // Assegna il valore calcolato alla variabile PdfPTable divider.
+        divider.setWidthPercentage(100f); // Esegue l'istruzione terminata dal punto e virgola.
+        divider.setSpacingAfter(12f); // Esegue l'istruzione terminata dal punto e virgola.
 
-        PdfPCell cell = new PdfPCell();
-        cell.setFixedHeight(2f);
-        cell.setBorder(PdfPCell.NO_BORDER);
-        cell.setBackgroundColor(PRIMARY_COLOR);
-        divider.addCell(cell);
+        PdfPCell cell = new PdfPCell(); // Assegna il valore calcolato alla variabile PdfPCell cell.
+        cell.setFixedHeight(2f); // Esegue l'istruzione terminata dal punto e virgola.
+        cell.setBorder(PdfPCell.NO_BORDER); // Esegue l'istruzione terminata dal punto e virgola.
+        cell.setBackgroundColor(PRIMARY_COLOR); // Esegue l'istruzione terminata dal punto e virgola.
+        divider.addCell(cell); // Esegue l'istruzione terminata dal punto e virgola.
 
-        document.add(divider);
-    }
+        document.add(divider); // Esegue l'istruzione terminata dal punto e virgola.
+    } // Chiude il blocco di codice precedente.
 
-    private void aggiungiSezione(Document document, String titolo, Consumer<PdfPTable> builder)
-            throws DocumentException {
-        Paragraph section = new Paragraph(titolo.toUpperCase(Locale.ITALIAN), sectionFont);
-        section.setSpacingBefore(6f);
-        section.setSpacingAfter(4f);
-        document.add(section);
+    private void aggiungiSezione(Document document, String titolo, Consumer<PdfPTable> builder) // Definisce il metodo aggiungiSezione che supporta la logica di dominio.
+            throws DocumentException { // Apre il blocco di codice associato alla dichiarazione.
+        Paragraph section = new Paragraph(titolo.toUpperCase(Locale.ITALIAN), sectionFont); // Assegna il valore calcolato alla variabile Paragraph section.
+        section.setSpacingBefore(6f); // Esegue l'istruzione terminata dal punto e virgola.
+        section.setSpacingAfter(4f); // Esegue l'istruzione terminata dal punto e virgola.
+        document.add(section); // Esegue l'istruzione terminata dal punto e virgola.
 
-        PdfPTable table = creaTabellaSezione();
-        builder.accept(table);
-        table.setSpacingAfter(14f);
-        document.add(table);
-    }
+        PdfPTable table = creaTabellaSezione(); // Assegna il valore calcolato alla variabile PdfPTable table.
+        builder.accept(table); // Esegue l'istruzione terminata dal punto e virgola.
+        table.setSpacingAfter(14f); // Esegue l'istruzione terminata dal punto e virgola.
+        document.add(table); // Esegue l'istruzione terminata dal punto e virgola.
+    } // Chiude il blocco di codice precedente.
 
-    private PdfPTable creaTabellaSezione() {
-        PdfPTable table = new PdfPTable(new float[] { 1f, 2f });
-        table.setWidthPercentage(100f);
-        table.setSpacingBefore(2f);
-        return table;
-    }
+    private PdfPTable creaTabellaSezione() { // Definisce il metodo creaTabellaSezione che supporta la logica di dominio.
+        PdfPTable table = new PdfPTable(new float[] { 1f, 2f }); // Assegna il valore calcolato alla variabile PdfPTable table.
+        table.setWidthPercentage(100f); // Esegue l'istruzione terminata dal punto e virgola.
+        table.setSpacingBefore(2f); // Esegue l'istruzione terminata dal punto e virgola.
+        return table; // Restituisce il risultato dell'espressione table.
+    } // Chiude il blocco di codice precedente.
 
-    private void aggiungiRiga(PdfPTable table, String etichetta, String valore) {
-        PdfPCell labelCell = new PdfPCell(new Phrase(valueOrPlaceholder(etichetta), labelFont));
-        labelCell.setBackgroundColor(LIGHT_BACKGROUND);
-        labelCell.setPadding(8f);
-        labelCell.setBorderColor(new Color(220, 224, 231));
-        labelCell.setHorizontalAlignment(Element.ALIGN_LEFT);
-        table.addCell(labelCell);
+    private void aggiungiRiga(PdfPTable table, String etichetta, String valore) { // Definisce il metodo aggiungiRiga che supporta la logica di dominio.
+        PdfPCell labelCell = new PdfPCell(new Phrase(valueOrPlaceholder(etichetta), labelFont)); // Assegna il valore calcolato alla variabile PdfPCell labelCell.
+        labelCell.setBackgroundColor(LIGHT_BACKGROUND); // Esegue l'istruzione terminata dal punto e virgola.
+        labelCell.setPadding(8f); // Esegue l'istruzione terminata dal punto e virgola.
+        labelCell.setBorderColor(new Color(220, 224, 231)); // Esegue l'istruzione terminata dal punto e virgola.
+        labelCell.setHorizontalAlignment(Element.ALIGN_LEFT); // Esegue l'istruzione terminata dal punto e virgola.
+        table.addCell(labelCell); // Esegue l'istruzione terminata dal punto e virgola.
 
-        PdfPCell valueCell = new PdfPCell(new Phrase(valueOrPlaceholder(valore), valueFont));
-        valueCell.setPadding(8f);
-        valueCell.setBorderColor(new Color(220, 224, 231));
-        valueCell.setHorizontalAlignment(Element.ALIGN_LEFT);
-        table.addCell(valueCell);
-    }
+        PdfPCell valueCell = new PdfPCell(new Phrase(valueOrPlaceholder(valore), valueFont)); // Assegna il valore calcolato alla variabile PdfPCell valueCell.
+        valueCell.setPadding(8f); // Esegue l'istruzione terminata dal punto e virgola.
+        valueCell.setBorderColor(new Color(220, 224, 231)); // Esegue l'istruzione terminata dal punto e virgola.
+        valueCell.setHorizontalAlignment(Element.ALIGN_LEFT); // Esegue l'istruzione terminata dal punto e virgola.
+        table.addCell(valueCell); // Esegue l'istruzione terminata dal punto e virgola.
+    } // Chiude il blocco di codice precedente.
 
-    private void aggiungiBloccoNote(Document document, String note) throws DocumentException {
-        Paragraph section = new Paragraph("NOTE", sectionFont);
-        section.setSpacingBefore(6f);
-        section.setSpacingAfter(4f);
-        document.add(section);
+    private void aggiungiBloccoNote(Document document, String note) throws DocumentException { // Definisce il metodo aggiungiBloccoNote che supporta la logica di dominio.
+        Paragraph section = new Paragraph("NOTE", sectionFont); // Assegna il valore calcolato alla variabile Paragraph section.
+        section.setSpacingBefore(6f); // Esegue l'istruzione terminata dal punto e virgola.
+        section.setSpacingAfter(4f); // Esegue l'istruzione terminata dal punto e virgola.
+        document.add(section); // Esegue l'istruzione terminata dal punto e virgola.
 
-        PdfPCell noteCell = new PdfPCell(new Phrase(valueOrPlaceholder(note), valueFont));
-        noteCell.setPadding(10f);
-        noteCell.setBorderColor(new Color(220, 224, 231));
+        PdfPCell noteCell = new PdfPCell(new Phrase(valueOrPlaceholder(note), valueFont)); // Assegna il valore calcolato alla variabile PdfPCell noteCell.
+        noteCell.setPadding(10f); // Esegue l'istruzione terminata dal punto e virgola.
+        noteCell.setBorderColor(new Color(220, 224, 231)); // Esegue l'istruzione terminata dal punto e virgola.
 
-        PdfPTable noteTable = new PdfPTable(1);
-        noteTable.setWidthPercentage(100f);
-        noteTable.addCell(noteCell);
-        noteTable.setSpacingAfter(14f);
-        document.add(noteTable);
-    }
+        PdfPTable noteTable = new PdfPTable(1); // Assegna il valore calcolato alla variabile PdfPTable noteTable.
+        noteTable.setWidthPercentage(100f); // Esegue l'istruzione terminata dal punto e virgola.
+        noteTable.addCell(noteCell); // Esegue l'istruzione terminata dal punto e virgola.
+        noteTable.setSpacingAfter(14f); // Esegue l'istruzione terminata dal punto e virgola.
+        document.add(noteTable); // Esegue l'istruzione terminata dal punto e virgola.
+    } // Chiude il blocco di codice precedente.
 
-    private void aggiungiFooter(Document document) throws DocumentException {
-        Paragraph footer = new Paragraph(
-                "Gestore Agenti S.r.l. · Via Roma 1, 20100 Milano · info@gestoreagenti.example · P.IVA 01234567890",
-                footerFont);
-        footer.setAlignment(Element.ALIGN_CENTER);
-        footer.setSpacingBefore(24f);
-        document.add(footer);
-    }
+    private void aggiungiFooter(Document document) throws DocumentException { // Definisce il metodo aggiungiFooter che supporta la logica di dominio.
+        Paragraph footer = new Paragraph( // Esegue l'istruzione necessaria alla logica applicativa.
+                "Gestore Agenti S.r.l. · Via Roma 1, 20100 Milano · info@gestoreagenti.example · P.IVA 01234567890", // Esegue l'istruzione necessaria alla logica applicativa.
+                footerFont); // Esegue l'istruzione terminata dal punto e virgola.
+        footer.setAlignment(Element.ALIGN_CENTER); // Esegue l'istruzione terminata dal punto e virgola.
+        footer.setSpacingBefore(24f); // Esegue l'istruzione terminata dal punto e virgola.
+        document.add(footer); // Esegue l'istruzione terminata dal punto e virgola.
+    } // Chiude il blocco di codice precedente.
 
-    private String formatoCodiceContratto(Contratto contratto) {
-        if (contratto == null || contratto.getIdContratto() == null) {
-            return "-";
-        }
-        return "CTR-" + contratto.getIdContratto();
-    }
+    private String formatoCodiceContratto(Contratto contratto) { // Definisce il metodo formatoCodiceContratto che supporta la logica di dominio.
+        if (contratto == null || contratto.getIdContratto() == null) { // Valuta la condizione per controllare il flusso applicativo.
+            return "-"; // Restituisce il risultato dell'espressione "-".
+        } // Chiude il blocco di codice precedente.
+        return "CTR-" + contratto.getIdContratto(); // Restituisce il risultato dell'espressione "CTR-" + contratto.getIdContratto().
+    } // Chiude il blocco di codice precedente.
 
-    private String formatCurrency(java.math.BigDecimal value) {
-        return value != null ? CURRENCY_FORMATTER.format(value) : "-";
-    }
+    private String formatCurrency(java.math.BigDecimal value) { // Definisce il metodo formatCurrency che supporta la logica di dominio.
+        return value != null ? CURRENCY_FORMATTER.format(value) : "-"; // Restituisce il risultato dell'espressione value != null ? CURRENCY_FORMATTER.format(value) : "-".
+    } // Chiude il blocco di codice precedente.
 
-    private String formatPercentage(java.math.BigDecimal value) {
-        if (value == null) {
-            return "-";
-        }
-        NumberFormat percentFormat = NumberFormat.getPercentInstance(Locale.ITALY);
-        percentFormat.setMinimumFractionDigits(2);
-        percentFormat.setMaximumFractionDigits(2);
-        return percentFormat.format(value.divide(java.math.BigDecimal.valueOf(100)));
-    }
+    private String formatPercentage(java.math.BigDecimal value) { // Definisce il metodo formatPercentage che supporta la logica di dominio.
+        if (value == null) { // Valuta la condizione per controllare il flusso applicativo.
+            return "-"; // Restituisce il risultato dell'espressione "-".
+        } // Chiude il blocco di codice precedente.
+        NumberFormat percentFormat = NumberFormat.getPercentInstance(Locale.ITALY); // Assegna il valore calcolato alla variabile NumberFormat percentFormat.
+        percentFormat.setMinimumFractionDigits(2); // Esegue l'istruzione terminata dal punto e virgola.
+        percentFormat.setMaximumFractionDigits(2); // Esegue l'istruzione terminata dal punto e virgola.
+        return percentFormat.format(value.divide(java.math.BigDecimal.valueOf(100))); // Restituisce il risultato dell'espressione percentFormat.format(value.divide(java.math.BigDecimal.valueOf(100))).
+    } // Chiude il blocco di codice precedente.
 
-    private String renderPersona(Cliente cliente) {
-        if (cliente == null) {
-            return "-";
-        }
-        if (cliente.getRagioneSociale() != null && !cliente.getRagioneSociale().isBlank()) {
-            return cliente.getRagioneSociale();
-        }
-        return buildFullName(cliente.getNome(), cliente.getCognome());
-    }
+    private String renderPersona(Cliente cliente) { // Definisce il metodo renderPersona che supporta la logica di dominio.
+        if (cliente == null) { // Valuta la condizione per controllare il flusso applicativo.
+            return "-"; // Restituisce il risultato dell'espressione "-".
+        } // Chiude il blocco di codice precedente.
+        if (cliente.getRagioneSociale() != null && !cliente.getRagioneSociale().isBlank()) { // Valuta la condizione per controllare il flusso applicativo.
+            return cliente.getRagioneSociale(); // Restituisce il risultato dell'espressione cliente.getRagioneSociale().
+        } // Chiude il blocco di codice precedente.
+        return buildFullName(cliente.getNome(), cliente.getCognome()); // Restituisce il risultato dell'espressione buildFullName(cliente.getNome(), cliente.getCognome()).
+    } // Chiude il blocco di codice precedente.
 
-    private String renderPersona(Dipendente dipendente) {
-        if (dipendente == null) {
-            return "-";
-        }
-        return buildFullName(dipendente.getNome(), dipendente.getCognome());
-    }
+    private String renderPersona(Dipendente dipendente) { // Definisce il metodo renderPersona che supporta la logica di dominio.
+        if (dipendente == null) { // Valuta la condizione per controllare il flusso applicativo.
+            return "-"; // Restituisce il risultato dell'espressione "-".
+        } // Chiude il blocco di codice precedente.
+        return buildFullName(dipendente.getNome(), dipendente.getCognome()); // Restituisce il risultato dell'espressione buildFullName(dipendente.getNome(), dipendente.getCognome()).
+    } // Chiude il blocco di codice precedente.
 
-    private String buildFullName(String nome, String cognome) {
-        StringBuilder builder = new StringBuilder();
-        if (nome != null && !nome.isBlank()) {
-            builder.append(nome.trim());
-        }
-        if (cognome != null && !cognome.isBlank()) {
-            if (builder.length() > 0) {
-                builder.append(' ');
-            }
-            builder.append(cognome.trim());
-        }
-        return builder.length() > 0 ? builder.toString() : "-";
-    }
+    private String buildFullName(String nome, String cognome) { // Definisce il metodo buildFullName che supporta la logica di dominio.
+        StringBuilder builder = new StringBuilder(); // Assegna il valore calcolato alla variabile StringBuilder builder.
+        if (nome != null && !nome.isBlank()) { // Valuta la condizione per controllare il flusso applicativo.
+            builder.append(nome.trim()); // Esegue l'istruzione terminata dal punto e virgola.
+        } // Chiude il blocco di codice precedente.
+        if (cognome != null && !cognome.isBlank()) { // Valuta la condizione per controllare il flusso applicativo.
+            if (builder.length() > 0) { // Valuta la condizione per controllare il flusso applicativo.
+                builder.append(' '); // Esegue l'istruzione terminata dal punto e virgola.
+            } // Chiude il blocco di codice precedente.
+            builder.append(cognome.trim()); // Esegue l'istruzione terminata dal punto e virgola.
+        } // Chiude il blocco di codice precedente.
+        return builder.length() > 0 ? builder.toString() : "-"; // Restituisce il risultato dell'espressione builder.length() > 0 ? builder.toString() : "-".
+    } // Chiude il blocco di codice precedente.
 
-    private String valueOrPlaceholder(String value) {
-        return value != null && !value.isBlank() ? value : "-";
-    }
-}
+    private String valueOrPlaceholder(String value) { // Definisce il metodo valueOrPlaceholder che supporta la logica di dominio.
+        return value != null && !value.isBlank() ? value : "-"; // Restituisce il risultato dell'espressione value != null && !value.isBlank() ? value : "-".
+    } // Chiude il blocco di codice precedente.
+} // Chiude il blocco di codice precedente.
 

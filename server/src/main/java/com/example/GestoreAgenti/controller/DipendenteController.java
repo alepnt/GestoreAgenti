@@ -12,13 +12,13 @@ import org.springframework.web.bind.annotation.RequestBody; // Importa RequestBo
 import org.springframework.web.bind.annotation.RequestMapping; // Importa RequestMapping per definire il prefisso delle rotte del controller.
 import org.springframework.web.bind.annotation.RestController; // Importa RestController per esporre il controller come componente REST.
 
-import org.springframework.http.HttpStatus;
-import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpStatus; // Importa org.springframework.http.HttpStatus per abilitare le funzionalità utilizzate nel file.
+import org.springframework.web.server.ResponseStatusException; // Importa org.springframework.web.server.ResponseStatusException per abilitare le funzionalità utilizzate nel file.
 
 import com.example.GestoreAgenti.model.Dipendente; // Importa la classe Dipendente per operare sui dati dei dipendenti.
-import com.example.GestoreAgenti.service.facade.AgentOperations;
-import com.example.GestoreAgenti.service.facade.AgentOverview;
-import com.example.GestoreAgenti.service.facade.TeamHierarchyNode;
+import com.example.GestoreAgenti.service.facade.AgentOperations; // Importa com.example.GestoreAgenti.service.facade.AgentOperations per abilitare le funzionalità utilizzate nel file.
+import com.example.GestoreAgenti.service.facade.AgentOverview; // Importa com.example.GestoreAgenti.service.facade.AgentOverview per abilitare le funzionalità utilizzate nel file.
+import com.example.GestoreAgenti.service.facade.TeamHierarchyNode; // Importa com.example.GestoreAgenti.service.facade.TeamHierarchyNode per abilitare le funzionalità utilizzate nel file.
 
 @RestController // Applica l'annotazione @RestController per configurare il componente.
 @RequestMapping("/api/dipendenti") // Applica l'annotazione @RequestMapping per configurare il componente.
@@ -36,12 +36,12 @@ public class DipendenteController { // Dichiara la classe DipendenteController c
 
     @GetMapping("/{id}") // Applica l'annotazione @GetMapping per configurare il componente.
     public Dipendente getById(@PathVariable Long id) { // Restituisce il by id dell'entità.
-        Dipendente dipendente = agentOperations.getAgent(id);
-        if (dipendente == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Dipendente non trovato");
-        }
-        return dipendente;
-    }
+        Dipendente dipendente = agentOperations.getAgent(id); // Assegna il valore calcolato alla variabile Dipendente dipendente.
+        if (dipendente == null) { // Valuta la condizione per controllare il flusso applicativo.
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Dipendente non trovato"); // Propaga un'eccezione verso il chiamante.
+        } // Chiude il blocco di codice precedente.
+        return dipendente; // Restituisce il risultato dell'espressione dipendente.
+    } // Chiude il blocco di codice precedente.
 
     @PostMapping // Applica l'annotazione @PostMapping per configurare il componente.
     public Dipendente create(@RequestBody Dipendente dipendente) { return agentOperations.registerAgent(dipendente); } // Metodo create che gestisce la logica prevista.
@@ -54,23 +54,23 @@ public class DipendenteController { // Dichiara la classe DipendenteController c
     @DeleteMapping("/{id}") // Applica l'annotazione @DeleteMapping per configurare il componente.
     public void delete(@PathVariable Long id) { agentOperations.removeAgent(id); } // Elimina l'entità identificata dal parametro in ingresso.
 
-    @GetMapping("/{id}/overview")
-    public AgentOverview getOverview(@PathVariable Long id) {
-        return agentOperations.loadOverview(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Overview non disponibile"));
-    }
+    @GetMapping("/{id}/overview") // Applica l'annotazione @GetMapping per configurare il componente.
+    public AgentOverview getOverview(@PathVariable Long id) { // Definisce il metodo getOverview che supporta la logica di dominio.
+        return agentOperations.loadOverview(id) // Restituisce il risultato dell'espressione agentOperations.loadOverview(id).
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Overview non disponibile")); // Esegue l'istruzione terminata dal punto e virgola.
+    } // Chiude il blocco di codice precedente.
 
-    @PostMapping("/{id}/teams/{teamId}")
-    public Dipendente assignTeam(@PathVariable Long id, @PathVariable Long teamId) {
-        try {
-            return agentOperations.assignAgentToTeam(id, teamId);
-        } catch (IllegalArgumentException ex) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, ex.getMessage(), ex);
-        }
-    }
+    @PostMapping("/{id}/teams/{teamId}") // Applica l'annotazione @PostMapping per configurare il componente.
+    public Dipendente assignTeam(@PathVariable Long id, @PathVariable Long teamId) { // Definisce il metodo assignTeam che supporta la logica di dominio.
+        try { // Avvia il blocco protetto per intercettare eventuali eccezioni.
+            return agentOperations.assignAgentToTeam(id, teamId); // Restituisce il risultato dell'espressione agentOperations.assignAgentToTeam(id, teamId).
+        } catch (IllegalArgumentException ex) { // Apre il blocco di codice associato alla dichiarazione.
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, ex.getMessage(), ex); // Propaga un'eccezione verso il chiamante.
+        } // Chiude il blocco di codice precedente.
+    } // Chiude il blocco di codice precedente.
 
-    @GetMapping("/gerarchia")
-    public TeamHierarchyNode getHierarchy() {
-        return agentOperations.buildHierarchy();
-    }
+    @GetMapping("/gerarchia") // Applica l'annotazione @GetMapping per configurare il componente.
+    public TeamHierarchyNode getHierarchy() { // Definisce il metodo getHierarchy che supporta la logica di dominio.
+        return agentOperations.buildHierarchy(); // Restituisce il risultato dell'espressione agentOperations.buildHierarchy().
+    } // Chiude il blocco di codice precedente.
 } // Chiude il blocco di codice precedente.

@@ -1,74 +1,74 @@
-package com.example.GestoreAgenti.service.crud;
+package com.example.GestoreAgenti.service.crud; // Definisce il pacchetto com.example.GestoreAgenti.service.crud che contiene questa classe.
 
-import java.util.List;
-import java.util.Optional;
+import java.util.List; // Importa java.util.List per abilitare le funzionalità utilizzate nel file.
+import java.util.Optional; // Importa java.util.Optional per abilitare le funzionalità utilizzate nel file.
 
-import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaRepository; // Importa org.springframework.data.jpa.repository.JpaRepository per abilitare le funzionalità utilizzate nel file.
 
-import jakarta.persistence.EntityNotFoundException;
+import jakarta.persistence.EntityNotFoundException; // Importa jakarta.persistence.EntityNotFoundException per abilitare le funzionalità utilizzate nel file.
 
 /**
  * Template method that encapsulates the lifecycle of typical CRUD operations.
  * Concrete services only need to provide a repository and, optionally, a
  * {@link CrudEntityHandler} to customise validation and mapping rules.
  */
-public abstract class AbstractCrudService<T, ID> {
+public abstract class AbstractCrudService<T, ID> { // Apre il blocco di codice associato alla dichiarazione.
 
-    private final JpaRepository<T, ID> repository;
-    private final CrudEntityHandler<T> handler;
-    private final String entityDescription;
+    private final JpaRepository<T, ID> repository; // Dichiara il campo repository dell'oggetto.
+    private final CrudEntityHandler<T> handler; // Dichiara il campo handler dell'oggetto.
+    private final String entityDescription; // Dichiara il campo entityDescription dell'oggetto.
 
-    protected AbstractCrudService(JpaRepository<T, ID> repository,
-                                  CrudEntityHandler<T> handler,
-                                  String entityDescription) {
-        this.repository = repository;
-        this.handler = handler == null ? CrudEntityHandler.noop() : handler;
-        this.entityDescription = entityDescription == null ? "Entity" : entityDescription;
-    }
+    protected AbstractCrudService(JpaRepository<T, ID> repository, // Definisce il metodo AbstractCrudService che supporta la logica di dominio.
+                                  CrudEntityHandler<T> handler, // Esegue l'istruzione necessaria alla logica applicativa.
+                                  String entityDescription) { // Apre il blocco di codice associato alla dichiarazione.
+        this.repository = repository; // Aggiorna il campo repository dell'istanza.
+        this.handler = handler == null ? CrudEntityHandler.noop() : handler; // Aggiorna il campo handler dell'istanza.
+        this.entityDescription = entityDescription == null ? "Entity" : entityDescription; // Aggiorna il campo entityDescription dell'istanza.
+    } // Chiude il blocco di codice precedente.
 
-    protected JpaRepository<T, ID> repository() {
-        return repository;
-    }
+    protected JpaRepository<T, ID> repository() { // Definisce il metodo repository che supporta la logica di dominio.
+        return repository; // Restituisce il risultato dell'espressione repository.
+    } // Chiude il blocco di codice precedente.
 
-    protected CrudEntityHandler<T> handler() {
-        return handler;
-    }
+    protected CrudEntityHandler<T> handler() { // Definisce il metodo handler che supporta la logica di dominio.
+        return handler; // Restituisce il risultato dell'espressione handler.
+    } // Chiude il blocco di codice precedente.
 
-    public List<T> findAll() {
-        return repository.findAll();
-    }
+    public List<T> findAll() { // Definisce il metodo findAll che supporta la logica di dominio.
+        return repository.findAll(); // Restituisce il risultato dell'espressione repository.findAll().
+    } // Chiude il blocco di codice precedente.
 
-    public Optional<T> findOptionalById(ID id) {
-        return repository.findById(id);
-    }
+    public Optional<T> findOptionalById(ID id) { // Definisce il metodo findOptionalById che supporta la logica di dominio.
+        return repository.findById(id); // Restituisce il risultato dell'espressione repository.findById(id).
+    } // Chiude il blocco di codice precedente.
 
-    public T findRequiredById(ID id) {
-        return findOptionalById(id)
-                .orElseThrow(() -> new EntityNotFoundException(entityDescription + " con id " + id + " non trovato"));
-    }
+    public T findRequiredById(ID id) { // Definisce il metodo findRequiredById che supporta la logica di dominio.
+        return findOptionalById(id) // Restituisce il risultato dell'espressione findOptionalById(id).
+                .orElseThrow(() -> new EntityNotFoundException(entityDescription + " con id " + id + " non trovato")); // Esegue l'istruzione terminata dal punto e virgola.
+    } // Chiude il blocco di codice precedente.
 
-    public T create(T entity) {
-        handler.validateForCreate(entity);
-        T prepared = handler.prepareForCreate(entity);
-        T saved = repository.save(prepared);
-        handler.afterCreate(saved);
-        return saved;
-    }
+    public T create(T entity) { // Definisce il metodo create che supporta la logica di dominio.
+        handler.validateForCreate(entity); // Esegue l'istruzione terminata dal punto e virgola.
+        T prepared = handler.prepareForCreate(entity); // Assegna il valore calcolato alla variabile T prepared.
+        T saved = repository.save(prepared); // Assegna il valore calcolato alla variabile T saved.
+        handler.afterCreate(saved); // Esegue l'istruzione terminata dal punto e virgola.
+        return saved; // Restituisce il risultato dell'espressione saved.
+    } // Chiude il blocco di codice precedente.
 
-    public T update(ID id, T changes) {
-        T existing = findRequiredById(id);
-        handler.validateForUpdate(existing, changes);
-        T merged = handler.merge(existing, changes);
-        T saved = repository.save(merged);
-        handler.afterUpdate(saved);
-        return saved;
-    }
+    public T update(ID id, T changes) { // Definisce il metodo update che supporta la logica di dominio.
+        T existing = findRequiredById(id); // Assegna il valore calcolato alla variabile T existing.
+        handler.validateForUpdate(existing, changes); // Esegue l'istruzione terminata dal punto e virgola.
+        T merged = handler.merge(existing, changes); // Assegna il valore calcolato alla variabile T merged.
+        T saved = repository.save(merged); // Assegna il valore calcolato alla variabile T saved.
+        handler.afterUpdate(saved); // Esegue l'istruzione terminata dal punto e virgola.
+        return saved; // Restituisce il risultato dell'espressione saved.
+    } // Chiude il blocco di codice precedente.
 
-    public T delete(ID id) {
-        T existing = findRequiredById(id);
-        handler.beforeDelete(existing);
-        repository.delete(existing);
-        handler.afterDelete(existing);
-        return existing;
-    }
-}
+    public T delete(ID id) { // Definisce il metodo delete che supporta la logica di dominio.
+        T existing = findRequiredById(id); // Assegna il valore calcolato alla variabile T existing.
+        handler.beforeDelete(existing); // Esegue l'istruzione terminata dal punto e virgola.
+        repository.delete(existing); // Esegue l'istruzione terminata dal punto e virgola.
+        handler.afterDelete(existing); // Esegue l'istruzione terminata dal punto e virgola.
+        return existing; // Restituisce il risultato dell'espressione existing.
+    } // Chiude il blocco di codice precedente.
+} // Chiude il blocco di codice precedente.

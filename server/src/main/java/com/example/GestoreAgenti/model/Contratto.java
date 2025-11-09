@@ -64,22 +64,22 @@ public class Contratto implements Prototype<Contratto> { // Dichiara la classe C
     public String getNote() { return note; } // Restituisce le note dell'entità.
     public void setNote(String note) { this.note = note; } // Imposta le note per l'entità.
 
-    @Override
-    public Contratto copia() {
-        Contratto copia = new Contratto();
-        copia.setCliente(this.cliente);
-        copia.setDipendente(this.dipendente);
-        copia.setServizio(this.servizio);
-        copia.setDataInizio(this.dataInizio);
-        copia.setDataFine(this.dataFine);
-        copia.setImporto(this.importo);
-        copia.setStato(this.stato);
-        copia.setNote(this.note);
-        return copia;
+    @Override // Applica l'annotazione @Override per configurare il componente.
+    public Contratto copia() { // Definisce il metodo copia che supporta la logica di dominio.
+        Contratto copia = new Contratto(); // Assegna il valore calcolato alla variabile Contratto copia.
+        copia.setCliente(this.cliente); // Esegue l'istruzione terminata dal punto e virgola.
+        copia.setDipendente(this.dipendente); // Esegue l'istruzione terminata dal punto e virgola.
+        copia.setServizio(this.servizio); // Esegue l'istruzione terminata dal punto e virgola.
+        copia.setDataInizio(this.dataInizio); // Esegue l'istruzione terminata dal punto e virgola.
+        copia.setDataFine(this.dataFine); // Esegue l'istruzione terminata dal punto e virgola.
+        copia.setImporto(this.importo); // Esegue l'istruzione terminata dal punto e virgola.
+        copia.setStato(this.stato); // Esegue l'istruzione terminata dal punto e virgola.
+        copia.setNote(this.note); // Esegue l'istruzione terminata dal punto e virgola.
+        return copia; // Restituisce il risultato dell'espressione copia.
     } // Duplica lo stato significativo del contratto senza propagare l'identificativo.
 
-    public static ContrattoBuilder builder(Cliente cliente, Dipendente dipendente, Servizio servizio) {
-        return ContrattoBuilder.nuovoContratto(cliente, dipendente, servizio);
+    public static ContrattoBuilder builder(Cliente cliente, Dipendente dipendente, Servizio servizio) { // Definisce il metodo builder che supporta la logica di dominio.
+        return ContrattoBuilder.nuovoContratto(cliente, dipendente, servizio); // Restituisce il risultato dell'espressione ContrattoBuilder.nuovoContratto(cliente, dipendente, servizio).
     } // Espone un factory method per creare builder coerenti con il pattern creazionale introdotto.
 } // Chiude il blocco di codice precedente.
 

@@ -42,13 +42,13 @@ public class Servizio implements Prototype<Servizio> { // Dichiara la classe Ser
     public BigDecimal getCommissionePercentuale() { return commissionePercentuale; } // Restituisce la percentuale di commissione dell'entità.
     public void setCommissionePercentuale(BigDecimal commissionePercentuale) { this.commissionePercentuale = commissionePercentuale; } // Imposta la percentuale di commissione per l'entità.
 
-    @Override
-    public Servizio copia() {
-        Servizio copia = new Servizio();
-        copia.setNome(this.nome);
-        copia.setDescrizione(this.descrizione);
-        copia.setPrezzoBase(this.prezzoBase);
-        copia.setCommissionePercentuale(this.commissionePercentuale);
-        return copia;
+    @Override // Applica l'annotazione @Override per configurare il componente.
+    public Servizio copia() { // Definisce il metodo copia che supporta la logica di dominio.
+        Servizio copia = new Servizio(); // Assegna il valore calcolato alla variabile Servizio copia.
+        copia.setNome(this.nome); // Esegue l'istruzione terminata dal punto e virgola.
+        copia.setDescrizione(this.descrizione); // Esegue l'istruzione terminata dal punto e virgola.
+        copia.setPrezzoBase(this.prezzoBase); // Esegue l'istruzione terminata dal punto e virgola.
+        copia.setCommissionePercentuale(this.commissionePercentuale); // Esegue l'istruzione terminata dal punto e virgola.
+        return copia; // Restituisce il risultato dell'espressione copia.
     } // Crea una nuova istanza duplicando lo stato significativo senza propagare l'identificativo.
 } // Chiude il blocco di codice precedente.

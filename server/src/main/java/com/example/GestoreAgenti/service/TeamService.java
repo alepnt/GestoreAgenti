@@ -1,41 +1,86 @@
-package com.example.GestoreAgenti.service; // Definisce il pacchetto com.example.GestoreAgenti.service a cui appartiene questa classe.
+package com.example.GestoreAgenti.service;
 
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
-import java.util.List; // Importa java.util.List per abilitare le funzionalità utilizzate nel file.
-import java.util.Optional; // Importa java.util.Optional per abilitare le funzionalità utilizzate nel file.
+import org.springframework.stereotype.Service;
 
-import org.springframework.stereotype.Service; // Importa org.springframework.stereotype.Service per abilitare le funzionalità utilizzate nel file.
+import com.example.GestoreAgenti.model.Team;
+import com.example.GestoreAgenti.repository.TeamRepository;
+import com.example.GestoreAgenti.service.crud.AbstractCrudService;
+import com.example.GestoreAgenti.service.crud.BeanCopyCrudEntityHandler;
 
-import com.example.GestoreAgenti.model.Team; // Importa com.example.GestoreAgenti.model.Team per abilitare le funzionalità utilizzate nel file.
-import com.example.GestoreAgenti.repository.TeamRepository; // Importa com.example.GestoreAgenti.repository.TeamRepository per abilitare le funzionalità utilizzate nel file.
-import com.example.GestoreAgenti.service.crud.AbstractCrudService; // Importa com.example.GestoreAgenti.service.crud.AbstractCrudService per abilitare le funzionalità utilizzate nel file.
-import com.example.GestoreAgenti.service.crud.BeanCopyCrudEntityHandler; // Importa com.example.GestoreAgenti.service.crud.BeanCopyCrudEntityHandler per abilitare le funzionalità utilizzate nel file.
+@Service
+public class TeamService extends AbstractCrudService<Team, Long> {
 
-@Service // Applica l'annotazione @Service per configurare il componente.
-public class TeamService extends AbstractCrudService<Team, Long> { // Definisce la classe TeamService che incapsula la logica applicativa.
+    private static final BigDecimal MIN_COMMISSION = new BigDecimal("0.10");
+    private static final BigDecimal MAX_COMMISSION = new BigDecimal("0.12");
 
-    public TeamService(TeamRepository repository) { // Costruttore della classe TeamService che inizializza le dipendenze necessarie.
-        super(repository, new BeanCopyCrudEntityHandler<>("no"), "Team"); // Invoca il costruttore della superclasse per inizializzare lo stato ereditato.
-    } // Chiude il blocco di codice precedente.
+    private final TeamRepository teamRepository;
 
-    public List<Team> findAll() { // Definisce il metodo findAll che supporta la logica di dominio.
-        return super.findAll(); // Restituisce il risultato dell'espressione super.findAll().
-    } // Chiude il blocco di codice precedente.
+    public TeamService(TeamRepository repository) {
+        super(repository, new BeanCopyCrudEntityHandler<>("no"), "Team");
+        this.teamRepository = repository;
+    }
 
-    public Optional<Team> findById(Long id) { // Definisce il metodo findById che supporta la logica di dominio.
-        return findOptionalById(id); // Restituisce il risultato dell'espressione findOptionalById(id).
-    } // Chiude il blocco di codice precedente.
+    public List<Team> findAll() {
+        return super.findAll();
+    }
 
-    public Team save(Team team) { // Definisce il metodo save che supporta la logica di dominio.
-        return create(team); // Restituisce il risultato dell'espressione create(team).
-    } // Chiude il blocco di codice precedente.
+    public Optional<Team> findById(Long id) {
+        return findOptionalById(id);
+    }
 
-    public Team update(Long id, Team updatedTeam) { // Definisce il metodo update che supporta la logica di dominio.
-        return super.update(id, updatedTeam); // Restituisce il risultato dell'espressione super.update(id, updatedTeam).
-    } // Chiude il blocco di codice precedente.
+    public Team save(Team team) {
+        validateTeam(team, null);
+        return create(team);
+    }
 
-    public Team delete(Long id) { // Definisce il metodo delete che supporta la logica di dominio.
-        return super.delete(id); // Restituisce il risultato dell'espressione super.delete(id).
-    } // Chiude il blocco di codice precedente.
-} // Chiude il blocco di codice precedente.
+    public Team update(Long id, Team updatedTeam) {
+        validateTeam(updatedTeam, id);
+        return super.update(id, updatedTeam);
+    }
 
+    public Team delete(Long id) {
+        Team existing = findRequiredById(id);
+        if (existing.getResponsabileId() != null) {
+            long count = teamRepository.countByResponsabileId(existing.getResponsabileId());
+            if (count <= 2) {
+                throw new IllegalStateException("Impossibile eliminare il team: il responsabile deve coordinare almeno due team");
+            }
+        }
+        return super.delete(id);
+    }
+
+    private void validateTeam(Team team, Long id) {
+        if (team.getPercentualeProvvigione() == null) {
+            throw new IllegalArgumentException("La percentuale di provvigione del team è obbligatoria");
+        }
+        if (team.getPercentualeProvvigione().compareTo(MIN_COMMISSION) < 0
+                || team.getPercentualeProvvigione().compareTo(MAX_COMMISSION) > 0) {
+            throw new IllegalArgumentException("La percentuale di provvigione deve essere compresa tra 10% e 12%");
+        }
+        Long responsabileId = team.getResponsabileId();
+        if (responsabileId != null) {
+            long count = teamRepository.countByResponsabileId(responsabileId);
+            if (id == null) {
+                if (count >= 3) {
+                    throw new IllegalStateException("Ogni responsabile può coordinare al massimo tre team");
+                }
+            } else {
+                Team existing = findRequiredById(id);
+                if (!Objects.equals(existing.getResponsabileId(), responsabileId) && count >= 3) {
+                    throw new IllegalStateException("Ogni responsabile può coordinare al massimo tre team");
+                }
+            }
+        }
+        if (team.getDistribuzioneProvvigioni() == null) {
+            throw new IllegalArgumentException("La modalità di distribuzione delle provvigioni è obbligatoria");
+        }
+        if (team.getBaseCalcolo() == null) {
+            throw new IllegalArgumentException("È necessario specificare la base di calcolo delle provvigioni");
+        }
+    }
+}

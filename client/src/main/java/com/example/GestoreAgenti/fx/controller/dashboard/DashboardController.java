@@ -17,6 +17,7 @@ import com.example.GestoreAgenti.fx.model.ChatMessage; // Record che descrive un
 import com.example.GestoreAgenti.fx.model.EmailMessage; // Record che rappresenta una mail inviata o ricevuta.
 import com.example.GestoreAgenti.fx.model.Employee; // Record che rappresenta il dipendente connesso.
 import com.example.GestoreAgenti.fx.model.InvoiceRecord; // Record che rappresenta una fattura.
+import com.example.GestoreAgenti.fx.model.MonthlyRevenue;
 import com.example.GestoreAgenti.invoice.InvoiceState; // Enumerazione condivisa con gli stati delle fatture.
 import com.example.GestoreAgenti.fx.model.Notification; // Record che descrive una notifica.
 import com.example.GestoreAgenti.fx.model.PaymentRecord; // Record che rappresenta un pagamento.
@@ -25,6 +26,7 @@ import com.example.GestoreAgenti.fx.model.PaymentRecord; // Record che rappresen
 import javafx.application.Platform; // Permette di aggiornare i controlli dal thread JavaFX.
 import javafx.beans.property.SimpleStringProperty; // Wrapper per esporre stringhe reattive nelle tabelle.
 import javafx.collections.ObservableList; // Lista osservabile che notifica le view dei cambiamenti.
+import javafx.collections.ListChangeListener;
 import javafx.collections.transformation.FilteredList; // Vista filtrata che seleziona elementi per stato.
 import javafx.css.PseudoClass; // Gestisce pseudo-classi CSS dinamiche.
 import javafx.event.ActionEvent; // Evento generato da interazioni dell'utente.
@@ -39,6 +41,8 @@ import javafx.scene.control.TextArea; // Campo di input multi-riga.
 import javafx.scene.control.TextField; // Campo di input a singola riga.
 import javafx.scene.control.ToggleButton; // Pulsante con stato selezionabile.
 import javafx.scene.control.ToggleGroup; // Collega più ToggleButton per selezione esclusiva.
+import javafx.scene.chart.LineChart;
+import javafx.scene.chart.XYChart;
 import javafx.scene.layout.AnchorPane; // Layout ancorato usato per i pannelli della dashboard.
 import javafx.scene.layout.StackPane; // Layout che sovrappone i diversi pannelli.
 import javafx.scene.layout.VBox; // Layout verticale usato nelle notifiche.
@@ -47,6 +51,8 @@ import javafx.stage.Stage; // Rappresenta la finestra principale di JavaFX.
 // Import di utilità standard Java utilizzate dal controller.
 import java.text.NumberFormat; // Gestisce la formattazione degli importi in valuta.
 import java.time.format.DateTimeFormatter; // Gestisce la formattazione delle date.
+import java.time.format.TextStyle;
+import java.time.Month;
 import java.util.Locale; // Specifica la localizzazione italiana.
 import java.util.ArrayList; // Implementazione di lista usata per le sottoscrizioni.
 import java.util.HashMap; // Implementazione di mappa usata per registrare i comandi.
@@ -242,6 +248,24 @@ public class DashboardController { // Esegue: public class DashboardController {
     @FXML // Esegue: @FXML
     private TableColumn<InvoiceRecord, String> invoicePaidTotalColumn; // Colonna con l'importo pagato.
 
+    @FXML
+    private TableView<InvoiceRecord> invoicesRegisteredTable;
+
+    @FXML
+    private TableColumn<InvoiceRecord, String> invoiceRegisteredNumberColumn;
+
+    @FXML
+    private TableColumn<InvoiceRecord, String> invoiceRegisteredDateColumn;
+
+    @FXML
+    private TableColumn<InvoiceRecord, String> invoiceRegisteredCustomerColumn;
+
+    @FXML
+    private TableColumn<InvoiceRecord, String> invoiceRegisteredTotalColumn;
+
+    @FXML
+    private LineChart<String, Number> revenueTrendChart;
+
     @FXML // Esegue: @FXML
     private TableView<PaymentRecord> paymentsTable; // Tabella che riepiloga i pagamenti ricevuti.
 
@@ -280,6 +304,7 @@ public class DashboardController { // Esegue: public class DashboardController {
         configureNotifications(); // Prepara la sezione notifiche.
         configureInvoices(); // Prepara la sezione fatture.
         configurePayments(); // Prepara la sezione pagamenti.
+        observeRevenueTrend();
 
         registerCommands(); // Registra i comandi necessari alla UI.
         subscribeToEvents(); // Sottoscrive gli handler agli eventi di dominio.
@@ -387,14 +412,17 @@ public class DashboardController { // Esegue: public class DashboardController {
         FilteredList<InvoiceRecord> issued = new FilteredList<>(invoices, invoice -> invoice.state() == InvoiceState.EMESSA); // Esegue: FilteredList<InvoiceRecord> issued = new FilteredList<>(invoices, invoice -> invoice.state() == InvoiceState.EMESSA);
         FilteredList<InvoiceRecord> due = new FilteredList<>(invoices, invoice -> invoice.state() == InvoiceState.IN_SOLLECITO); // Esegue: FilteredList<InvoiceRecord> due = new FilteredList<>(invoices, invoice -> invoice.state() == InvoiceState.IN_SOLLECITO);
         FilteredList<InvoiceRecord> paid = new FilteredList<>(invoices, invoice -> invoice.state() == InvoiceState.SALDATA); // Esegue: FilteredList<InvoiceRecord> paid = new FilteredList<>(invoices, invoice -> invoice.state() == InvoiceState.SALDATA);
+        FilteredList<InvoiceRecord> registered = new FilteredList<>(invoices, InvoiceRecord::registered);
 
         configureInvoiceColumns(invoiceIssuedNumberColumn, invoiceIssuedDateColumn, invoiceIssuedCustomerColumn, invoiceIssuedTotalColumn); // Esegue: configureInvoiceColumns(invoiceIssuedNumberColumn, invoiceIssuedDateColumn, invoiceIssuedCustomerColumn, invoiceIssuedTotalColumn);
         configureInvoiceColumns(invoiceDueNumberColumn, invoiceDueDateColumn, invoiceDueCustomerColumn, invoiceDueTotalColumn); // Esegue: configureInvoiceColumns(invoiceDueNumberColumn, invoiceDueDateColumn, invoiceDueCustomerColumn, invoiceDueTotalColumn);
         configureInvoiceColumns(invoicePaidNumberColumn, invoicePaidDateColumn, invoicePaidCustomerColumn, invoicePaidTotalColumn); // Esegue: configureInvoiceColumns(invoicePaidNumberColumn, invoicePaidDateColumn, invoicePaidCustomerColumn, invoicePaidTotalColumn);
+        configureInvoiceColumns(invoiceRegisteredNumberColumn, invoiceRegisteredDateColumn, invoiceRegisteredCustomerColumn, invoiceRegisteredTotalColumn);
 
         invoicesIssuedTable.setItems(issued); // Esegue: invoicesIssuedTable.setItems(issued);
         invoicesDueTable.setItems(due); // Esegue: invoicesDueTable.setItems(due);
         invoicesPaidTable.setItems(paid); // Esegue: invoicesPaidTable.setItems(paid);
+        invoicesRegisteredTable.setItems(registered);
     } // Esegue: }
 
     private void configureInvoiceColumns(TableColumn<InvoiceRecord, String> numberColumn, // Esegue: private void configureInvoiceColumns(TableColumn<InvoiceRecord, String> numberColumn,
@@ -406,6 +434,47 @@ public class DashboardController { // Esegue: public class DashboardController {
         customerColumn.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().customer())); // Esegue: customerColumn.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().customer()));
         totalColumn.setCellValueFactory(data -> new SimpleStringProperty(CURRENCY_FORMAT.format(data.getValue().total()))); // Esegue: totalColumn.setCellValueFactory(data -> new SimpleStringProperty(CURRENCY_FORMAT.format(data.getValue().total())));
     } // Esegue: }
+
+    private void observeRevenueTrend() {
+        ObservableList<MonthlyRevenue> revenues = dataService.getRevenueTrend();
+        revenues.addListener((ListChangeListener<MonthlyRevenue>) change -> updateRevenueChart(revenues));
+        updateRevenueChart(revenues);
+    }
+
+    private void updateRevenueChart(List<? extends MonthlyRevenue> revenues) {
+        if (revenueTrendChart == null) {
+            return;
+        }
+        Runnable updateTask = () -> {
+            revenueTrendChart.getData().clear();
+            if (revenues == null || revenues.isEmpty()) {
+                return;
+            }
+            XYChart.Series<String, Number> series = new XYChart.Series<>();
+            for (MonthlyRevenue revenue : revenues) {
+                if (revenue != null) {
+                    series.getData().add(new XYChart.Data<>(formatMonthLabel(revenue), revenue.total()));
+                }
+            }
+            revenueTrendChart.getData().add(series);
+        };
+        if (Platform.isFxApplicationThread()) {
+            updateTask.run();
+        } else {
+            Platform.runLater(updateTask);
+        }
+    }
+
+    private String formatMonthLabel(MonthlyRevenue revenue) {
+        if (revenue == null) {
+            return "";
+        }
+        int monthValue = revenue.month();
+        String monthName = monthValue >= 1 && monthValue <= 12
+                ? Month.of(monthValue).getDisplayName(TextStyle.SHORT, Locale.ITALIAN)
+                : String.valueOf(monthValue);
+        return monthName + " " + revenue.year();
+    }
 
     private void configurePayments() { // Esegue: private void configurePayments() {
         paymentsTable.setItems(dataService.getPaymentsFor(employee)); // Esegue: paymentsTable.setItems(dataService.getPaymentsFor(employee));

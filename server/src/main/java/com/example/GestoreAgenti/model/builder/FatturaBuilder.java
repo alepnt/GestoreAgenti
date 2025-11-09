@@ -65,6 +65,7 @@ public final class FatturaBuilder { // Definisce la classe FatturaBuilder che in
         copia.setImponibile(fattura.getImponibile()); // Esegue l'istruzione terminata dal punto e virgola.
         copia.setIva(fattura.getIva()); // Esegue l'istruzione terminata dal punto e virgola.
         copia.setTotale(fattura.getTotale()); // Esegue l'istruzione terminata dal punto e virgola.
+        copia.setRegistrata(fattura.isRegistrata());
         copia.setState(fattura.getState()); // Esegue l'istruzione terminata dal punto e virgola.
         return new FatturaBuilder(copia); // Restituisce il risultato dell'espressione new FatturaBuilder(copia).
     } // Chiude il blocco di codice precedente.

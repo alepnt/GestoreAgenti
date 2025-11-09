@@ -17,5 +17,9 @@ public interface ContrattoRepository extends JpaRepository<Contratto, Long> { //
      * @return contratti associati al dipendente
      */
     java.util.List<Contratto> findByDipendente_Id(Long dipendenteId); // Esegue l'istruzione terminata dal punto e virgola.
+
+    java.util.List<Contratto> findByCliente_Id(Long clienteId);
+
+    java.util.List<Contratto> findByDipendente_TeamIgnoreCase(String team);
 } // Chiude il blocco di codice precedente.
 

@@ -131,7 +131,7 @@ class UtenteServiceTest {
         Cliente cliente = persistCliente("7");
 
         Utente changes = new Utente();
-        changes.setRuolo(UserRole.CLIENTE);
+        changes.setRuolo(clienteRole());
         changes.setCliente(cliente);
 
         Utente updated = utenteService.updateUtente(account.getIdUtente(), changes);
@@ -151,7 +151,7 @@ class UtenteServiceTest {
 
         Utente changes = new Utente();
         changes.setUsername("clientSecond");
-        changes.setRuolo(UserRole.CLIENTE);
+        changes.setRuolo(clienteRole());
         changes.setCliente(first);
 
         assertThatThrownBy(() -> utenteService.updateUtente(secondAccount.getIdUtente(), changes))
@@ -214,8 +214,12 @@ class UtenteServiceTest {
         Utente utente = new Utente();
         utente.setUsername(username);
         utente.setPasswordHash("password");
-        utente.setRuolo(UserRole.CLIENTE);
+        utente.setRuolo(clienteRole());
         utente.setCliente(cliente);
         return utente;
+    }
+
+    private static UserRole clienteRole() {
+        return UserRole.valueOf("CLIENTE");
     }
 }

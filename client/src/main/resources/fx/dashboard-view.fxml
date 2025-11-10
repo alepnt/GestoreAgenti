@@ -22,11 +22,13 @@
     </top>
     <left>
         <VBox spacing="10" styleClass="side-menu">
+            <fx:define>
+                <ToggleGroup fx:id="navigationGroup"/>
+            </fx:define>
             <padding>
                 <Insets top="20" right="15" bottom="20" left="15"/>
             </padding>
             <Label text="Navigazione" styleClass="side-menu-title"/>
-            <ToggleGroup fx:id="navigationGroup"/>
             <ToggleButton fx:id="utenteButton" text="Utente" toggleGroup="$navigationGroup"/>
             <ToggleButton fx:id="agendaButton" text="Agenda" toggleGroup="$navigationGroup"/>
             <ToggleButton fx:id="chatInternaButton" text="Chat interna" toggleGroup="$navigationGroup"/>

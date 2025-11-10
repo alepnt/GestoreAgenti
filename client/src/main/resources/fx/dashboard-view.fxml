@@ -22,6 +22,9 @@
     </top>
     <left>
         <VBox spacing="10" styleClass="side-menu">
+            <fx:define>
+                <ToggleGroup fx:id="navigationGroup"/>
+            </fx:define>
             <padding>
                 <Insets top="20" right="15" bottom="20" left="15"/>
             </padding>

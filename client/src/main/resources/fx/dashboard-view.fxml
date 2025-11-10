@@ -26,14 +26,13 @@
                 <Insets top="20" right="15" bottom="20" left="15"/>
             </padding>
             <Label text="Navigazione" styleClass="side-menu-title"/>
-            <ToggleGroup fx:id="navigationGroup"/>
-            <ToggleButton fx:id="utenteButton" text="Utente" toggleGroup="$navigationGroup"/>
-            <ToggleButton fx:id="agendaButton" text="Agenda" toggleGroup="$navigationGroup"/>
-            <ToggleButton fx:id="chatInternaButton" text="Chat interna" toggleGroup="$navigationGroup"/>
-            <ToggleButton fx:id="chatEsternaButton" text="Chat esterna" toggleGroup="$navigationGroup"/>
-            <ToggleButton fx:id="notificheButton" text="Notifiche" toggleGroup="$navigationGroup"/>
-            <ToggleButton fx:id="fattureButton" text="Fatture" toggleGroup="$navigationGroup"/>
-            <ToggleButton fx:id="pagamentiButton" text="Pagamenti" toggleGroup="$navigationGroup"/>
+            <ToggleButton fx:id="utenteButton" text="Utente"/>
+            <ToggleButton fx:id="agendaButton" text="Agenda"/>
+            <ToggleButton fx:id="chatInternaButton" text="Chat interna"/>
+            <ToggleButton fx:id="chatEsternaButton" text="Chat esterna"/>
+            <ToggleButton fx:id="notificheButton" text="Notifiche"/>
+            <ToggleButton fx:id="fattureButton" text="Fatture"/>
+            <ToggleButton fx:id="pagamentiButton" text="Pagamenti"/>
         </VBox>
     </left>
     <center>

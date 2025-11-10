@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RequestMapping; // Importa org.sp
 import org.springframework.web.bind.annotation.RestController; // Importa org.springframework.web.bind.annotation.RestController per abilitare le funzionalità utilizzate nel file.
 
 import com.example.GestoreAgenti.security.UserRole; // Importa com.example.GestoreAgenti.security.UserRole per abilitare le funzionalità utilizzate nel file.
+import com.example.GestoreAgenti.security.AccountAssociation; // Importa com.example.GestoreAgenti.security.AccountAssociation per abilitare le funzionalità utilizzate nel file.
 
 /**
  * Espone le informazioni sui ruoli disponibili nel sistema.
@@ -20,7 +21,7 @@ public class RoleController { // Definisce la classe RoleController che incapsul
      * DTO minimale che restituisce sia il nome tecnico del ruolo (per la sicurezza)
      * sia la descrizione user-friendly da mostrare nelle interfacce.
      */
-    public record RoleResponse(String name, String displayName, UserRole.AccountAssociation association) { // Definisce la record RoleResponse che incapsula la logica applicativa.
+    public record RoleResponse(String name, String displayName, AccountAssociation association) { // Definisce la record RoleResponse che incapsula la logica applicativa.
     } // Chiude il blocco di codice precedente.
 
     @GetMapping // Applica l'annotazione @GetMapping per configurare il componente.

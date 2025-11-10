@@ -1,15 +1,19 @@
 # Configurare SQL Server per GestoreAgenti
 
-L'applicazione server utilizza Microsoft SQL Server come database principale. Di
-seguito trovi le opzioni di connessione supportate e come selezionarle a seconda
-che tu voglia autenticarti con credenziali SQL dedicate oppure sfruttare
-l'account di Windows dell'utente corrente.
+Di default il backend utilizza un database H2 locale, così puoi avviare l'applicazione
+senza predisporre un'istanza di Microsoft SQL Server. I dati vengono salvati nel
+percorso `server/target/h2/gestoreagenti` e rimangono disponibili tra un avvio e
+l'altro.
 
-## Autenticazione SQL (impostazione predefinita)
+Se vuoi collegarti a SQL Server sono disponibili due profili Spring Boot dedicati,
+uno basato su credenziali SQL e l'altro sull'autenticazione integrata di Windows.
 
-Di default il file [`application.properties`](../server/src/main/resources/application.properties)
-usa un login SQL chiamato `gestore_app` con password `CambiaSubito!`. Puoi
-personalizzare questi valori impostando le variabili d'ambiente:
+## Autenticazione SQL (`mssql`)
+
+Attiva il profilo `mssql` per riutilizzare la configurazione classica con un login
+SQL. Il file [`application-mssql.properties`](../server/src/main/resources/application-mssql.properties)
+imposta un utente predefinito `gestore_app` con password `CambiaSubito!`, che puoi
+personalizzare tramite variabili d'ambiente:
 
 - `DB_URL` per cambiare completamente l'URL JDBC (host, porta, database, ecc.).
 - `DB_USERNAME` e `DB_PASSWORD` per indicare altre credenziali SQL.
@@ -19,14 +23,15 @@ Esempio su Windows PowerShell:
 ```powershell
 $env:DB_USERNAME = "mio_utente"
 $env:DB_PASSWORD = "mia_password_sicura"
-mvn spring-boot:run -pl server -am
+mvn spring-boot:run -pl server -am -Dspring-boot.run.profiles=mssql
 ```
 
-## Autenticazione integrata di Windows
+## Autenticazione integrata di Windows (`windows`)
 
 Se il tuo server SQL accetta soltanto l'autenticazione di Windows, attiva il
-profilo Spring Boot `windows` che imposta l'URL JDBC con `integratedSecurity=true`
-(vedi [`application-windows.properties`](../server/src/main/resources/application-windows.properties)).
+profilo Spring Boot `windows`, che include automaticamente la configurazione
+`mssql` ma forza l'uso di `integratedSecurity=true` (vedi
+[`application-windows.properties`](../server/src/main/resources/application-windows.properties)).
 
 1. Assicurati che la libreria nativa `sqljdbc_auth.dll` fornita dal driver
    Microsoft JDBC sia disponibile nel `PATH` di sistema oppure aggiungila alla

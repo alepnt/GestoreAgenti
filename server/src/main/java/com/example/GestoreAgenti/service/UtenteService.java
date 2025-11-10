@@ -11,6 +11,7 @@ import com.example.GestoreAgenti.model.Utente; // Importa com.example.GestoreAge
 import com.example.GestoreAgenti.model.Dipendente; // Importa com.example.GestoreAgenti.model.Dipendente per abilitare le funzionalità utilizzate nel file.
 import com.example.GestoreAgenti.model.Cliente; // Importa com.example.GestoreAgenti.model.Cliente per abilitare le funzionalità utilizzate nel file.
 import com.example.GestoreAgenti.security.UserRole; // Importa com.example.GestoreAgenti.security.UserRole per abilitare le funzionalità utilizzate nel file.
+import com.example.GestoreAgenti.security.AccountAssociation; // Importa com.example.GestoreAgenti.security.AccountAssociation per abilitare le funzionalità utilizzate nel file.
 import com.example.GestoreAgenti.repository.UtenteRepository; // Importa com.example.GestoreAgenti.repository.UtenteRepository per abilitare le funzionalità utilizzate nel file.
 import com.example.GestoreAgenti.service.crud.AbstractCrudService; // Importa com.example.GestoreAgenti.service.crud.AbstractCrudService per abilitare le funzionalità utilizzate nel file.
 import com.example.GestoreAgenti.service.crud.CrudEntityHandler; // Importa com.example.GestoreAgenti.service.crud.CrudEntityHandler per abilitare le funzionalità utilizzate nel file.
@@ -49,11 +50,11 @@ public class UtenteService extends AbstractCrudService<Utente, Long> { // Defini
         @Override // Applica l'annotazione @Override per configurare il componente.
         public void validateForUpdate(Utente existing, Utente changes) { // Definisce il metodo validateForUpdate che supporta la logica di dominio.
             UserRole role = changes.getRuolo() != null ? changes.getRuolo() : requireRole(existing); // Assegna il valore calcolato alla variabile UserRole role.
-            UserRole.AccountAssociation associationType = associationFor(role); // Assegna il valore calcolato alla variabile UserRole.AccountAssociation associationType.
-            Dipendente finalDipendente = associationType == UserRole.AccountAssociation.DIPENDENTE // Esegue l'istruzione necessaria alla logica applicativa.
+            AccountAssociation associationType = associationFor(role); // Assegna il valore calcolato alla variabile AccountAssociation associationType.
+            Dipendente finalDipendente = associationType == AccountAssociation.DIPENDENTE // Esegue l'istruzione necessaria alla logica applicativa.
                     ? firstNonNull(changes.getDipendente(), existing.getDipendente()) // Esegue l'istruzione necessaria alla logica applicativa.
                     : null; // Esegue l'istruzione terminata dal punto e virgola.
-            Cliente finalCliente = associationType == UserRole.AccountAssociation.CLIENTE // Esegue l'istruzione necessaria alla logica applicativa.
+            Cliente finalCliente = associationType == AccountAssociation.CLIENTE // Esegue l'istruzione necessaria alla logica applicativa.
                     ? firstNonNull(changes.getCliente(), existing.getCliente()) // Esegue l'istruzione necessaria alla logica applicativa.
                     : null; // Esegue l'istruzione terminata dal punto e virgola.
 
@@ -70,12 +71,12 @@ public class UtenteService extends AbstractCrudService<Utente, Long> { // Defini
                 existing.setRuolo(changes.getRuolo()); // Esegue l'istruzione terminata dal punto e virgola.
             } // Chiude il blocco di codice precedente.
             UserRole role = requireRole(existing); // Assegna il valore calcolato alla variabile UserRole role.
-            UserRole.AccountAssociation associationType = associationFor(role); // Assegna il valore calcolato alla variabile UserRole.AccountAssociation associationType.
-            if (associationType == UserRole.AccountAssociation.DIPENDENTE) { // Valuta la condizione per controllare il flusso applicativo.
+            AccountAssociation associationType = associationFor(role); // Assegna il valore calcolato alla variabile AccountAssociation associationType.
+            if (associationType == AccountAssociation.DIPENDENTE) { // Valuta la condizione per controllare il flusso applicativo.
                 Dipendente dipendente = firstNonNull(changes.getDipendente(), existing.getDipendente()); // Assegna il valore calcolato alla variabile Dipendente dipendente.
                 existing.setDipendente(dipendente); // Esegue l'istruzione terminata dal punto e virgola.
                 existing.setCliente(null); // Esegue l'istruzione terminata dal punto e virgola.
-            } else if (associationType == UserRole.AccountAssociation.CLIENTE) { // Apre il blocco di codice associato alla dichiarazione.
+            } else if (associationType == AccountAssociation.CLIENTE) { // Apre il blocco di codice associato alla dichiarazione.
                 Cliente cliente = firstNonNull(changes.getCliente(), existing.getCliente()); // Assegna il valore calcolato alla variabile Cliente cliente.
                 existing.setCliente(cliente); // Esegue l'istruzione terminata dal punto e virgola.
                 existing.setDipendente(null); // Esegue l'istruzione terminata dal punto e virgola.
@@ -88,7 +89,7 @@ public class UtenteService extends AbstractCrudService<Utente, Long> { // Defini
 
         private void validateAssociations(UserRole role, Dipendente finalDipendente, Cliente finalCliente, // Definisce il metodo validateAssociations che supporta la logica di dominio.
                 Dipendente rawDipendente, Cliente rawCliente, Long currentUserId) { // Apre il blocco di codice associato alla dichiarazione.
-            UserRole.AccountAssociation associationType = associationFor(role); // Assegna il valore calcolato alla variabile UserRole.AccountAssociation associationType.
+            AccountAssociation associationType = associationFor(role); // Assegna il valore calcolato alla variabile AccountAssociation associationType.
             switch (associationType) { // Seleziona il ramo logico in base al valore indicato.
                 case DIPENDENTE -> { // Gestisce uno dei possibili casi nello switch.
                     Dipendente dipendente = requireDipendente(finalDipendente); // Assegna il valore calcolato alla variabile Dipendente dipendente.
@@ -140,16 +141,16 @@ public class UtenteService extends AbstractCrudService<Utente, Long> { // Defini
         } // Chiude il blocco di codice precedente.
 
         private void clearUnusedAssociations(Utente entity, UserRole role) { // Definisce il metodo clearUnusedAssociations che supporta la logica di dominio.
-            UserRole.AccountAssociation associationType = associationFor(role); // Assegna il valore calcolato alla variabile UserRole.AccountAssociation associationType.
-            if (associationType == UserRole.AccountAssociation.DIPENDENTE) { // Valuta la condizione per controllare il flusso applicativo.
+            AccountAssociation associationType = associationFor(role); // Assegna il valore calcolato alla variabile AccountAssociation associationType.
+            if (associationType == AccountAssociation.DIPENDENTE) { // Valuta la condizione per controllare il flusso applicativo.
                 entity.setCliente(null); // Esegue l'istruzione terminata dal punto e virgola.
-            } else if (associationType == UserRole.AccountAssociation.CLIENTE) { // Apre il blocco di codice associato alla dichiarazione.
+            } else if (associationType == AccountAssociation.CLIENTE) { // Apre il blocco di codice associato alla dichiarazione.
                 entity.setDipendente(null); // Esegue l'istruzione terminata dal punto e virgola.
             } // Chiude il blocco di codice precedente.
         } // Chiude il blocco di codice precedente.
 
-        private UserRole.AccountAssociation associationFor(UserRole role) { // Definisce il metodo associationFor che supporta la logica di dominio.
-            UserRole.AccountAssociation associationType = role.getAccountAssociation(); // Assegna il valore calcolato alla variabile UserRole.AccountAssociation associationType.
+        private AccountAssociation associationFor(UserRole role) { // Definisce il metodo associationFor che supporta la logica di dominio.
+            AccountAssociation associationType = role.getAccountAssociation(); // Assegna il valore calcolato alla variabile AccountAssociation associationType.
             if (associationType == null) { // Valuta la condizione per controllare il flusso applicativo.
                 throw new IllegalStateException("Ruolo non supportato: " + role); // Propaga un'eccezione verso il chiamante.
             } // Chiude il blocco di codice precedente.

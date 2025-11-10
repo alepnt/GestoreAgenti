@@ -22,11 +22,6 @@ public enum UserRole {
     OPERATIONS("Supporto operativo", AccountAssociation.DIPENDENTE),
     CLIENTE("Cliente", AccountAssociation.CLIENTE);
 
-    public enum AccountAssociation {
-        DIPENDENTE,
-        CLIENTE
-    }
-
     private static final Map<String, UserRole> LOOKUP_BY_NORMALIZED_DISPLAY =
             Collections.unmodifiableMap(Arrays.stream(values())
                     .collect(Collectors.toMap(role -> normalize(role.displayName), Function.identity())));

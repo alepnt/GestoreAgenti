@@ -9,26 +9,38 @@ modules.
 ## 1. Prime a local repository on a machine with internet access
 
 ```bash
+./scripts/prime-maven-cache.sh
+```
+
+The helper script wraps the two `dependency:go-offline` invocations for the
+server and client modules, storing the resulting repository snapshot under
+`offline/repository` and packaging it into `offline/maven-repo.tar.gz`. If you
+prefer to run the Maven goals manually you can still use:
+
+```bash
 ./mvnw -pl server -am dependency:go-offline -DskipTests
 ./mvnw -pl client -am dependency:go-offline -DskipTests
 ```
 
-Both commands download the Spring Boot parent POM together with the
+Both approaches download the Spring Boot parent POM together with the
 dependencies declared in `server/pom.xml` and `client/pom.xml`.
 
 ## 2. Copy the populated repository into the sandbox
 
-After the previous step completes you will have a filled Maven cache under
-`~/.m2/repository`. Copy that directory to the restricted environment, for
-example under `/workspace/.m2/repository`.
+After the previous step completes you will have both a populated repository at
+`offline/repository` and a compressed archive at `offline/maven-repo.tar.gz`.
+Copy the archive to the restricted environment and unpack it with the companion
+script:
 
 ```bash
-# On the online machine
-rsync -a ~/.m2/repository/ user@sandbox:/workspace/.m2/repository/
+# On the offline machine
+./scripts/install-maven-cache.sh offline/maven-repo.tar.gz /workspace/.m2/repository
 ```
 
-Any file transfer tool (rsync, scp, zip + unzip, etc.) is fine as long as the
-resulting repository keeps the Maven directory structure.
+If you need to customise the paths, pass the archive location and the target
+repository directory as arguments. Any file transfer tool (rsync, scp, zip +
+unzip, etc.) is fine as long as the resulting repository keeps the Maven
+directory structure.
 
 ## 3. Run Maven offline inside the sandbox
 

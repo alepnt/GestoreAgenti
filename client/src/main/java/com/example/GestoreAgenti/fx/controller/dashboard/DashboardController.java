@@ -89,8 +89,7 @@ public class DashboardController { // Esegue: public class DashboardController {
     @FXML // Esegue: @FXML
     private Label userEmailLabel; // Etichetta con l'indirizzo email aziendale.
 
-    @FXML // Esegue: @FXML
-    private ToggleGroup navigationGroup; // Gruppo che coordina la selezione dei pulsanti di navigazione.
+    private final ToggleGroup navigationGroup = new ToggleGroup(); // Gruppo che coordina la selezione dei pulsanti di navigazione.
 
     @FXML // Esegue: @FXML
     private ToggleButton utenteButton; // Pulsante che porta alla scheda utente.
@@ -283,6 +282,24 @@ public class DashboardController { // Esegue: public class DashboardController {
 
     @FXML
     private Button logoutButton;
+
+    @FXML
+    private void initialize() {
+        ToggleButton[] navigationButtons = {
+                utenteButton,
+                agendaButton,
+                chatInternaButton,
+                chatEsternaButton,
+                notificheButton,
+                fattureButton,
+                pagamentiButton
+        };
+        for (ToggleButton button : navigationButtons) {
+            if (button != null) {
+                button.setToggleGroup(navigationGroup);
+            }
+        }
+    }
 
     private FxDataService dataService; // Servizio dati condiviso dai controller.
     private Employee employee; // Dipendente attualmente visualizzato.

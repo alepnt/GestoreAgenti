@@ -3,6 +3,7 @@ package com.example.GestoreAgenti.service.email; // Definisce il pacchetto com.e
 import jakarta.mail.MessagingException; // Importa jakarta.mail.MessagingException per abilitare le funzionalità utilizzate nel file.
 import jakarta.mail.internet.MimeMessage; // Importa jakarta.mail.internet.MimeMessage per abilitare le funzionalità utilizzate nel file.
 import org.springframework.beans.factory.annotation.Value; // Importa org.springframework.beans.factory.annotation.Value per abilitare le funzionalità utilizzate nel file.
+import org.springframework.lang.NonNull; // Importa org.springframework.lang.NonNull per dichiarare contratti di non nullità.
 import org.springframework.mail.MailException; // Importa org.springframework.mail.MailException per abilitare le funzionalità utilizzate nel file.
 import org.springframework.mail.javamail.JavaMailSender; // Importa org.springframework.mail.javamail.JavaMailSender per abilitare le funzionalità utilizzate nel file.
 import org.springframework.mail.javamail.MimeMessageHelper; // Importa org.springframework.mail.javamail.MimeMessageHelper per abilitare le funzionalità utilizzate nel file.
@@ -62,14 +63,14 @@ public class EmailDeliveryService { // Definisce la classe EmailDeliveryService 
         } // Chiude il blocco di codice precedente.
     } // Chiude il blocco di codice precedente.
 
-    private String resolveSender(String from) { // Definisce il metodo resolveSender che supporta la logica di dominio.
+    private @NonNull String resolveSender(String from) { // Definisce il metodo resolveSender che supporta la logica di dominio.
         if (StringUtils.hasText(overrideSender)) { // Valuta la condizione per controllare il flusso applicativo.
             return overrideSender.trim(); // Restituisce il risultato dell'espressione overrideSender.trim().
         } // Chiude il blocco di codice precedente.
         return requireNonBlank(from, "Il mittente non può essere vuoto").trim(); // Restituisce il risultato dell'espressione requireNonBlank(from, "Il mittente non può essere vuoto").trim().
     } // Chiude il blocco di codice precedente.
 
-    private String requireNonBlank(String value, String errorMessage) { // Definisce il metodo requireNonBlank che supporta la logica di dominio.
+    private @NonNull String requireNonBlank(String value, String errorMessage) { // Definisce il metodo requireNonBlank che supporta la logica di dominio.
         if (!StringUtils.hasText(value)) { // Valuta la condizione per controllare il flusso applicativo.
             throw new EmailDeliveryException(errorMessage); // Propaga un'eccezione verso il chiamante.
         } // Chiude il blocco di codice precedente.

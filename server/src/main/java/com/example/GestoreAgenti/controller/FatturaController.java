@@ -2,6 +2,7 @@ package com.example.GestoreAgenti.controller; // Definisce il pacchetto com.exam
 
 import java.time.LocalDate;
 import java.util.List; // Importa List per gestire insiemi ordinati di elementi.
+import java.util.Objects; // Importa Objects per gestire i controlli di nullità richiesti dalle API annotate @NonNull.
 
 import org.springframework.core.io.ByteArrayResource; // Importa ByteArrayResource per fornire file binari come risposta.
 import org.springframework.core.io.Resource; // Importa Resource per modellare la risposta del file.
@@ -76,21 +77,21 @@ public class FatturaController { // Dichiara la classe FatturaController che inc
 
     @GetMapping(value = "/report", produces = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet") // Applica l'annotazione @GetMapping per esporre il report Excel.
     public ResponseEntity<Resource> esportaReportFatture() { // Restituisce il file Excel generato.
-        byte[] workbook = reportService.generaReport(service.getAllFatture()); // Genera il report aggregando i layout differenti.
+        byte[] workbook = Objects.requireNonNull(reportService.generaReport(service.getAllFatture()), "Il report generato non può essere nullo"); // Genera il report aggregando i layout differenti.
         return ResponseEntity.ok() // Configura la risposta HTTP di successo.
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=fatture-report.xlsx") // Suggerisce il nome del file scaricato.
-                .contentType(EXCEL_MEDIA_TYPE) // Imposta il tipo di contenuto dell'Excel.
+                .contentType(Objects.requireNonNull(EXCEL_MEDIA_TYPE)) // Imposta il tipo di contenuto dell'Excel.
                 .body(new ByteArrayResource(workbook)); // Restituisce il file al client.
     } // Chiude il blocco di codice precedente.
 
     @GetMapping(value = "/{id}/pdf", produces = MediaType.APPLICATION_PDF_VALUE) // Applica l'annotazione @GetMapping per esporre il report PDF della fattura.
     public ResponseEntity<Resource> esportaFatturaPdf(@PathVariable Long id) { // Restituisce il template PDF generato.
         Fattura fattura = service.findRequiredById(id); // Recupera la fattura da rappresentare.
-        byte[] pdf = pdfReportService.generaPdf(fattura); // Genera il PDF utilizzando il template condiviso.
+        byte[] pdf = Objects.requireNonNull(pdfReportService.generaPdf(fattura), "Il PDF generato non può essere nullo"); // Genera il PDF utilizzando il template condiviso.
         String filename = "fattura-" + (fattura.getNumeroFattura() != null ? fattura.getNumeroFattura() : id) + ".pdf"; // Determina il nome del file.
         return ResponseEntity.ok() // Configura la risposta HTTP di successo.
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + filename) // Suggerisce il nome del file scaricato.
-                .contentType(MediaType.APPLICATION_PDF) // Imposta il tipo di contenuto del PDF.
+                .contentType(Objects.requireNonNull(MediaType.APPLICATION_PDF)) // Imposta il tipo di contenuto del PDF.
                 .body(new ByteArrayResource(pdf)); // Restituisce il file al client.
     } // Chiude il blocco di codice precedente.
 

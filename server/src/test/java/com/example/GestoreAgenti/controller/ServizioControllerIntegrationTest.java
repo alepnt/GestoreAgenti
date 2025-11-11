@@ -13,6 +13,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import java.util.Objects;
+
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
@@ -53,7 +55,7 @@ class ServizioControllerIntegrationTest {
         String payload = objectMapper.writeValueAsString(request);
 
         MvcResult creationResult = mockMvc.perform(post("/api/servizi")
-                        .contentType(MediaType.APPLICATION_JSON)
+                        .contentType(Objects.requireNonNull(MediaType.APPLICATION_JSON))
                         .content(payload))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.idServizio").isNumber())

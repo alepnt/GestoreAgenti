@@ -97,7 +97,6 @@ class RemoteEmailClientTest { // Esegue: class RemoteEmailClientTest {
         assertEquals("Invio email fallito (HTTP 500)", method.invoke(client, emptyResponse)); // Esegue: assertEquals("Invio email fallito (HTTP 500)", method.invoke(client, emptyResponse));
     } // Esegue: }
 
-    @SuppressWarnings("rawtypes") // Esegue: @SuppressWarnings("rawtypes")
     private record BasicResponse(int statusCode, String body) implements HttpResponse<String> { // Esegue: private record BasicResponse(int statusCode, String body) implements HttpResponse<String> {
 
         @Override // Esegue: @Override

@@ -1,6 +1,7 @@
 package com.example.GestoreAgenti.service.crud; // Definisce il pacchetto com.example.GestoreAgenti.service.crud che contiene questa classe.
 
 import java.util.Arrays; // Importa java.util.Arrays per abilitare le funzionalità utilizzate nel file.
+import java.util.Objects; // Importa java.util.Objects per garantire il rispetto dei contratti @NonNull delle API Spring.
 
 import org.springframework.beans.BeanUtils; // Importa org.springframework.beans.BeanUtils per abilitare le funzionalità utilizzate nel file.
 
@@ -19,7 +20,9 @@ public class BeanCopyCrudEntityHandler<T> implements CrudEntityHandler<T> { // D
 
     @Override // Applica l'annotazione @Override per configurare il componente.
     public T merge(T existing, T changes) { // Definisce il metodo merge che supporta la logica di dominio.
-        BeanUtils.copyProperties(changes, existing, ignoredProperties); // Esegue l'istruzione terminata dal punto e virgola.
+        BeanUtils.copyProperties(Objects.requireNonNull(changes, "I dati aggiornati sono obbligatori"), // Esegue l'istruzione terminata dal punto e virgola.
+                Objects.requireNonNull(existing, "L'entità esistente è obbligatoria"),
+                Objects.requireNonNull(ignoredProperties, "La lista delle proprietà da ignorare non può essere nulla"));
         return existing; // Restituisce il risultato dell'espressione existing.
     } // Chiude il blocco di codice precedente.
 

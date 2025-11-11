@@ -8,6 +8,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore; // Importa JsonIgnore per ev
 import jakarta.persistence.*; // Importa tutte le annotazioni JPA necessarie per mappare l'entità nel database.
 import java.math.BigDecimal; // Importa BigDecimal per rappresentare importi monetari con precisione.
 import java.time.LocalDate; // Importa LocalDate per gestire le date senza informazioni temporali.
+import org.hibernate.annotations.ColumnDefault;
 
 @Entity // Applica l'annotazione @Entity per configurare il componente.
 @Table(name = "fattura") // Applica l'annotazione @Table per configurare il componente.
@@ -35,7 +36,9 @@ public class Fattura { // Dichiara la classe Fattura che incapsula la logica del
 
     private String stato = BozzaState.NOME; // Memorizza lo stato dell'entità.
 
-    private boolean registrata;
+    @Column(nullable = false)
+    @ColumnDefault("0")
+    private boolean registrata = false;
 
     @Transient // Impedisce a JPA di persistere direttamente l'oggetto stato.
     private FatturaState state = new BozzaState(); // Riferimento all'implementazione concreta dello stato della fattura.

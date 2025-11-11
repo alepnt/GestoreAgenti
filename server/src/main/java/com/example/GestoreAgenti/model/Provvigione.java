@@ -9,6 +9,8 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
 
@@ -63,4 +65,12 @@ public class Provvigione {
 
     public LocalDate getDataCalcolo() { return dataCalcolo; }
     public void setDataCalcolo(LocalDate dataCalcolo) { this.dataCalcolo = dataCalcolo; }
+
+    @PrePersist
+    @PreUpdate
+    private void ensureFatturaAssociata() {
+        if (fattura == null) {
+            throw new ValidationException("La provvigione deve essere associata a una fattura");
+        }
+    }
 }

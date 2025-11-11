@@ -8,7 +8,8 @@ import org.springframework.web.bind.annotation.RequestMapping; // Importa org.sp
 import org.springframework.web.bind.annotation.RestController; // Importa org.springframework.web.bind.annotation.RestController per abilitare le funzionalità utilizzate nel file.
 
 import com.example.GestoreAgenti.security.UserRole; // Importa com.example.GestoreAgenti.security.UserRole per abilitare le funzionalità utilizzate nel file.
-import com.example.GestoreAgenti.security.AccountAssociation; // Importa com.example.GestoreAgenti.security.AccountAssociation per abilitare le funzionalità utilizzate nel file.
+// L'enum AccountAssociation è esposto tramite UserRole#getAssociationCode(),
+// quindi non è necessario importarlo direttamente in questo modulo.
 
 /**
  * Espone le informazioni sui ruoli disponibili nel sistema.
@@ -21,13 +22,13 @@ public class RoleController { // Definisce la classe RoleController che incapsul
      * DTO minimale che restituisce sia il nome tecnico del ruolo (per la sicurezza)
      * sia la descrizione user-friendly da mostrare nelle interfacce.
      */
-    public record RoleResponse(String name, String displayName, AccountAssociation association) { // Definisce la record RoleResponse che incapsula la logica applicativa.
+    public record RoleResponse(String name, String displayName, String association) { // Definisce la record RoleResponse che incapsula la logica applicativa.
     } // Chiude il blocco di codice precedente.
 
     @GetMapping // Applica l'annotazione @GetMapping per configurare il componente.
     public List<RoleResponse> listRoles() { // Definisce il metodo listRoles che supporta la logica di dominio.
         return Arrays.stream(UserRole.values()) // Restituisce il risultato dell'espressione Arrays.stream(UserRole.values()).
-                .map(role -> new RoleResponse(role.name(), role.getDisplayName(), role.getAccountAssociation())) // Esegue l'istruzione necessaria alla logica applicativa.
+                .map(role -> new RoleResponse(role.name(), role.getDisplayName(), role.getAssociationCode())) // Esegue l'istruzione necessaria alla logica applicativa.
                 .toList(); // Esegue l'istruzione terminata dal punto e virgola.
     } // Chiude il blocco di codice precedente.
 } // Chiude il blocco di codice precedente.

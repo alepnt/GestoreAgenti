@@ -38,6 +38,7 @@ public class RemoteChatClient { // Esegue: public class RemoteChatClient {
     private final URI baseUri; // Esegue: private final URI baseUri;
     private final Map<String, TeamConnection> activeConnections = new ConcurrentHashMap<>(); // Esegue: private final Map<String, TeamConnection> activeConnections = new ConcurrentHashMap<>();
     private final RemoteTaskScheduler taskScheduler; // Esegue: private final RemoteTaskScheduler taskScheduler;
+    private volatile String authToken;
 
     public RemoteChatClient(RemoteTaskScheduler taskScheduler) { // Esegue: public RemoteChatClient(RemoteTaskScheduler taskScheduler) {
         this(taskScheduler, // Esegue: this(taskScheduler,
@@ -69,10 +70,10 @@ public class RemoteChatClient { // Esegue: public class RemoteChatClient {
             } // Esegue: }
             String encodedTeam = URLEncoder.encode(teamName, StandardCharsets.UTF_8); // Esegue: String encodedTeam = URLEncoder.encode(teamName, StandardCharsets.UTF_8);
             URI uri = baseUri.resolve("api/chat/" + encodedTeam); // Esegue: URI uri = baseUri.resolve("api/chat/" + encodedTeam);
-            HttpRequest request = HttpRequest.newBuilder(uri) // Esegue: HttpRequest request = HttpRequest.newBuilder(uri)
-                    .header("Accept", "application/json") // Esegue: .header("Accept", "application/json")
-                    .GET() // Esegue: .GET()
-                    .build(); // Esegue: .build();
+            HttpRequest.Builder builder = HttpRequest.newBuilder(uri) // Esegue: HttpRequest.Builder builder = HttpRequest.newBuilder(uri)
+                    .header("Accept", "application/json"); // Esegue: .header("Accept", "application/json");
+            applyAuthorization(builder);
+            HttpRequest request = builder.GET().build();
             return httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString()) // Esegue: return httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString())
                     .thenCompose(response -> { // Esegue: .thenCompose(response -> {
                         if (isSuccess(response.statusCode())) { // Esegue: if (isSuccess(response.statusCode())) {
@@ -101,9 +102,11 @@ public class RemoteChatClient { // Esegue: public class RemoteChatClient {
             URI uri = baseUri.resolve("api/chat/" + encodedTeam); // Esegue: URI uri = baseUri.resolve("api/chat/" + encodedTeam);
             try { // Esegue: try {
                 String payload = objectMapper.writeValueAsString(new OutgoingMessage(sender, content)); // Esegue: String payload = objectMapper.writeValueAsString(new OutgoingMessage(sender, content));
-                HttpRequest request = HttpRequest.newBuilder(uri) // Esegue: HttpRequest request = HttpRequest.newBuilder(uri)
+                HttpRequest.Builder builder = HttpRequest.newBuilder(uri) // Esegue: HttpRequest.Builder builder = HttpRequest.newBuilder(uri)
                         .header("Accept", "application/json") // Esegue: .header("Accept", "application/json")
-                        .header("Content-Type", "application/json") // Esegue: .header("Content-Type", "application/json")
+                        .header("Content-Type", "application/json"); // Esegue: .header("Content-Type", "application/json");
+                applyAuthorization(builder);
+                HttpRequest request = builder
                         .POST(HttpRequest.BodyPublishers.ofString(payload)) // Esegue: .POST(HttpRequest.BodyPublishers.ofString(payload))
                         .build(); // Esegue: .build();
                 return httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString()) // Esegue: return httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString())
@@ -145,9 +148,10 @@ public class RemoteChatClient { // Esegue: public class RemoteChatClient {
                 return CompletableFuture.failedFuture(e); // Esegue: return CompletableFuture.failedFuture(e);
             } // Esegue: }
             TeamWebSocketListener listener = new TeamWebSocketListener(objectMapper, onMessage, onError); // Esegue: TeamWebSocketListener listener = new TeamWebSocketListener(objectMapper, onMessage, onError);
-            return httpClient.newWebSocketBuilder() // Esegue: return httpClient.newWebSocketBuilder()
-                    .connectTimeout(DEFAULT_TIMEOUT) // Esegue: .connectTimeout(DEFAULT_TIMEOUT)
-                    .buildAsync(webSocketUri, listener) // Esegue: .buildAsync(webSocketUri, listener)
+            java.net.http.WebSocket.Builder builder = httpClient.newWebSocketBuilder() // Esegue: java.net.http.WebSocket.Builder builder = httpClient.newWebSocketBuilder()
+                    .connectTimeout(DEFAULT_TIMEOUT); // Esegue: .connectTimeout(DEFAULT_TIMEOUT);
+            applyAuthorization(builder);
+            return builder.buildAsync(webSocketUri, listener) // Esegue: builder.buildAsync(webSocketUri, listener)
                     .thenApply(webSocket -> { // Esegue: .thenApply(webSocket -> {
                         TeamConnection connection = new TeamConnection(webSocket); // Esegue: TeamConnection connection = new TeamConnection(webSocket);
                         activeConnections.put(teamKey, connection); // Esegue: activeConnections.put(teamKey, connection);
@@ -179,9 +183,27 @@ public class RemoteChatClient { // Esegue: public class RemoteChatClient {
         activeConnections.clear(); // Esegue: activeConnections.clear();
     } // Esegue: }
 
+    public void setAuthToken(String authToken) {
+        this.authToken = authToken != null && !authToken.isBlank() ? authToken : null;
+    }
+
     private boolean isSuccess(int statusCode) { // Esegue: private boolean isSuccess(int statusCode) {
         return statusCode >= 200 && statusCode < 300; // Esegue: return statusCode >= 200 && statusCode < 300;
     } // Esegue: }
+
+    private void applyAuthorization(HttpRequest.Builder builder) {
+        String token = authToken;
+        if (token != null && !token.isBlank()) {
+            builder.header("Authorization", "Bearer " + token);
+        }
+    }
+
+    private void applyAuthorization(java.net.http.WebSocket.Builder builder) {
+        String token = authToken;
+        if (token != null && !token.isBlank()) {
+            builder.header("Authorization", "Bearer " + token);
+        }
+    }
 
     private URI buildWebSocketUri(String teamName) throws URISyntaxException { // Esegue: private URI buildWebSocketUri(String teamName) throws URISyntaxException {
         String scheme = toWebSocketScheme(baseUri.getScheme()); // Esegue: String scheme = toWebSocketScheme(baseUri.getScheme());

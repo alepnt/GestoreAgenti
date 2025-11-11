@@ -25,6 +25,7 @@ public class RemoteEmailClient { // Esegue: public class RemoteEmailClient {
     private final ObjectMapper objectMapper; // Esegue: private final ObjectMapper objectMapper;
     private final URI baseUri; // Esegue: private final URI baseUri;
     private final RemoteTaskScheduler taskScheduler; // Esegue: private final RemoteTaskScheduler taskScheduler;
+    private volatile String authToken;
 
     public RemoteEmailClient(RemoteTaskScheduler taskScheduler) { // Esegue: public RemoteEmailClient(RemoteTaskScheduler taskScheduler) {
         this(taskScheduler, // Esegue: this(taskScheduler,
@@ -58,10 +59,12 @@ public class RemoteEmailClient { // Esegue: public class RemoteEmailClient {
             URI uri = baseUri.resolve("api/email"); // Esegue: URI uri = baseUri.resolve("api/email");
             try { // Esegue: try {
                 String payload = objectMapper.writeValueAsString(new EmailPayload(from, to, subject, body)); // Esegue: String payload = objectMapper.writeValueAsString(new EmailPayload(from, to, subject, body));
-                HttpRequest request = HttpRequest.newBuilder(uri) // Esegue: HttpRequest request = HttpRequest.newBuilder(uri)
+                HttpRequest.Builder builder = HttpRequest.newBuilder(uri) // Esegue: HttpRequest.Builder builder = HttpRequest.newBuilder(uri)
                         .timeout(DEFAULT_TIMEOUT) // Esegue: .timeout(DEFAULT_TIMEOUT)
                         .header("Accept", "application/json") // Esegue: .header("Accept", "application/json")
-                        .header("Content-Type", "application/json") // Esegue: .header("Content-Type", "application/json")
+                        .header("Content-Type", "application/json"); // Esegue: .header("Content-Type", "application/json");
+                applyAuthorization(builder);
+                HttpRequest request = builder
                         .POST(HttpRequest.BodyPublishers.ofString(payload, StandardCharsets.UTF_8)) // Esegue: .POST(HttpRequest.BodyPublishers.ofString(payload, StandardCharsets.UTF_8))
                         .build(); // Esegue: .build();
                 return httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8)) // Esegue: return httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8))
@@ -108,9 +111,20 @@ public class RemoteEmailClient { // Esegue: public class RemoteEmailClient {
         } // Esegue: }
     } // Esegue: }
 
+    public void setAuthToken(String authToken) {
+        this.authToken = authToken != null && !authToken.isBlank() ? authToken : null;
+    }
+
     private boolean isSuccess(int statusCode) { // Esegue: private boolean isSuccess(int statusCode) {
         return statusCode >= 200 && statusCode < 300; // Esegue: return statusCode >= 200 && statusCode < 300;
     } // Esegue: }
+
+    private void applyAuthorization(HttpRequest.Builder builder) {
+        String token = authToken;
+        if (token != null && !token.isBlank()) {
+            builder.header("Authorization", "Bearer " + token);
+        }
+    }
 
     private String extractErrorMessage(HttpResponse<String> response) { // Esegue: private String extractErrorMessage(HttpResponse<String> response) {
         String body = response.body(); // Esegue: String body = response.body();

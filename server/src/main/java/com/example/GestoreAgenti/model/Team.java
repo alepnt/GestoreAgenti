@@ -13,6 +13,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import org.hibernate.annotations.ColumnDefault;
 
 @Entity
 @Table(name = "Team")
@@ -35,10 +36,12 @@ public class Team {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
+    @ColumnDefault("'PERCENTUALE'")
     private CommissionDistributionMode distribuzioneProvvigioni = CommissionDistributionMode.PERCENTUALE;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
+    @ColumnDefault("'IMPONIBILE'")
     private CommissionBase baseCalcolo = CommissionBase.IMPONIBILE;
 
     public Team() {}

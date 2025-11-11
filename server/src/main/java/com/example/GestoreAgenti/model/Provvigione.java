@@ -10,6 +10,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotNull;
 
 @Entity
 @Table(name = "provvigione")
@@ -27,8 +28,9 @@ public class Provvigione {
     @JoinColumn(name = "id_contratto", nullable = false)
     private Contratto contratto;
 
-    @ManyToOne
-    @JoinColumn(name = "id_fattura", nullable = false)
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "id_fattura")
+    @NotNull
     private Fattura fattura;
 
     private BigDecimal percentuale;

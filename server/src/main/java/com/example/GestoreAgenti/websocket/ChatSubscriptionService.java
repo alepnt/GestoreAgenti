@@ -80,10 +80,6 @@ public class ChatSubscriptionService { // Definisce la classe ChatSubscriptionSe
     } // Chiude il blocco di codice precedente.
 
     private @NonNull String normalizeTeam(String teamName) { // Definisce il metodo normalizeTeam che supporta la logica di dominio.
-        if (teamName == null) { // Valuta la condizione per controllare il flusso applicativo.
-            return ""; // Restituisce il risultato dell'espressione "".
-        } // Chiude il blocco di codice precedente.
-        String normalized = teamName.trim().toLowerCase(); // Assegna il valore calcolato alla variabile normalized.
-        return Objects.requireNonNull(normalized); // Restituisce il risultato dell'espressione normalized.
+        return teamName == null ? "" : teamName.trim().toLowerCase(); // Restituisce il risultato dell'espressione teamName == null ? "" : teamName.trim().toLowerCase().
     } // Chiude il blocco di codice precedente.
 } // Chiude il blocco di codice precedente.

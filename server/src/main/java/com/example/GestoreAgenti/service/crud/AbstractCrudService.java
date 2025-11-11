@@ -51,8 +51,8 @@ public abstract class AbstractCrudService<T, ID> { // Apre il blocco di codice a
     public T create(T entity) { // Definisce il metodo create che supporta la logica di dominio.
         T safeEntity = Objects.requireNonNull(entity, "L'entità da creare è obbligatoria"); // Assegna il valore calcolato alla variabile T safeEntity.
         handler.validateForCreate(safeEntity); // Esegue l'istruzione terminata dal punto e virgola.
-        T prepared = Objects.requireNonNull(handler.prepareForCreate(safeEntity), "L'entità preparata non può essere nulla"); // Assegna il valore calcolato alla variabile T prepared.
-        T saved = Objects.requireNonNull(repository.save(prepared), "Il salvataggio deve restituire un'entità valida"); // Assegna il valore calcolato alla variabile T saved.
+        T prepared = handler.prepareForCreate(safeEntity); // Assegna il valore calcolato alla variabile T prepared.
+        T saved = repository.save(prepared); // Assegna il valore calcolato alla variabile T saved.
         handler.afterCreate(saved); // Esegue l'istruzione terminata dal punto e virgola.
         return Objects.requireNonNull(saved); // Restituisce il risultato dell'espressione saved.
     } // Chiude il blocco di codice precedente.
@@ -61,8 +61,8 @@ public abstract class AbstractCrudService<T, ID> { // Apre il blocco di codice a
         T existing = findRequiredById(Objects.requireNonNull(id, "L'identificativo è obbligatorio")); // Assegna il valore calcolato alla variabile T existing.
         T safeChanges = Objects.requireNonNull(changes, "I dati aggiornati sono obbligatori"); // Assegna il valore calcolato alla variabile T safeChanges.
         handler.validateForUpdate(existing, safeChanges); // Esegue l'istruzione terminata dal punto e virgola.
-        T merged = Objects.requireNonNull(handler.merge(existing, safeChanges), "Il risultato della merge non può essere nullo"); // Assegna il valore calcolato alla variabile T merged.
-        T saved = Objects.requireNonNull(repository.save(merged), "Il salvataggio deve restituire un'entità valida"); // Assegna il valore calcolato alla variabile T saved.
+        T merged = handler.merge(existing, safeChanges); // Assegna il valore calcolato alla variabile T merged.
+        T saved = repository.save(merged); // Assegna il valore calcolato alla variabile T saved.
         handler.afterUpdate(saved); // Esegue l'istruzione terminata dal punto e virgola.
         return Objects.requireNonNull(saved); // Restituisce il risultato dell'espressione saved.
     } // Chiude il blocco di codice precedente.

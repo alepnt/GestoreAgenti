@@ -9,7 +9,10 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import jakarta.validation.ValidationException;
 
 @Entity
 @Table(name = "provvigione")
@@ -28,7 +31,7 @@ public class Provvigione {
     private Contratto contratto;
 
     @ManyToOne
-    @JoinColumn(name = "id_fattura", nullable = false)
+    @JoinColumn(name = "id_fattura")
     private Fattura fattura;
 
     private BigDecimal percentuale;
@@ -61,4 +64,12 @@ public class Provvigione {
 
     public LocalDate getDataCalcolo() { return dataCalcolo; }
     public void setDataCalcolo(LocalDate dataCalcolo) { this.dataCalcolo = dataCalcolo; }
+
+    @PrePersist
+    @PreUpdate
+    private void ensureFatturaAssociata() {
+        if (fattura == null) {
+            throw new ValidationException("La provvigione deve essere associata a una fattura");
+        }
+    }
 }

@@ -54,7 +54,7 @@ public abstract class AbstractCrudService<T, ID> { // Apre il blocco di codice a
         T prepared = handler.prepareForCreate(safeEntity); // Assegna il valore calcolato alla variabile T prepared.
         T saved = repository.save(prepared); // Assegna il valore calcolato alla variabile T saved.
         handler.afterCreate(saved); // Esegue l'istruzione terminata dal punto e virgola.
-        return saved; // Restituisce il risultato dell'espressione saved.
+        return Objects.requireNonNull(saved); // Restituisce il risultato dell'espressione saved.
     } // Chiude il blocco di codice precedente.
 
     public T update(ID id, T changes) { // Definisce il metodo update che supporta la logica di dominio.
@@ -64,7 +64,7 @@ public abstract class AbstractCrudService<T, ID> { // Apre il blocco di codice a
         T merged = handler.merge(existing, safeChanges); // Assegna il valore calcolato alla variabile T merged.
         T saved = repository.save(merged); // Assegna il valore calcolato alla variabile T saved.
         handler.afterUpdate(saved); // Esegue l'istruzione terminata dal punto e virgola.
-        return saved; // Restituisce il risultato dell'espressione saved.
+        return Objects.requireNonNull(saved); // Restituisce il risultato dell'espressione saved.
     } // Chiude il blocco di codice precedente.
 
     public T delete(ID id) { // Definisce il metodo delete che supporta la logica di dominio.
@@ -72,6 +72,6 @@ public abstract class AbstractCrudService<T, ID> { // Apre il blocco di codice a
         handler.beforeDelete(existing); // Esegue l'istruzione terminata dal punto e virgola.
         repository.delete(existing); // Esegue l'istruzione terminata dal punto e virgola.
         handler.afterDelete(existing); // Esegue l'istruzione terminata dal punto e virgola.
-        return existing; // Restituisce il risultato dell'espressione existing.
+        return Objects.requireNonNull(existing); // Restituisce il risultato dell'espressione existing.
     } // Chiude il blocco di codice precedente.
 } // Chiude il blocco di codice precedente.

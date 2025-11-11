@@ -15,13 +15,13 @@ public class WebSocketConfig implements WebSocketConfigurer { // Definisce la cl
 
     private final ChatWebSocketHandler chatWebSocketHandler; // Dichiara il campo chatWebSocketHandler dell'oggetto.
 
-    public WebSocketConfig(ChatWebSocketHandler chatWebSocketHandler) { // Costruttore della classe WebSocketConfig che inizializza le dipendenze necessarie.
+    public WebSocketConfig(@NonNull ChatWebSocketHandler chatWebSocketHandler) { // Costruttore della classe WebSocketConfig che inizializza le dipendenze necessarie.
         this.chatWebSocketHandler = Objects.requireNonNull(chatWebSocketHandler); // Aggiorna il campo chatWebSocketHandler dell'istanza.
     } // Chiude il blocco di codice precedente.
 
     @Override // Applica l'annotazione @Override per configurare il componente.
     public void registerWebSocketHandlers(@NonNull WebSocketHandlerRegistry registry) { // Definisce il metodo registerWebSocketHandlers che supporta la logica di dominio.
-        registry.addHandler(chatWebSocketHandler, "/ws/chat") // Esegue l'istruzione necessaria alla logica applicativa.
+        registry.addHandler(Objects.requireNonNull(chatWebSocketHandler), "/ws/chat") // Esegue l'istruzione necessaria alla logica applicativa.
                 .setAllowedOrigins("*"); // Esegue l'istruzione terminata dal punto e virgola.
     } // Chiude il blocco di codice precedente.
 } // Chiude il blocco di codice precedente.

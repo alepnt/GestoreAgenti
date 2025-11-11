@@ -28,16 +28,16 @@ public class ChatWebSocketHandler extends TextWebSocketHandler { // Definisce la
     public ChatWebSocketHandler(ChatService chatService, // Costruttore della classe ChatWebSocketHandler che inizializza le dipendenze necessarie.
                                 ChatSubscriptionService subscriptionService, // Esegue l'istruzione necessaria alla logica applicativa.
                                 ObjectMapper objectMapper) { // Apre il blocco di codice associato alla dichiarazione.
-        this.chatService = chatService; // Aggiorna il campo chatService dell'istanza.
-        this.subscriptionService = subscriptionService; // Aggiorna il campo subscriptionService dell'istanza.
-        this.objectMapper = objectMapper; // Aggiorna il campo objectMapper dell'istanza.
+        this.chatService = Objects.requireNonNull(chatService); // Aggiorna il campo chatService dell'istanza.
+        this.subscriptionService = Objects.requireNonNull(subscriptionService); // Aggiorna il campo subscriptionService dell'istanza.
+        this.objectMapper = Objects.requireNonNull(objectMapper); // Aggiorna il campo objectMapper dell'istanza.
     } // Chiude il blocco di codice precedente.
 
     @Override // Applica l'annotazione @Override per configurare il componente.
     public void afterConnectionEstablished(@NonNull WebSocketSession session) throws Exception { // Definisce il metodo afterConnectionEstablished che supporta la logica di dominio.
         String teamName = resolveTeamName(session.getUri()); // Assegna il valore calcolato alla variabile String teamName.
         if (teamName == null || teamName.isBlank()) { // Valuta la condizione per controllare il flusso applicativo.
-            session.close(CloseStatus.BAD_DATA); // Esegue l'istruzione terminata dal punto e virgola.
+            session.close(Objects.requireNonNull(CloseStatus.BAD_DATA)); // Esegue l'istruzione terminata dal punto e virgola.
             return; // Esegue l'istruzione terminata dal punto e virgola.
         } // Chiude il blocco di codice precedente.
         subscriptionService.registerSession(teamName, session); // Esegue l'istruzione terminata dal punto e virgola.
@@ -67,7 +67,7 @@ public class ChatWebSocketHandler extends TextWebSocketHandler { // Definisce la
     @Override // Applica l'annotazione @Override per configurare il componente.
     public void handleTransportError(@NonNull WebSocketSession session, @NonNull Throwable exception) throws Exception { // Definisce il metodo handleTransportError che supporta la logica di dominio.
         subscriptionService.unregisterSession(session); // Esegue l'istruzione terminata dal punto e virgola.
-        session.close(CloseStatus.SERVER_ERROR); // Esegue l'istruzione terminata dal punto e virgola.
+        session.close(Objects.requireNonNull(CloseStatus.SERVER_ERROR)); // Esegue l'istruzione terminata dal punto e virgola.
     } // Chiude il blocco di codice precedente.
 
     private void sendHistory(WebSocketSession session, String teamName) throws IOException { // Definisce il metodo sendHistory che supporta la logica di dominio.

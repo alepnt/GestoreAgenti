@@ -2,6 +2,7 @@ package com.example.GestoreAgenti.service;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Objects;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,6 +26,7 @@ public class AgendaService {
     }
 
     public List<AgendaEvento> listForDipendente(Long dipendenteId, LocalDate from, LocalDate to) {
+        Objects.requireNonNull(dipendenteId, "L'identificativo del dipendente è obbligatorio");
         if (from != null && to != null) {
             return repository.findByDipendente_IdAndDataBetweenOrderByDataAscOraInizioAsc(dipendenteId, from, to);
         }
@@ -32,6 +34,8 @@ public class AgendaService {
     }
 
     public AgendaEvento create(Long dipendenteId, AgendaEvento evento) {
+        Objects.requireNonNull(dipendenteId, "L'identificativo del dipendente è obbligatorio");
+        Objects.requireNonNull(evento, "L'evento da creare è obbligatorio");
         Dipendente dipendente = dipendenteRepository.findById(dipendenteId)
                 .orElseThrow(() -> new IllegalArgumentException("Dipendente non trovato: " + dipendenteId));
         evento.setDipendente(dipendente);
@@ -39,6 +43,8 @@ public class AgendaService {
     }
 
     public AgendaEvento update(Long id, AgendaEvento changes, AgendaItemType requestedType) {
+        Objects.requireNonNull(id, "L'identificativo dell'evento è obbligatorio");
+        Objects.requireNonNull(changes, "I dati aggiornati dell'evento sono obbligatori");
         AgendaEvento existing = repository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Evento agenda non trovato: " + id));
         existing.setData(changes.getData());
@@ -54,6 +60,7 @@ public class AgendaService {
     }
 
     public void delete(Long id) {
+        Objects.requireNonNull(id, "L'identificativo dell'evento è obbligatorio");
         repository.deleteById(id);
     }
 }

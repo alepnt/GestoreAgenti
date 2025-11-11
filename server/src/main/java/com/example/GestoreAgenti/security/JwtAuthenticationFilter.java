@@ -2,6 +2,7 @@ package com.example.GestoreAgenti.security; // Definisce il pacchetto com.exampl
 
 import java.io.IOException; // Importa IOException per segnalare errori di input/output nel filtro.
 
+import org.springframework.lang.NonNull; // Importa org.springframework.lang.NonNull per rispettare i contratti del filtro padre.
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken; // Importa UsernamePasswordAuthenticationToken per incapsulare le credenziali dell'utente.
 import org.springframework.security.core.context.SecurityContextHolder; // Importa SecurityContextHolder per accedere al contesto di sicurezza corrente.
 import org.springframework.security.core.userdetails.UserDetails; // Importa UserDetails per manipolare le informazioni di autenticazione dell'utente.
@@ -27,7 +28,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter { // Dichiara 
 
     @Override // Applica l'annotazione @Override per configurare il componente.
     protected void doFilterInternal( // Definisce il metodo principale del filtro che gestisce ogni richiesta.
-            HttpServletRequest request, HttpServletResponse response, FilterChain filterChain // Elenca i parametri utilizzati per analizzare la richiesta e la risposta HTTP.
+            @NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull FilterChain filterChain // Elenca i parametri utilizzati per analizzare la richiesta e la risposta HTTP.
     ) throws ServletException, IOException { // Apre il blocco di istruzioni relativo alla dichiarazione precedente.
 
         String authHeader = request.getHeader("Authorization"); // Esegue questa istruzione come parte della logica del metodo.

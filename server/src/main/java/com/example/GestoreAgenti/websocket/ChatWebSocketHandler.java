@@ -4,6 +4,7 @@ import com.example.GestoreAgenti.model.ChatMessage; // Importa com.example.Gesto
 import com.example.GestoreAgenti.model.ChatMessageRequest; // Importa com.example.GestoreAgenti.model.ChatMessageRequest per abilitare le funzionalità utilizzate nel file.
 import com.example.GestoreAgenti.service.ChatService; // Importa com.example.GestoreAgenti.service.ChatService per abilitare le funzionalità utilizzate nel file.
 import com.fasterxml.jackson.databind.ObjectMapper; // Importa com.fasterxml.jackson.databind.ObjectMapper per abilitare le funzionalità utilizzate nel file.
+import org.springframework.lang.NonNull; // Importa org.springframework.lang.NonNull per dichiarare contratti di non nullità.
 import org.springframework.stereotype.Component; // Importa org.springframework.stereotype.Component per abilitare le funzionalità utilizzate nel file.
 import org.springframework.web.socket.CloseStatus; // Importa org.springframework.web.socket.CloseStatus per abilitare le funzionalità utilizzate nel file.
 import org.springframework.web.socket.TextMessage; // Importa org.springframework.web.socket.TextMessage per abilitare le funzionalità utilizzate nel file.
@@ -15,6 +16,7 @@ import java.net.URI; // Importa java.net.URI per abilitare le funzionalità util
 import java.net.URLDecoder; // Importa java.net.URLDecoder per abilitare le funzionalità utilizzate nel file.
 import java.nio.charset.StandardCharsets; // Importa java.nio.charset.StandardCharsets per abilitare le funzionalità utilizzate nel file.
 import java.util.List; // Importa java.util.List per abilitare le funzionalità utilizzate nel file.
+import java.util.Objects; // Importa java.util.Objects per garantire il rispetto dei contratti @NonNull delle API Spring.
 
 @Component // Applica l'annotazione @Component per configurare il componente.
 public class ChatWebSocketHandler extends TextWebSocketHandler { // Definisce la classe ChatWebSocketHandler che incapsula la logica applicativa.
@@ -32,7 +34,7 @@ public class ChatWebSocketHandler extends TextWebSocketHandler { // Definisce la
     } // Chiude il blocco di codice precedente.
 
     @Override // Applica l'annotazione @Override per configurare il componente.
-    public void afterConnectionEstablished(WebSocketSession session) throws Exception { // Definisce il metodo afterConnectionEstablished che supporta la logica di dominio.
+    public void afterConnectionEstablished(@NonNull WebSocketSession session) throws Exception { // Definisce il metodo afterConnectionEstablished che supporta la logica di dominio.
         String teamName = resolveTeamName(session.getUri()); // Assegna il valore calcolato alla variabile String teamName.
         if (teamName == null || teamName.isBlank()) { // Valuta la condizione per controllare il flusso applicativo.
             session.close(CloseStatus.BAD_DATA); // Esegue l'istruzione terminata dal punto e virgola.
@@ -43,7 +45,7 @@ public class ChatWebSocketHandler extends TextWebSocketHandler { // Definisce la
     } // Chiude il blocco di codice precedente.
 
     @Override // Applica l'annotazione @Override per configurare il componente.
-    protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception { // Definisce il metodo handleTextMessage che supporta la logica di dominio.
+    protected void handleTextMessage(@NonNull WebSocketSession session, @NonNull TextMessage message) throws Exception { // Definisce il metodo handleTextMessage che supporta la logica di dominio.
         ChatMessageRequest request = objectMapper.readValue(message.getPayload(), ChatMessageRequest.class); // Assegna il valore calcolato alla variabile ChatMessageRequest request.
         if (request.content() == null || request.content().isBlank() // Valuta la condizione per controllare il flusso applicativo.
                 || request.sender() == null || request.sender().isBlank()) { // Apre il blocco di codice associato alla dichiarazione.
@@ -58,12 +60,12 @@ public class ChatWebSocketHandler extends TextWebSocketHandler { // Definisce la
     } // Chiude il blocco di codice precedente.
 
     @Override // Applica l'annotazione @Override per configurare il componente.
-    public void afterConnectionClosed(WebSocketSession session, CloseStatus status) { // Definisce il metodo afterConnectionClosed che supporta la logica di dominio.
+    public void afterConnectionClosed(@NonNull WebSocketSession session, @NonNull CloseStatus status) { // Definisce il metodo afterConnectionClosed che supporta la logica di dominio.
         subscriptionService.unregisterSession(session); // Esegue l'istruzione terminata dal punto e virgola.
     } // Chiude il blocco di codice precedente.
 
     @Override // Applica l'annotazione @Override per configurare il componente.
-    public void handleTransportError(WebSocketSession session, Throwable exception) throws Exception { // Definisce il metodo handleTransportError che supporta la logica di dominio.
+    public void handleTransportError(@NonNull WebSocketSession session, @NonNull Throwable exception) throws Exception { // Definisce il metodo handleTransportError che supporta la logica di dominio.
         subscriptionService.unregisterSession(session); // Esegue l'istruzione terminata dal punto e virgola.
         session.close(CloseStatus.SERVER_ERROR); // Esegue l'istruzione terminata dal punto e virgola.
     } // Chiude il blocco di codice precedente.
@@ -71,7 +73,7 @@ public class ChatWebSocketHandler extends TextWebSocketHandler { // Definisce la
     private void sendHistory(WebSocketSession session, String teamName) throws IOException { // Definisce il metodo sendHistory che supporta la logica di dominio.
         List<ChatMessage> history = chatService.getMessagesForTeam(teamName); // Assegna il valore calcolato alla variabile List<ChatMessage> history.
         for (ChatMessage chatMessage : history) { // Itera sugli elementi richiesti dalla logica.
-            session.sendMessage(new TextMessage(objectMapper.writeValueAsString(chatMessage))); // Esegue l'istruzione terminata dal punto e virgola.
+            session.sendMessage(new TextMessage(Objects.requireNonNull(objectMapper.writeValueAsString(chatMessage)))); // Esegue l'istruzione terminata dal punto e virgola.
         } // Chiude il blocco di codice precedente.
     } // Chiude il blocco di codice precedente.
 

@@ -86,4 +86,29 @@ public enum UserRole {
     public AccountAssociation getAccountAssociation() {
         return accountAssociation;
     }
+
+    /**
+     * Indica se il ruolo richiede l'associazione a un dipendente dell'azienda.
+     */
+    public boolean isAssociatedToDipendente() {
+        return accountAssociation == AccountAssociation.DIPENDENTE;
+    }
+
+    /**
+     * Indica se il ruolo richiede l'associazione a un cliente finale.
+     */
+    public boolean isAssociatedToCliente() {
+        return accountAssociation == AccountAssociation.CLIENTE;
+    }
+
+    /**
+     * Restituisce il nome dell'associazione oppure {@code null} se non previsto.
+     * <p>
+     * Questo metodo evita ai chiamanti di dipendere direttamente dall'enum
+     * {@link AccountAssociation}, mantenendo comunque un'informazione coerente
+     * per la serializzazione.
+     */
+    public String getAssociationCode() {
+        return accountAssociation != null ? accountAssociation.name() : null;
+    }
 }

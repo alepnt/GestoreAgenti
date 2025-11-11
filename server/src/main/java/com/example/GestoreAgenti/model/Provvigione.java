@@ -12,7 +12,6 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
-import jakarta.validation.ValidationException;
 import jakarta.validation.constraints.NotNull;
 
 @Entity
@@ -71,7 +70,7 @@ public class Provvigione {
     @PreUpdate
     private void ensureFatturaAssociata() {
         if (fattura == null) {
-            throw new ValidationException("La provvigione deve essere associata a una fattura");
+            throw new IllegalStateException("La provvigione deve essere associata a una fattura");
         }
     }
 }

@@ -3,11 +3,14 @@ package com.example.GestoreAgenti.security; // Definisce il pacchetto com.exampl
 import org.springframework.context.annotation.Bean; // Importa org.springframework.context.annotation.Bean per abilitare le funzionalità utilizzate nel file.
 import org.springframework.context.annotation.Configuration; // Importa org.springframework.context.annotation.Configuration per abilitare le funzionalità utilizzate nel file.
 import org.springframework.security.authentication.AuthenticationManager; // Importa org.springframework.security.authentication.AuthenticationManager per abilitare le funzionalità utilizzate nel file.
+import org.springframework.http.HttpMethod; // Importa HttpMethod per configurare le regole di autorizzazione specifiche.
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder; // Importa org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder per abilitare le funzionalità utilizzate nel file.
 import org.springframework.security.config.annotation.web.builders.HttpSecurity; // Importa org.springframework.security.config.annotation.web.builders.HttpSecurity per abilitare le funzionalità utilizzate nel file.
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity; // Importa org.springframework.security.config.annotation.web.configuration.EnableWebSecurity per abilitare le funzionalità utilizzate nel file.
+import org.springframework.security.config.http.SessionCreationPolicy; // Importa SessionCreationPolicy per abilitare le funzionalità utilizzate nel file.
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder; // Importa org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder per abilitare le funzionalità utilizzate nel file.
 import org.springframework.security.web.SecurityFilterChain; // Importa org.springframework.security.web.SecurityFilterChain per abilitare le funzionalità utilizzate nel file.
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter; // Importa UsernamePasswordAuthenticationFilter per abilitare le funzionalità utilizzate nel file.
 
 /**
  * Configura la sicurezza Spring consentendo l'accesso libero alle API della demo.
@@ -17,10 +20,15 @@ import org.springframework.security.web.SecurityFilterChain; // Importa org.spri
 public class SecurityConfig { // Definisce la classe SecurityConfig che incapsula la logica applicativa.
 
     @Bean // Applica l'annotazione @Bean per configurare il componente.
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception { // Definisce il metodo securityFilterChain che supporta la logica di dominio.
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthenticationFilter jwtAuthenticationFilter) throws Exception { // Definisce il metodo securityFilterChain che supporta la logica di dominio.
         http // Esegue l'istruzione necessaria alla logica applicativa.
                 .csrf(csrf -> csrf.disable()) // Esegue l'istruzione necessaria alla logica applicativa.
-                .authorizeHttpRequests(registry -> registry.anyRequest().permitAll()); // Esegue l'istruzione terminata dal punto e virgola.
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // Impone sessioni stateless per le API.
+                .authorizeHttpRequests(registry -> registry // Configura le regole di autorizzazione granulari.
+                        .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll() // Consente il login senza token.
+                        .requestMatchers("/ws/**").permitAll() // Mantiene aperti gli endpoint WebSocket pubblici.
+                        .anyRequest().authenticated()) // Richiede autenticazione per il resto delle API.
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class); // Inserisce il filtro JWT nella catena.
         return http.build(); // Restituisce il risultato dell'espressione http.build().
     } // Chiude il blocco di codice precedente.
 

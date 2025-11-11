@@ -91,6 +91,7 @@ public class FxDataService { // Esegue: public class FxDataService {
     private int nextEmployeeSequence; // Esegue: private int nextEmployeeSequence;
     private RemoteAgentServiceProxy remoteAgentProxy; // Esegue: private RemoteAgentServiceProxy remoteAgentProxy;
     private Employee currentEmployee; // Esegue: private Employee currentEmployee;
+    private String authToken;
 
     public FxDataService() {
         this(new BackendGateway());
@@ -365,6 +366,40 @@ public class FxDataService { // Esegue: public class FxDataService {
         }
     }
 
+    private EmployeeCredential findCredential(String identifier) {
+        if (identifier == null) {
+            return null;
+        }
+        EmployeeCredential exact = credentials.get(identifier);
+        if (exact != null) {
+            return exact;
+        }
+        String lower = identifier.toLowerCase(Locale.ROOT);
+        return credentials.entrySet().stream()
+                .filter(entry -> entry.getKey() != null
+                        && entry.getKey().toLowerCase(Locale.ROOT).equals(lower))
+                .map(Map.Entry::getValue)
+                .findFirst()
+                .orElse(null);
+    }
+
+    private NameParts splitFullName(String fullName) {
+        if (fullName == null) {
+            return new NameParts("", "");
+        }
+        String normalized = fullName.trim();
+        if (normalized.isEmpty()) {
+            return new NameParts("", "");
+        }
+        int separator = normalized.indexOf(' ');
+        if (separator < 0) {
+            return new NameParts(normalized, "");
+        }
+        String first = normalized.substring(0, separator).trim();
+        String last = normalized.substring(separator + 1).trim();
+        return new NameParts(first, last);
+    }
+
     private Employee registerEmployee(EmployeeDto dto, String password) { // Esegue: private Employee registerEmployee(EmployeeDto dto, String password) {
         EmployeeDto normalized = dto; // Esegue: EmployeeDto normalized = dto;
         String identifier = normalized.id(); // Esegue: String identifier = normalized.id();
@@ -487,14 +522,42 @@ public class FxDataService { // Esegue: public class FxDataService {
     } // Esegue: }
 
     public Optional<Employee> authenticate(String employeeId, String password) { // Esegue: public Optional<Employee> authenticate(String employeeId, String password) {
-        EmployeeCredential credential = credentials.get(employeeId); // Esegue: EmployeeCredential credential = credentials.get(employeeId);
-        if (credential == null || !Objects.equals(credential.password(), password)) { // Esegue: if (credential == null || !Objects.equals(credential.password(), password)) {
-            currentEmployee = null; // Esegue: currentEmployee = null;
-            return Optional.empty(); // Esegue: return Optional.empty();
-        } // Esegue: }
-        currentEmployee = credential.employee(); // Esegue: currentEmployee = credential.employee();
+        String normalizedId = employeeId == null ? null : employeeId.trim();
+        String normalizedPassword = password == null ? null : password.trim();
+        if (normalizedId == null || normalizedId.isEmpty() || normalizedPassword == null || normalizedPassword.isEmpty()) {
+            currentEmployee = null;
+            return Optional.empty();
+        }
+
+        Optional<String> remoteToken = backendGateway.authenticate(normalizedId, normalizedPassword);
+        if (remoteToken.isPresent()) {
+            authToken = remoteToken.get();
+            remoteChatClient.setAuthToken(authToken);
+            remoteEmailClient.setAuthToken(authToken);
+            tryInitializeFromBackend();
+            EmployeeCredential credential = findCredential(normalizedId);
+            if (credential == null) {
+                NameParts parts = splitFullName(normalizedId);
+                EmployeeDto dto = new EmployeeDto(normalizedId, parts.firstName(), parts.lastName(), null, null, null);
+                Employee fallback = employeeAdapter.toModel(dto);
+                credential = new EmployeeCredential(fallback, normalizedPassword);
+                credentials.put(fallback.id(), credential);
+            } else {
+                credentials.put(credential.employee().id(), new EmployeeCredential(credential.employee(), normalizedPassword));
+            }
+            currentEmployee = credential.employee();
+            loadRemoteDataFor(currentEmployee);
+            return Optional.of(currentEmployee);
+        }
+
+        EmployeeCredential credential = findCredential(normalizedId);
+        if (credential == null || !Objects.equals(credential.password(), normalizedPassword)) {
+            currentEmployee = null;
+            return Optional.empty();
+        }
+        currentEmployee = credential.employee();
         loadRemoteDataFor(currentEmployee);
-        return Optional.of(currentEmployee); // Esegue: return Optional.of(currentEmployee);
+        return Optional.of(currentEmployee);
     } // Esegue: }
 
     public Optional<Employee> getCurrentEmployee() { // Esegue: public Optional<Employee> getCurrentEmployee() {
@@ -503,6 +566,11 @@ public class FxDataService { // Esegue: public class FxDataService {
 
     public void clearCurrentEmployee() { // Esegue: public void clearCurrentEmployee() {
         currentEmployee = null; // Esegue: currentEmployee = null;
+        authToken = null;
+        backendGateway.clearAuthentication();
+        remoteChatClient.setAuthToken(null);
+        remoteChatClient.disconnectAll();
+        remoteEmailClient.setAuthToken(null);
     } // Esegue: }
 
     public Optional<Employee> registerEmployee(String fullName, String role, String teamName, String email, String password) { // Esegue: public Optional<Employee> registerEmployee(String fullName, String role, String teamName, String email, String password) {
@@ -523,16 +591,38 @@ public class FxDataService { // Esegue: public class FxDataService {
             return Optional.empty(); // Esegue: return Optional.empty();
         } // Esegue: }
 
-        String generatedId = generateNextEmployeeId(); // Esegue: String generatedId = generateNextEmployeeId();
-        Employee employee = new Employee(generatedId, normalizedName, normalizedRole, normalizedTeam, normalizedEmail); // Esegue: Employee employee = new Employee(generatedId, normalizedName, normalizedRole, normalizedTeam, normalizedEmail);
-        credentials.put(generatedId, new EmployeeCredential(employee, normalizedPassword)); // Esegue: credentials.put(generatedId, new EmployeeCredential(employee, normalizedPassword));
+        String candidateId = peekNextEmployeeId();
+        if (backendGateway.isAuthenticated()) {
+            NameParts parts = splitFullName(normalizedName);
+            Optional<BackendGateway.EmployeeSnapshot> created = backendGateway.createEmployee(parts.firstName(),
+                    parts.lastName(), normalizedRole, normalizedTeam, normalizedEmail, candidateId,
+                    normalizedPassword, resolvedRole.name());
+            if (created.isEmpty()) {
+                return Optional.empty();
+            }
+            BackendGateway.EmployeeSnapshot snapshot = created.get();
+            String resolvedId = snapshot.username() != null && !snapshot.username().isBlank()
+                    ? snapshot.username().trim()
+                    : candidateId;
+            EmployeeDto dto = new EmployeeDto(resolvedId,
+                    snapshot.firstName(), snapshot.lastName(), snapshot.role(), snapshot.team(), snapshot.email());
+            Employee employee = registerEmployee(dto, normalizedPassword);
+            if (snapshot.id() != null) {
+                backendEmployeeIds.put(employee.id(), snapshot.id());
+            }
+            refreshRevenueTrend();
+            return Optional.of(employee);
+        }
 
-        ensureCollections(generatedId); // Esegue: ensureCollections(generatedId);
-        chatByTeam.computeIfAbsent(normalizedTeam, key -> FXCollections.observableArrayList()); // Esegue: chatByTeam.computeIfAbsent(normalizedTeam, key -> FXCollections.observableArrayList());
-        addTeamName(normalizedTeam); // Esegue: addTeamName(normalizedTeam);
-
-        return Optional.of(employee); // Esegue: return Optional.of(employee);
+        NameParts parts = splitFullName(normalizedName);
+        String generatedId = generateNextEmployeeId();
+        EmployeeDto dto = new EmployeeDto(generatedId, parts.firstName(), parts.lastName(), normalizedRole,
+                normalizedTeam, normalizedEmail);
+        return Optional.of(registerEmployee(dto, normalizedPassword));
     } // Esegue: }
+
+    private record NameParts(String firstName, String lastName) {
+    }
 
     public ObservableList<AgendaItem> getAgendaFor(Employee employee) { // Esegue: public ObservableList<AgendaItem> getAgendaFor(Employee employee) {
         return agendaByEmployee.computeIfAbsent(employee.id(), key -> FXCollections.observableArrayList()); // Esegue: return agendaByEmployee.computeIfAbsent(employee.id(), key -> FXCollections.observableArrayList());

@@ -107,7 +107,7 @@ public class CommissionCalculationService {
                     .setScale(2, RoundingMode.HALF_UP);
 
             Provvigione provvigione = provvigioneRepository
-                    .findByFattura_IdAndDipendente_Id(fattura.getIdFattura(), membro.getId())
+                    .findByFattura_IdFatturaAndDipendente_Id(fattura.getIdFattura(), membro.getId())
                     .orElseGet(Provvigione::new);
             provvigione.setDipendente(membro);
             provvigione.setContratto(contratto);
@@ -132,7 +132,7 @@ public class CommissionCalculationService {
             return;
         }
         List<Provvigione> provvigioni = provvigioneRepository
-                .findByFattura_Id(pagamento.getFattura().getIdFattura());
+                .findByFattura_IdFattura(pagamento.getFattura().getIdFattura());
         for (Provvigione provvigione : provvigioni) {
             if (!"EROGATA".equalsIgnoreCase(provvigione.getStato())) {
                 provvigione.setStato("EROGATA");

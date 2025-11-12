@@ -13,7 +13,7 @@ public interface ProvvigioneRepository extends JpaRepository<Provvigione, Long> 
 
     List<Provvigione> findByDipendente_Id(Long dipendenteId);
 
-    List<Provvigione> findByFattura_Id(Long fatturaId);
+    List<Provvigione> findByFattura_IdFattura(Long fatturaId);
 
-    Optional<Provvigione> findByFattura_IdAndDipendente_Id(Long fatturaId, Long dipendenteId);
+    Optional<Provvigione> findByFattura_IdFatturaAndDipendente_Id(Long fatturaId, Long dipendenteId);
 }

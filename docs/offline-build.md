@@ -1,8 +1,8 @@
 # Offline build instructions
 
 The Maven build fails in the sandbox because it cannot contact Maven Central to
-resolve the Spring Boot parent POM (`spring-boot-starter-parent:3.5.6`). To
-build the project you need a local Maven repository that already contains the
+resolve the Spring Boot BOM (`spring-boot-dependencies:3.3.5`). To build the
+project you need a local Maven repository that already contains the
 Spring Boot BOM and all of the dependencies declared by the client and server
 modules.
 
@@ -22,8 +22,8 @@ prefer to run the Maven goals manually you can still use:
 ./mvnw -pl client -am dependency:go-offline -DskipTests
 ```
 
-Both approaches download the Spring Boot parent POM together with the
-dependencies declared in `server/pom.xml` and `client/pom.xml`.
+Both approaches download the Spring Boot BOM together with the dependencies
+declared in `server/pom.xml` and `client/pom.xml`.
 
 ## 2. Copy the populated repository into the sandbox
 
@@ -51,23 +51,30 @@ never tries to reach Maven Central:
 mvn -pl server -am -DskipTests package -o -Dmaven.repo.local=/workspace/.m2/repository
 ```
 
+With the cache in place you can also execute targeted unit tests such as the
+JWT regression suite that guards against the weak-secret regression fixed in
+this change:
+
+```bash
+mvn -pl server -Dtest=JwtUtilTest test -o -Dmaven.repo.local=/workspace/.m2/repository
+```
+
 The `-o` switch enforces offline mode and `-Dmaven.repo.local` points Maven to
 the repository you copied in step 2. Repeat the command for the client module if
 needed.
 
 ## 4. (Optional) Install only the missing parent POM
 
-If you only lack the Spring Boot parent POM but already have the other
-artifacts, download `spring-boot-starter-parent-3.5.6.pom` once and install it
-manually:
+If you only lack the Spring Boot BOM but already have the other artifacts,
+download `spring-boot-dependencies-3.3.5.pom` once and install it manually:
 
 ```bash
 mvn org.apache.maven.plugins:maven-install-plugin:3.1.1:install-file \
-    -Dfile=spring-boot-starter-parent-3.5.6.pom \
-    -DpomFile=spring-boot-starter-parent-3.5.6.pom \
+    -Dfile=spring-boot-dependencies-3.3.5.pom \
+    -DpomFile=spring-boot-dependencies-3.3.5.pom \
     -DgroupId=org.springframework.boot \
-    -DartifactId=spring-boot-starter-parent \
-    -Dversion=3.5.6 \
+    -DartifactId=spring-boot-dependencies \
+    -Dversion=3.3.5 \
     -Dpackaging=pom
 ```
 

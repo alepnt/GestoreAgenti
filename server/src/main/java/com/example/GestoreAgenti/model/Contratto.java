@@ -36,7 +36,7 @@ public class Contratto implements Prototype<Contratto> {
     @Column(columnDefinition = "TEXT")
     private String note;
 
-    private boolean provvigioneAllaFirma = true;
+    private Boolean provvigioneAllaFirma = Boolean.TRUE;
 
     public Long getIdContratto() { return idContratto; }
     public void setIdContratto(Long idContratto) { this.idContratto = idContratto; }
@@ -65,8 +65,8 @@ public class Contratto implements Prototype<Contratto> {
     public String getNote() { return note; }
     public void setNote(String note) { this.note = note; }
 
-    public boolean isProvvigioneAllaFirma() { return provvigioneAllaFirma; }
-    public void setProvvigioneAllaFirma(boolean provvigioneAllaFirma) { this.provvigioneAllaFirma = provvigioneAllaFirma; }
+    public boolean isProvvigioneAllaFirma() { return provvigioneAllaFirma == null || provvigioneAllaFirma; }
+    public void setProvvigioneAllaFirma(Boolean provvigioneAllaFirma) { this.provvigioneAllaFirma = provvigioneAllaFirma; }
 
     @Override
     public Contratto copia() {

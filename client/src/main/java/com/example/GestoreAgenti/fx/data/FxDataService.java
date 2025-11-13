@@ -63,6 +63,7 @@ public class FxDataService { // Esegue: public class FxDataService {
             name -> name.toLowerCase(Locale.ROOT)); // Esegue: name -> name.toLowerCase(Locale.ROOT));
 
     private final Map<String, EmployeeCredential> credentials = new HashMap<>(); // Esegue: private final Map<String, EmployeeCredential> credentials = new HashMap<>();
+    private final Map<String, String> emailToEmployeeId = new HashMap<>();
     private final Map<String, ObservableList<AgendaItem>> agendaByEmployee = new HashMap<>(); // Esegue: private final Map<String, ObservableList<AgendaItem>> agendaByEmployee = new HashMap<>();
     private final Map<String, ObservableList<Notification>> notificationsByEmployee = new HashMap<>(); // Esegue: private final Map<String, ObservableList<Notification>> notificationsByEmployee = new HashMap<>();
     private final Map<String, ObservableList<InvoiceRecord>> invoicesByEmployee = new HashMap<>(); // Esegue: private final Map<String, ObservableList<InvoiceRecord>> invoicesByEmployee = new HashMap<>();
@@ -216,6 +217,7 @@ public class FxDataService { // Esegue: public class FxDataService {
 
     private void resetState() {
         credentials.clear();
+        emailToEmployeeId.clear();
         agendaByEmployee.clear();
         notificationsByEmployee.clear();
         invoicesByEmployee.clear();
@@ -383,6 +385,26 @@ public class FxDataService { // Esegue: public class FxDataService {
                 .orElse(null);
     }
 
+    private EmployeeCredential findCredentialByEmail(String email) {
+        String normalized = normalizeEmailKey(email);
+        if (normalized == null) {
+            return null;
+        }
+        String employeeId = emailToEmployeeId.get(normalized);
+        if (employeeId != null) {
+            return credentials.get(employeeId);
+        }
+        return credentials.values().stream()
+                .filter(credential -> {
+                    Employee employee = credential.employee();
+                    String employeeEmail = employee != null ? employee.email() : null;
+                    String employeeEmailKey = normalizeEmailKey(employeeEmail);
+                    return employeeEmailKey != null && employeeEmailKey.equals(normalized);
+                })
+                .findFirst()
+                .orElse(null);
+    }
+
     private NameParts splitFullName(String fullName) {
         if (fullName == null) {
             return new NameParts("", "");
@@ -400,6 +422,31 @@ public class FxDataService { // Esegue: public class FxDataService {
         return new NameParts(first, last);
     }
 
+    private static String deriveNameFromEmail(String email) {
+        if (email == null) {
+            return "";
+        }
+        String trimmed = email.trim();
+        int atIndex = trimmed.indexOf('@');
+        String localPart = atIndex >= 0 ? trimmed.substring(0, atIndex) : trimmed;
+        String sanitized = localPart.replace('.', ' ').replace('_', ' ').replace('-', ' ');
+        return sanitized.trim();
+    }
+
+    private void storeCredential(Employee employee, String password) {
+        if (employee == null) {
+            return;
+        }
+        EmployeeCredential existing = credentials.get(employee.id());
+        String resolvedPassword = password != null ? password : existing != null ? existing.password() : null;
+        credentials.put(employee.id(), new EmployeeCredential(employee, resolvedPassword));
+        emailToEmployeeId.entrySet().removeIf(entry -> Objects.equals(entry.getValue(), employee.id()));
+        String normalizedEmail = normalizeEmailKey(employee.email());
+        if (normalizedEmail != null) {
+            emailToEmployeeId.put(normalizedEmail, employee.id());
+        }
+    }
+
     private Employee registerEmployee(EmployeeDto dto, String password) { // Esegue: private Employee registerEmployee(EmployeeDto dto, String password) {
         EmployeeDto normalized = dto; // Esegue: EmployeeDto normalized = dto;
         String identifier = normalized.id(); // Esegue: String identifier = normalized.id();
@@ -410,7 +457,7 @@ public class FxDataService { // Esegue: public class FxDataService {
         Employee employee = ensureNormalizedTeam(employeeAdapter.toModel(normalized)); // Esegue: Employee employee = ensureNormalizedTeam(employeeAdapter.toModel(normalized));
         EmployeeCredential existing = credentials.get(employee.id()); // Esegue: EmployeeCredential existing = credentials.get(employee.id());
         String resolvedPassword = password != null ? password : existing != null ? existing.password() : null; // Esegue: String resolvedPassword = password != null ? password : existing != null ? existing.password() : null;
-        credentials.put(employee.id(), new EmployeeCredential(employee, resolvedPassword)); // Esegue: credentials.put(employee.id(), new EmployeeCredential(employee, resolvedPassword));
+        storeCredential(employee, resolvedPassword);
         ensureCollections(employee.id()); // Esegue: ensureCollections(employee.id());
         addTeamName(employee.teamName()); // Esegue: addTeamName(employee.teamName());
         if (employee.teamName() != null) { // Esegue: if (employee.teamName() != null) {
@@ -529,6 +576,7 @@ public class FxDataService { // Esegue: public class FxDataService {
             return Optional.empty();
         }
 
+        boolean loginIsEmail = isEmailValid(normalizedId);
         Optional<String> remoteToken = backendGateway.authenticate(normalizedId, normalizedPassword);
         if (remoteToken.isPresent()) {
             authToken = remoteToken.get();
@@ -536,14 +584,20 @@ public class FxDataService { // Esegue: public class FxDataService {
             remoteEmailClient.setAuthToken(authToken);
             tryInitializeFromBackend();
             EmployeeCredential credential = findCredential(normalizedId);
+            if (credential == null && loginIsEmail) {
+                credential = findCredentialByEmail(normalizedId);
+            }
             if (credential == null) {
-                NameParts parts = splitFullName(normalizedId);
-                EmployeeDto dto = new EmployeeDto(normalizedId, parts.firstName(), parts.lastName(), null, null, null);
+                String fallbackName = loginIsEmail ? deriveNameFromEmail(normalizedId) : normalizedId;
+                NameParts parts = splitFullName(fallbackName);
+                String fallbackId = normalizedId;
+                EmployeeDto dto = new EmployeeDto(fallbackId, parts.firstName(), parts.lastName(), null, null,
+                        loginIsEmail ? normalizedId : null);
                 Employee fallback = employeeAdapter.toModel(dto);
+                storeCredential(fallback, normalizedPassword);
                 credential = new EmployeeCredential(fallback, normalizedPassword);
-                credentials.put(fallback.id(), credential);
             } else {
-                credentials.put(credential.employee().id(), new EmployeeCredential(credential.employee(), normalizedPassword));
+                storeCredential(credential.employee(), normalizedPassword);
             }
             currentEmployee = credential.employee();
             loadRemoteDataFor(currentEmployee);
@@ -551,6 +605,9 @@ public class FxDataService { // Esegue: public class FxDataService {
         }
 
         EmployeeCredential credential = findCredential(normalizedId);
+        if (credential == null && loginIsEmail) {
+            credential = findCredentialByEmail(normalizedId);
+        }
         if (credential == null || !Objects.equals(credential.password(), normalizedPassword)) {
             currentEmployee = null;
             return Optional.empty();
@@ -590,6 +647,14 @@ public class FxDataService { // Esegue: public class FxDataService {
                 || normalizedTeam == null || !isEmailValid(normalizedEmail) || !isPasswordStrong(normalizedPassword)) { // Esegue: || normalizedTeam == null || !isEmailValid(normalizedEmail) || !isPasswordStrong(normalizedPassword)) {
             return Optional.empty(); // Esegue: return Optional.empty();
         } // Esegue: }
+
+        String normalizedEmailKey = normalizeEmailKey(normalizedEmail);
+        if (normalizedEmailKey == null) {
+            return Optional.empty();
+        }
+        if (emailToEmployeeId.containsKey(normalizedEmailKey)) {
+            return Optional.empty();
+        }
 
         String candidateId = peekNextEmployeeId();
         if (backendGateway.isAuthenticated()) {

@@ -587,7 +587,7 @@ public class FxDataService { // Esegue: public class FxDataService {
         String normalizedPassword = normalizeRequired(password); // Esegue: String normalizedPassword = normalizeRequired(password);
 
         if (normalizedName.isEmpty() || normalizedRole.isEmpty() // Esegue: if (normalizedName.isEmpty() || normalizedRole.isEmpty()
-                || normalizedTeam == null || normalizedEmail.isEmpty() || normalizedPassword.isEmpty()) { // Esegue: || normalizedTeam == null || normalizedEmail.isEmpty() || normalizedPassword.isEmpty()) {
+                || normalizedTeam == null || !isEmailValid(normalizedEmail) || !isPasswordStrong(normalizedPassword)) { // Esegue: || normalizedTeam == null || !isEmailValid(normalizedEmail) || !isPasswordStrong(normalizedPassword)) {
             return Optional.empty(); // Esegue: return Optional.empty();
         } // Esegue: }
 
@@ -759,6 +759,21 @@ public class FxDataService { // Esegue: public class FxDataService {
     private static String normalizeRequired(String value) { // Esegue: private static String normalizeRequired(String value) {
         return value == null ? "" : value.trim(); // Esegue: return value == null ? "" : value.trim();
     } // Esegue: }
+
+    private static boolean isEmailValid(String email) {
+        return email != null && !email.isBlank() && email.contains("@");
+    }
+
+    private static boolean isPasswordStrong(String password) {
+        if (password == null || password.isBlank()) {
+            return false;
+        }
+        boolean hasUppercase = password.chars().anyMatch(Character::isUpperCase);
+        boolean hasLowercase = password.chars().anyMatch(Character::isLowerCase);
+        boolean hasDigit = password.chars().anyMatch(Character::isDigit);
+        boolean hasSpecial = password.chars().anyMatch(ch -> !Character.isLetterOrDigit(ch));
+        return hasUppercase && hasLowercase && hasDigit && hasSpecial;
+    }
 
     private static String normalizeTeamName(String teamName) { // Esegue: private static String normalizeTeamName(String teamName) {
         if (teamName == null) { // Esegue: if (teamName == null) {

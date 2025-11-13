@@ -7,7 +7,6 @@ import org.springframework.web.bind.annotation.GetMapping; // Importa org.spring
 import org.springframework.web.bind.annotation.RequestMapping; // Importa org.springframework.web.bind.annotation.RequestMapping per abilitare le funzionalità utilizzate nel file.
 import org.springframework.web.bind.annotation.RestController; // Importa org.springframework.web.bind.annotation.RestController per abilitare le funzionalità utilizzate nel file.
 
-import com.example.GestoreAgenti.security.AccountAssociation; // Importa com.example.GestoreAgenti.security.AccountAssociation per abilitare le funzionalità utilizzate nel file.
 import com.example.GestoreAgenti.security.UserRole; // Importa com.example.GestoreAgenti.security.UserRole per abilitare le funzionalità utilizzate nel file.
 
 /**
@@ -32,7 +31,6 @@ public class RoleController { // Definisce la classe RoleController che incapsul
     } // Chiude il blocco di codice precedente.
 
     private static String associationCodeOf(UserRole role) { // Definisce il metodo associationCodeOf che supporta la logica di dominio.
-        AccountAssociation association = role.getAccountAssociation(); // Assegna il valore calcolato alla variabile AccountAssociation association.
-        return association != null ? association.name() : null; // Restituisce il risultato dell'espressione association != null ? association.name() : null.
+        return role.getAssociationCode(); // Restituisce il risultato dell'espressione role.getAssociationCode().
     } // Chiude il blocco di codice precedente.
 } // Chiude il blocco di codice precedente.

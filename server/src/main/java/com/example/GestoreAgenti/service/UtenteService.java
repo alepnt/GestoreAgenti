@@ -10,7 +10,6 @@ import org.springframework.stereotype.Service; // Importa org.springframework.st
 import com.example.GestoreAgenti.model.Utente; // Importa com.example.GestoreAgenti.model.Utente per abilitare le funzionalità utilizzate nel file.
 import com.example.GestoreAgenti.model.Dipendente; // Importa com.example.GestoreAgenti.model.Dipendente per abilitare le funzionalità utilizzate nel file.
 import com.example.GestoreAgenti.model.Cliente; // Importa com.example.GestoreAgenti.model.Cliente per abilitare le funzionalità utilizzate nel file.
-import com.example.GestoreAgenti.security.AccountAssociation; // Importa com.example.GestoreAgenti.security.AccountAssociation per abilitare le funzionalità utilizzate nel file.
 import com.example.GestoreAgenti.security.UserRole; // Importa com.example.GestoreAgenti.security.UserRole per abilitare le funzionalità utilizzate nel file.
 import com.example.GestoreAgenti.repository.UtenteRepository; // Importa com.example.GestoreAgenti.repository.UtenteRepository per abilitare le funzionalità utilizzate nel file.
 import com.example.GestoreAgenti.service.crud.AbstractCrudService; // Importa com.example.GestoreAgenti.service.crud.AbstractCrudService per abilitare le funzionalità utilizzate nel file.
@@ -155,11 +154,10 @@ public class UtenteService extends AbstractCrudService<Utente, Long> { // Defini
         } // Chiude il blocco di codice precedente.
 
         private AssociationType associationFor(UserRole role) { // Definisce il metodo associationFor che supporta la logica di dominio.
-            AccountAssociation association = role.getAccountAssociation(); // Assegna il valore calcolato alla variabile AccountAssociation association.
-            if (association == AccountAssociation.DIPENDENTE) { // Valuta la condizione per controllare il flusso applicativo.
+            if (role.isAssociatedToDipendente()) { // Valuta la condizione per controllare il flusso applicativo.
                 return AssociationType.DIPENDENTE; // Restituisce il risultato dell'espressione AssociationType.DIPENDENTE.
             }
-            if (association == AccountAssociation.CLIENTE) { // Valuta la condizione per controllare il flusso applicativo.
+            if (role.isAssociatedToCliente()) { // Valuta la condizione per controllare il flusso applicativo.
                 return AssociationType.CLIENTE; // Restituisce il risultato dell'espressione AssociationType.CLIENTE.
             }
             throw new IllegalStateException("Ruolo non supportato: " + role); // Propaga un'eccezione verso il chiamante.

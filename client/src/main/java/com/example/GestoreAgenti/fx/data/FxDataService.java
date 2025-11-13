@@ -825,6 +825,17 @@ public class FxDataService { // Esegue: public class FxDataService {
         return value == null ? "" : value.trim(); // Esegue: return value == null ? "" : value.trim();
     } // Esegue: }
 
+    private static String normalizeEmailKey(String email) {
+        if (email == null) {
+            return null;
+        }
+        String trimmed = email.trim();
+        if (trimmed.isEmpty()) {
+            return null;
+        }
+        return trimmed.toLowerCase(Locale.ROOT);
+    }
+
     private static boolean isEmailValid(String email) {
         return email != null && !email.isBlank() && email.contains("@");
     }

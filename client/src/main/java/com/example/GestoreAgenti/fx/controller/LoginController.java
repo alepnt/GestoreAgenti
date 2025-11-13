@@ -35,6 +35,12 @@ public class LoginController { // Esegue: public class LoginController {
     private TextField employeeIdField; // Esegue: private TextField employeeIdField;
 
     @FXML // Esegue: @FXML
+    private TextField emailField; // Esegue: private TextField emailField;
+
+    @FXML // Esegue: @FXML
+    private TextField lastNameField; // Esegue: private TextField lastNameField;
+
+    @FXML // Esegue: @FXML
     private PasswordField passwordField; // Esegue: private PasswordField passwordField;
 
     @FXML // Esegue: @FXML
@@ -63,7 +69,26 @@ public class LoginController { // Esegue: public class LoginController {
             return; // Esegue: return;
         } // Esegue: }
         String employeeId = employeeIdField.getText(); // Esegue: String employeeId = employeeIdField.getText();
+        String email = emailField.getText(); // Esegue: String email = emailField.getText();
+        String lastName = lastNameField.getText(); // Esegue: String lastName = lastNameField.getText();
         String password = passwordField.getText(); // Esegue: String password = passwordField.getText();
+
+        if (email == null || email.isBlank() || !email.contains("@")) { // Esegue: if (email == null || email.isBlank() || !email.contains("@")) {
+            errorLabel.setText("Inserisci un'email valida."); // Esegue: errorLabel.setText("Inserisci un'email valida.");
+            return; // Esegue: return;
+        } // Esegue: }
+
+        if (lastName == null || lastName.isBlank()) { // Esegue: if (lastName == null || lastName.isBlank()) {
+            errorLabel.setText("Il cognome è obbligatorio."); // Esegue: errorLabel.setText("Il cognome è obbligatorio.");
+            return; // Esegue: return;
+        } // Esegue: }
+
+        if (!isPasswordValid(password)) { // Esegue: if (!isPasswordValid(password)) {
+            errorLabel.setText("La password deve contenere maiuscole, minuscole, numeri e caratteri speciali."); // Esegue: errorLabel.setText("La password deve contenere maiuscole, minuscole, numeri e caratteri speciali.");
+            return; // Esegue: return;
+        } // Esegue: }
+
+        errorLabel.setText(""); // Esegue: errorLabel.setText("");
 
         Optional<Employee> employee = dataService.authenticate(employeeId, password); // Esegue: Optional<Employee> employee = dataService.authenticate(employeeId, password);
         if (employee.isPresent()) { // Esegue: if (employee.isPresent()) {
@@ -71,6 +96,17 @@ public class LoginController { // Esegue: public class LoginController {
         } else { // Esegue: } else {
             errorLabel.setText("Credenziali non valide. Riprova."); // Esegue: errorLabel.setText("Credenziali non valide. Riprova.");
         } // Esegue: }
+    } // Esegue: }
+
+    private boolean isPasswordValid(String password) { // Esegue: private boolean isPasswordValid(String password) {
+        if (password == null) { // Esegue: if (password == null) {
+            return false; // Esegue: return false;
+        } // Esegue: }
+        boolean hasUppercase = password.chars().anyMatch(Character::isUpperCase); // Esegue: boolean hasUppercase = password.chars().anyMatch(Character::isUpperCase);
+        boolean hasLowercase = password.chars().anyMatch(Character::isLowerCase); // Esegue: boolean hasLowercase = password.chars().anyMatch(Character::isLowerCase);
+        boolean hasDigit = password.chars().anyMatch(Character::isDigit); // Esegue: boolean hasDigit = password.chars().anyMatch(Character::isDigit);
+        boolean hasSpecial = password.chars().anyMatch(ch -> !Character.isLetterOrDigit(ch)); // Esegue: boolean hasSpecial = password.chars().anyMatch(ch -> !Character.isLetterOrDigit(ch));
+        return hasUppercase && hasLowercase && hasDigit && hasSpecial; // Esegue: return hasUppercase && hasLowercase && hasDigit && hasSpecial;
     } // Esegue: }
 
     private void openDashboard(Employee employee) { // Esegue: private void openDashboard(Employee employee) {

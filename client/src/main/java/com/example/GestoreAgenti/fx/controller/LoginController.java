@@ -32,13 +32,7 @@ public class LoginController { // Esegue: public class LoginController {
     private record RegistrationForm(String fullName, String role, String teamName, String email, String password) {} // Esegue: private record RegistrationForm(String fullName, String role, String teamName, String email, String password) {}
 
     @FXML // Esegue: @FXML
-    private TextField employeeIdField; // Esegue: private TextField employeeIdField;
-
-    @FXML // Esegue: @FXML
     private TextField emailField; // Esegue: private TextField emailField;
-
-    @FXML // Esegue: @FXML
-    private TextField lastNameField; // Esegue: private TextField lastNameField;
 
     @FXML // Esegue: @FXML
     private PasswordField passwordField; // Esegue: private PasswordField passwordField;
@@ -68,18 +62,11 @@ public class LoginController { // Esegue: public class LoginController {
             errorLabel.setText("Servizio dati non disponibile"); // Esegue: errorLabel.setText("Servizio dati non disponibile");
             return; // Esegue: return;
         } // Esegue: }
-        String employeeId = employeeIdField.getText(); // Esegue: String employeeId = employeeIdField.getText();
         String email = emailField.getText(); // Esegue: String email = emailField.getText();
-        String lastName = lastNameField.getText(); // Esegue: String lastName = lastNameField.getText();
         String password = passwordField.getText(); // Esegue: String password = passwordField.getText();
 
-        if (email == null || email.isBlank() || !email.contains("@")) { // Esegue: if (email == null || email.isBlank() || !email.contains("@")) {
+        if (!isEmailValid(email)) { // Esegue: if (!isEmailValid(email)) {
             errorLabel.setText("Inserisci un'email valida."); // Esegue: errorLabel.setText("Inserisci un'email valida.");
-            return; // Esegue: return;
-        } // Esegue: }
-
-        if (lastName == null || lastName.isBlank()) { // Esegue: if (lastName == null || lastName.isBlank()) {
-            errorLabel.setText("Il cognome è obbligatorio."); // Esegue: errorLabel.setText("Il cognome è obbligatorio.");
             return; // Esegue: return;
         } // Esegue: }
 
@@ -90,7 +77,7 @@ public class LoginController { // Esegue: public class LoginController {
 
         errorLabel.setText(""); // Esegue: errorLabel.setText("");
 
-        Optional<Employee> employee = dataService.authenticate(employeeId, password); // Esegue: Optional<Employee> employee = dataService.authenticate(employeeId, password);
+        Optional<Employee> employee = dataService.authenticate(email, password); // Esegue: Optional<Employee> employee = dataService.authenticate(email, password);
         if (employee.isPresent()) { // Esegue: if (employee.isPresent()) {
             openDashboard(employee.get()); // Esegue: openDashboard(employee.get());
         } else { // Esegue: } else {
@@ -199,8 +186,8 @@ public class LoginController { // Esegue: public class LoginController {
             boolean disable = nameField.getText().isBlank() // Esegue: boolean disable = nameField.getText().isBlank()
                     || roleCombo.getSelectionModel().getSelectedItem() == null // Esegue: || roleCombo.getSelectionModel().getSelectedItem() == null
                     || teamCombo.getSelectionModel().getSelectedItem() == null // Esegue: || teamCombo.getSelectionModel().getSelectedItem() == null
-                    || emailField.getText().isBlank() // Esegue: || emailField.getText().isBlank()
-                    || passwordInputField.getText().isBlank(); // Esegue: || passwordInputField.getText().isBlank();
+                    || !isEmailValid(emailField.getText()) // Esegue: || !isEmailValid(emailField.getText())
+                    || !isPasswordValid(passwordInputField.getText()); // Esegue: || !isPasswordValid(passwordInputField.getText());
             registerButton.setDisable(disable); // Esegue: registerButton.setDisable(disable);
         }; // Esegue: };
 
@@ -226,6 +213,15 @@ public class LoginController { // Esegue: public class LoginController {
         }); // Esegue: });
 
         dialog.showAndWait().ifPresent(form -> { // Esegue: dialog.showAndWait().ifPresent(form -> {
+            if (!isEmailValid(form.email())) {
+                showRegistrationError("Email non valida", "L'indirizzo email deve contenere il carattere '@'.");
+                return;
+            }
+            if (!isPasswordValid(form.password())) {
+                showRegistrationError("Password non valida",
+                        "La password deve contenere maiuscole, minuscole, numeri e caratteri speciali.");
+                return;
+            }
             Optional<Employee> registered = dataService.registerEmployee( // Esegue: Optional<Employee> registered = dataService.registerEmployee(
                     form.fullName(), // Esegue: form.fullName(),
                     form.role(), // Esegue: form.role(),
@@ -238,26 +234,35 @@ public class LoginController { // Esegue: public class LoginController {
                 Alert success = new Alert(Alert.AlertType.INFORMATION); // Esegue: Alert success = new Alert(Alert.AlertType.INFORMATION);
                 success.setTitle("Registrazione completata"); // Esegue: success.setTitle("Registrazione completata");
                 success.setHeaderText("Nuovo dipendente registrato"); // Esegue: success.setHeaderText("Nuovo dipendente registrato");
-                success.setContentText("L'account per " + registered.get().fullName() // Esegue: success.setContentText("L'account per " + registered.get().fullName()
-                        + " è stato creato. Puoi accedere con l'ID " // Esegue: + " è stato creato. Puoi accedere con l'ID "
-                        + registered.get().id() + "."); // Esegue: + registered.get().id() + ".");
+                success.setContentText("L'account per " + registered.get().fullName()
+                        + " è stato creato. Puoi accedere con l'email "
+                        + registered.get().email() + ".");
                 if (primaryStage != null) { // Esegue: if (primaryStage != null) {
                     success.initOwner(primaryStage); // Esegue: success.initOwner(primaryStage);
                 } // Esegue: }
                 success.showAndWait(); // Esegue: success.showAndWait();
-                employeeIdField.setText(registered.get().id()); // Esegue: employeeIdField.setText(registered.get().id());
+                emailField.setText(registered.get().email());
                 passwordField.setText(form.password()); // Esegue: passwordField.setText(form.password());
                 errorLabel.setText(""); // Esegue: errorLabel.setText("");
             } else { // Esegue: } else {
-                Alert failure = new Alert(Alert.AlertType.ERROR); // Esegue: Alert failure = new Alert(Alert.AlertType.ERROR);
-                failure.setTitle("Registrazione non riuscita"); // Esegue: failure.setTitle("Registrazione non riuscita");
-                failure.setHeaderText("Impossibile registrare il dipendente"); // Esegue: failure.setHeaderText("Impossibile registrare il dipendente");
-                failure.setContentText("Verifica che i dati siano corretti e riprova."); // Esegue: failure.setContentText("Verifica che i dati siano corretti e riprova.");
-                if (primaryStage != null) { // Esegue: if (primaryStage != null) {
-                    failure.initOwner(primaryStage); // Esegue: failure.initOwner(primaryStage);
-                } // Esegue: }
-                failure.showAndWait(); // Esegue: failure.showAndWait();
+                showRegistrationError("Registrazione non riuscita",
+                        "Impossibile registrare il dipendente. Verifica i dati e riprova.");
             } // Esegue: }
         }); // Esegue: });
     } // Esegue: }
+
+    private boolean isEmailValid(String email) {
+        return email != null && !email.isBlank() && email.contains("@");
+    }
+
+    private void showRegistrationError(String title, String message) {
+        Alert failure = new Alert(Alert.AlertType.ERROR);
+        failure.setTitle(title);
+        failure.setHeaderText(title);
+        failure.setContentText(message);
+        if (primaryStage != null) {
+            failure.initOwner(primaryStage);
+        }
+        failure.showAndWait();
+    }
 } // Esegue: }

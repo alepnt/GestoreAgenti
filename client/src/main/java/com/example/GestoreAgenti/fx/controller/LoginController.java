@@ -87,7 +87,11 @@ public class LoginController { // Esegue: public class LoginController {
                 primaryStage.show(); // Esegue: primaryStage.show();
             } // Esegue: }
         } catch (IOException e) { // Esegue: } catch (IOException e) {
-            errorLabel.setText("Impossibile aprire la dashboard"); // Esegue: errorLabel.setText("Impossibile aprire la dashboard");
+            String cause = e.getMessage(); // Esegue: String cause = e.getMessage();
+            if (cause == null || cause.isBlank()) { // Esegue: if (cause == null || cause.isBlank()) {
+                cause = e.getClass().getSimpleName(); // Esegue: cause = e.getClass().getSimpleName();
+            } // Esegue: }
+            errorLabel.setText("Errore durante il caricamento della dashboard: " + cause); // Esegue: errorLabel.setText("Errore durante il caricamento della dashboard: " + cause);
         } // Esegue: }
     } // Esegue: }
 

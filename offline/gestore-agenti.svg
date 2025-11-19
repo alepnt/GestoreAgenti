@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Gestore Agenti logo">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e88e5" />
+      <stop offset="100%" stop-color="#3949ab" />
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="18" fill="url(#bg)" />
+  <g fill="#e3f2fd" font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif" font-weight="700">
+    <text x="50%" y="52" font-size="34" text-anchor="middle">GA</text>
+    <text x="50%" y="92" font-size="16" text-anchor="middle" letter-spacing="1.5">CLIENT</text>
+  </g>
+</svg>

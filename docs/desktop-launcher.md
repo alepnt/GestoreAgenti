@@ -1,50 +1,55 @@
 # Avvio dal desktop di Gestore Agenti
 
-Questa guida descrive come installare un collegamento nel menu applicazioni (o sul desktop) per aprire direttamente la demo **Gestore Agenti**. Il lancio automatico si occupa di avviare sia il server Spring Boot sia l'interfaccia JavaFX.
+Questa guida descrive come installare un collegamento nel menu applicazioni (o sul desktop) per aprire direttamente la demo **Gestore Agenti** nelle build desktop del modulo `client`.
 
-## Prerequisiti
+## Prerequisiti comuni
 
-- Sistema operativo Linux con ambiente desktop compatibile con gli standard freedesktop.org.
 - Java 21 o superiore e Maven Wrapper (`./mvnw`) funzionante, come già richiesto dal progetto.
+- Il pacchetto desktop generato dal modulo client tramite:
+  ```bash
+  ./mvnw -pl client -Pdesktop clean package -DskipTests
+  ```
+  Il comando produce l'immagine jlink in `client/target/agent-manager-app/` con il launcher `bin/AgentManagerApp`.
 
-## Passaggi rapidi
+## Linux (desktop entry freedesktop)
 
-1. Apri un terminale nella cartella del repository.
-2. Esegui lo script di installazione:
+1. Verifica di avere completato il packaging desktop del client (vedi prerequisiti). Lo script userà `client/target/agent-manager-app/bin/AgentManagerApp`.
+2. Installa il collegamento eseguendo:
    ```bash
    scripts/install-gestore-agenti-desktop-entry.sh
    ```
-3. Cerca "Gestore Agenti" nel menu Applicazioni e trascina la voce sul desktop se desideri un collegamento visibile.
+3. Cerca "Gestore Agenti Client" nel menu Applicazioni o trascina l'icona sul desktop. Il file `.desktop` viene installato in `~/.local/share/applications/` e punta allo script [`scripts/avvia-client.sh`](../scripts/avvia-client.sh). L'icona viene letta da `offline/gestore-agenti.svg`.
 
-Lo script crea il file `gestore-agenti.desktop` in `~/.local/share/applications/` puntando allo script di avvio del progetto.
+Lo script [`scripts/avvia-client.sh`](../scripts/avvia-client.sh) lancia direttamente l'eseguibile creato dal profilo `desktop`, senza avviare il server backend.
 
-## Cosa fa lo script di avvio
+## Windows (script e collegamento sul desktop)
 
-Lo script [`scripts/launch-gestore-agenti.sh`](../scripts/launch-gestore-agenti.sh) esegue le seguenti operazioni:
+1. Genera l'immagine desktop del client con Maven sullo stesso percorso indicato nei prerequisiti.
+2. Copia lo script [`scripts/avvia-client.bat`](../scripts/avvia-client.bat) nella macchina di destinazione insieme alla cartella `client/target/agent-manager-app/`.
+3. Crea il collegamento sul desktop con PowerShell (eseguito nel repository):
+   ```powershell
+   $shell = New-Object -ComObject WScript.Shell
+   $shortcut = $shell.CreateShortcut("$env:USERPROFILE\Desktop\Gestore Agenti Client.lnk")
+   $shortcut.TargetPath = "$PWD\scripts\avvia-client.bat"
+   $shortcut.WorkingDirectory = "$PWD"
+   # Opzionale: per un'icona personalizzata crea un file `.ico` (ad es. convertendo `offline/gestore-agenti.svg`)
+   # e decommenta la riga seguente impostando il percorso dell'icona.
+   # $shortcut.IconLocation = "$PWD\offline\gestore-agenti.ico"
+   $shortcut.Save()
+   ```
+   In alternativa, crea manualmente un collegamento che punti a `scripts\avvia-client.bat`.
 
-- Verifica se esiste già un server avviato tramite il PID salvato nella cartella `.desktop-launcher/` del progetto.
-- Se necessario avvia il server Spring Boot (`./mvnw -pl server spring-boot:run -DskipTests`) in background, salvando log e PID.
-- Attende che la porta `8081` risulti raggiungibile.
-- Avvia il client JavaFX (`./mvnw -pl client -am javafx:run -DskipTests`).
-- Arresta il server al termine **solo** se era stato avviato dallo script (per non interrompere un'istanza lanciata manualmente).
+## macOS (immagine .app tramite jpackage)
 
-I log del server vengono salvati in `.desktop-launcher/server.log` per facilitare la diagnostica in caso di problemi d'avvio.
+1. Su macOS con Xcode command line tools e `jpackage` disponibili, esegui:
+   ```bash
+   ./mvnw -pl client -Pdesktop,macos-app clean package -DskipTests
+   ```
+   Il profilo `macos-app` crea `target/agent-manager-app` (jlink) e un bundle `.app` nella stessa cartella usando `jpackage`.
+2. Trascina il file `.app` generato in `/Applications` per installarlo. Lo start avvia direttamente il client JavaFX offline.
 
-## Personalizzazioni facoltative
+## Troubleshooting comune
 
-- Per mostrare un'icona personalizzata è sufficiente aggiungere un file PNG nel percorso del progetto e modificare la chiave `Icon=` dentro `~/.local/share/applications/gestore-agenti.desktop`.
-- Se preferisci non visualizzare un terminale durante l'avvio, puoi cambiare la riga `Terminal=true` in `Terminal=false` nel file `.desktop` generato.
-
-## Rimozione
-
-Per rimuovere il collegamento elimina il file `~/.local/share/applications/gestore-agenti.desktop` e, se presente, la cartella `.desktop-launcher/` creata nel repository.
-
-## Creare un'immagine desktop auto-contenuta
-
-Per generare un'immagine runtime del client JavaFX con tutte le risorse FXML/CSS presenti in `client/src/main/resources/fx/` usa il profilo Maven `desktop` dedicato:
-
-```bash
-mvn -pl client -Pdesktop clean package
-```
-
-Il comando produce un'immagine jlink pronta all'uso in `client/target/agent-manager-app/` e un archivio compresso in `client/target/agent-manager-app.zip`, utili per distribuire il launcher desktop senza richiedere una JRE preinstallata.
+- **Permesso negato sugli script**: esegui `chmod +x scripts/avvia-client.sh` e, se necessario, `chmod +x client/target/agent-manager-app/bin/AgentManagerApp`.
+- **Dipendenze JavaFX mancanti**: assicurati che la build desktop sia stata creata con `./mvnw -pl client -Pdesktop clean package -DskipTests` e che l'immagine `agent-manager-app` sia presente. Su Linux alcune distribuzioni richiedono pacchetti `libgtk`/`libglib` aggiornati per JavaFX.
+- **Percorsi con spazi**: il template `.desktop` sostituisce automaticamente gli spazi con escape (`\ `); nei collegamenti Windows assicurati che i percorsi siano racchiusi fra virgolette.

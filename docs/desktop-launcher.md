@@ -38,3 +38,13 @@ I log del server vengono salvati in `.desktop-launcher/server.log` per facilitar
 ## Rimozione
 
 Per rimuovere il collegamento elimina il file `~/.local/share/applications/gestore-agenti.desktop` e, se presente, la cartella `.desktop-launcher/` creata nel repository.
+
+## Creare un'immagine desktop auto-contenuta
+
+Per generare un'immagine runtime del client JavaFX con tutte le risorse FXML/CSS presenti in `client/src/main/resources/fx/` usa il profilo Maven `desktop` dedicato:
+
+```bash
+mvn -pl client -Pdesktop clean package
+```
+
+Il comando produce un'immagine jlink pronta all'uso in `client/target/agent-manager-app/` e un archivio compresso in `client/target/agent-manager-app.zip`, utili per distribuire il launcher desktop senza richiedere una JRE preinstallata.

@@ -1,2 +1,4 @@
 *
 !.gitignore
+!gestore-agenti.desktop
+!gestore-agenti.svg

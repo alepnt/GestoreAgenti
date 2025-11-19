@@ -9,7 +9,20 @@ fi
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
-LAUNCHER_SCRIPT="${ROOT_DIR}/scripts/launch-gestore-agenti.sh"
+LAUNCHER_SCRIPT="${ROOT_DIR}/scripts/avvia-client.sh"
+DESKTOP_TEMPLATE="${ROOT_DIR}/offline/gestore-agenti.desktop"
+ICON_PATH="${ROOT_DIR}/offline/gestore-agenti.svg"
+
+if [[ ! -f "${LAUNCHER_SCRIPT}" ]]; then
+    echo "Lo script di avvio non esiste: ${LAUNCHER_SCRIPT}" >&2
+    echo "Verifica di aver clonato correttamente il repository." >&2
+    exit 1
+fi
+
+if [[ ! -f "${DESKTOP_TEMPLATE}" ]]; then
+    echo "Il template .desktop non esiste: ${DESKTOP_TEMPLATE}" >&2
+    exit 1
+fi
 
 if [[ ! -x "${LAUNCHER_SCRIPT}" ]]; then
     echo "Rendo eseguibile lo script di avvio..."
@@ -21,20 +34,14 @@ DESKTOP_FILE="${APPLICATIONS_DIR}/gestore-agenti.desktop"
 
 mkdir -p "${APPLICATIONS_DIR}"
 
-escaped_exec_path="${LAUNCHER_SCRIPT// /\\ }"
+escaped_root=${ROOT_DIR// /\\ }
+sed "s#__PROJECT_ROOT__#${escaped_root}#g" "${DESKTOP_TEMPLATE}" > "${DESKTOP_FILE}"
 
-cat > "${DESKTOP_FILE}" <<EOF_DESKTOP
-[Desktop Entry]
-Type=Application
-Version=1.0
-Name=Gestore Agenti
-Comment=Avvia il server demo e l'applicazione desktop Gestore Agenti
-Exec=${escaped_exec_path}
-Terminal=true
-Categories=Office;Utility;
-EOF_DESKTOP
+if [[ -f "${ICON_PATH}" ]]; then
+    chmod +r "${ICON_PATH}" || true
+fi
+chmod +x "${DESKTOP_FILE}" || true
 
-chmod +x "${DESKTOP_FILE}"
-
-echo "File desktop installato in: ${DESKTOP_FILE}"
-echo "Ora puoi cercare \"Gestore Agenti\" nel menu Applicazioni o creare un collegamento sul desktop."
+echo "File desktop installato in: ${DESKTOP_FILE}"  
+echo "L'icona utilizza: ${ICON_PATH}"  
+echo "Ora puoi cercare 'Gestore Agenti Client' nel menu Applicazioni o trascinare la voce sul desktop."

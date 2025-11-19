@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Gestore Agenti Client
+Comment=Avvia il client desktop di Gestore Agenti
+Exec=__PROJECT_ROOT__/scripts/avvia-client.sh
+Icon=__PROJECT_ROOT__/offline/gestore-agenti.svg
+Terminal=false
+Categories=Office;Utility;
+StartupNotify=true
